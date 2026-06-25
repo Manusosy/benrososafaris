@@ -351,6 +351,7 @@ export type Database = {
           notes: Json;
           phone: string | null;
           preferred_dates: string | null;
+          reference_code: string | null;
           source_path: string | null;
           status: string;
           topic: string | null;
@@ -363,6 +364,7 @@ export type Database = {
           budget?: string | null;
           country?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           destinations?: string | null;
           email: string;
           enquiry_type?: string;
@@ -374,6 +376,7 @@ export type Database = {
           notes?: Json;
           phone?: string | null;
           preferred_dates?: string | null;
+          reference_code?: string | null;
           source_path?: string | null;
           status?: string;
           topic?: string | null;
@@ -386,6 +389,7 @@ export type Database = {
           budget?: string | null;
           country?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           destinations?: string | null;
           email?: string;
           enquiry_type?: string;
@@ -397,6 +401,7 @@ export type Database = {
           notes?: Json;
           phone?: string | null;
           preferred_dates?: string | null;
+          reference_code?: string | null;
           source_path?: string | null;
           status?: string;
           topic?: string | null;
@@ -1476,6 +1481,26 @@ export type Database = {
     };
     Functions: {
       staff_has_role: { Args: { allowed_roles: string[] }; Returns: boolean };
+      submit_enquiry: {
+        Args: {
+          p_booking_reference?: string | null;
+          p_budget?: string | null;
+          p_country?: string | null;
+          p_destinations?: string | null;
+          p_email: string;
+          p_enquiry_type: string;
+          p_form_data: Json;
+          p_locale: string;
+          p_message: string;
+          p_name: string;
+          p_phone: string | null;
+          p_preferred_dates?: string | null;
+          p_source_path: string | null;
+          p_topic?: string | null;
+          p_travelers?: number | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -262,11 +262,9 @@ async function persistEnquiry(
   });
 }
 
-function extractReferenceCode(result: Awaited<ReturnType<typeof persistEnquiry>>): string | null {
-  if ('data' in result && result.data && typeof result.data === 'object') {
-    if ('reference_code' in result.data) {
-      return (result.data.reference_code as string | null) ?? null;
-    }
+function extractReferenceCode(result: { data: unknown }): string | null {
+  if (result.data && typeof result.data === 'object' && 'reference_code' in result.data) {
+    return (result.data.reference_code as string | null) ?? null;
   }
 
   return null;

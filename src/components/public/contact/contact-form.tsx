@@ -373,12 +373,11 @@ function ContactFormBody({
       tripType: ''
     },
     validators: {
-      onSubmit:
-        activeType === 'safari-quote'
-          ? safariQuoteSchema
-          : activeType === 'general'
-            ? generalSchema
-            : otherSchema
+      onSubmit: (activeType === 'safari-quote'
+        ? safariQuoteSchema
+        : activeType === 'general'
+          ? generalSchema
+          : otherSchema) as any
     },
     onSubmit: ({ value }) => {
       onSubmitStatusChange('idle');

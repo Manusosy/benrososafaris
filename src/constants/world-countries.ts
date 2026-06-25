@@ -203,7 +203,7 @@ export type WorldCountryName = (typeof WORLD_COUNTRIES_DATA)[number]['name'];
 /** Sorted country names for combobox display. */
 export const WORLD_COUNTRIES = WORLD_COUNTRIES_DATA.map((entry) => entry.name);
 
-const DIAL_CODE_BY_COUNTRY = new Map(
+const DIAL_CODE_BY_COUNTRY = new Map<string, string>(
   WORLD_COUNTRIES_DATA.map((entry) => [entry.name, entry.dialCode])
 );
 
