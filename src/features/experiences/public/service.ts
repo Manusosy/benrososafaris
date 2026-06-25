@@ -1,0 +1,513 @@
+import { createClient } from '@/lib/supabase/server';
+import { localePath } from '@/lib/public/locale-path';
+
+import type {
+  PublicExperience,
+  PublicExperienceDetail,
+  PublicExperienceFaq,
+  PublicExperienceMedia,
+  PublicExperienceRelatedAccommodation,
+  PublicExperienceRelatedTour
+} from './types';
+
+type ExperienceTranslationRow = {
+  content: { html?: string; text?: string } | null;
+  experience:
+    | {
+        category: string | null;
+        deleted_at: string | null;
+        gallery: string[] | null;
+        highlights: string[] | null;
+        id: string;
+        status: string;
+      }
+    | Array<{
+        category: string | null;
+        deleted_at: string | null;
+        gallery: string[] | null;
+        highlights: string[] | null;
+        id: string;
+        status: string;
+      }>
+    | null;
+  faqs: unknown;
+  og_image?:
+    | { alt?: string | null; url?: string | null }
+    | Array<{
+        alt?: string | null;
+        url?: string | null;
+      }>
+    | null;
+  seo_description: string | null;
+  seo_title: string | null;
+  slug: string;
+  summary: string | null;
+  title: string;
+};
+
+type TourTranslationRow = {
+  excerpt: string | null;
+  slug: string;
+  title: string;
+  tour:
+    | {
+        days: number | null;
+        id: string;
+        nights: number | null;
+        price_from: number | null;
+        status: string;
+      }
+    | Array<{
+        days: number | null;
+        id: string;
+        nights: number | null;
+        price_from: number | null;
+        status: string;
+      }>
+    | null;
+  tour_id: string;
+  og_image?:
+    | { alt?: string | null; url?: string | null }
+    | Array<{ alt?: string | null; url?: string | null }>
+    | null;
+};
+
+type AccommodationTranslationRow = {
+  accommodation:
+    | {
+        country: string | null;
+        id: string;
+        region: string | null;
+        status: string;
+      }
+    | Array<{
+        country: string | null;
+        id: string;
+        region: string | null;
+        status: string;
+      }>
+    | null;
+  accommodation_id: string;
+  name: string;
+  og_image?:
+    | { alt?: string | null; url?: string | null }
+    | Array<{ alt?: string | null; url?: string | null }>
+    | null;
+  slug: string;
+  summary: string | null;
+};
+
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function mediaUrl(asset: { url?: string | null } | { url?: string | null }[] | null | undefined) {
+  return unwrapRelation(asset)?.url ?? null;
+}
+
+function mediaAlt(
+  asset:
+    | { alt?: string | null; url?: string | null }
+    | { alt?: string | null; url?: string | null }[]
+    | null
+    | undefined,
+  fallback: string
+) {
+  return unwrapRelation(asset)?.alt ?? fallback;
+}
+
+function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+}
+
+function parseFaqs(value: unknown): PublicExperienceFaq[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (typeof item !== 'object' || item === null) return [];
+
+    const record = item as Record<string, unknown>;
+    const question = typeof record.question === 'string' ? record.question.trim() : '';
+    const answer = typeof record.answer === 'string' ? record.answer.trim() : '';
+
+    return question && answer ? [{ answer, question }] : [];
+  });
+}
+
+function parseContentHtml(content: ExperienceTranslationRow['content']): string | null {
+  if (!content) return null;
+  const html = content.html ?? content.text ?? null;
+  return html?.trim() ? html : null;
+}
+
+function hasTranslationContent(content: ExperienceTranslationRow['content']): boolean {
+  return Boolean(parseContentHtml(content));
+}
+
+async function resolveMediaByIds(ids: string[]): Promise<Map<string, PublicExperienceMedia>> {
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (!uniqueIds.length) return new Map();
+
+  const supabase = await createClient();
+  const { data } = await supabase.from('media_assets').select('id, url, alt').in('id', uniqueIds);
+
+  return new Map(
+    (data ?? []).map((asset) => [
+      asset.id,
+      {
+        alt: asset.alt,
+        id: asset.id,
+        url: asset.url
+      }
+    ])
+  );
+}
+
+function coverFromGallery(
+  galleryIds: string[],
+  mediaById: Map<string, PublicExperienceMedia>,
+  fallbackTitle: string
+): { imageAlt: string | null; imageUrl: string | null } {
+  const coverId = galleryIds[0];
+  if (!coverId) return { imageAlt: null, imageUrl: null };
+
+  const cover = mediaById.get(coverId);
+  return {
+    imageAlt: cover?.alt ?? fallbackTitle,
+    imageUrl: cover?.url ?? null
+  };
+}
+
+function mapExperienceRow(
+  row: ExperienceTranslationRow,
+  locale: string,
+  mediaById: Map<string, PublicExperienceMedia>
+): PublicExperience | null {
+  const experience = unwrapRelation(row.experience);
+  if (!experience || experience.status !== 'published' || experience.deleted_at) return null;
+  if (!hasTranslationContent(row.content)) return null;
+
+  const galleryIds = parseStringArray(experience.gallery);
+  const cover = coverFromGallery(galleryIds, mediaById, row.title);
+
+  return {
+    category: experience.category,
+    href: localePath(locale, `/experiences/${row.slug}`),
+    id: experience.id,
+    imageAlt: cover.imageAlt,
+    imageUrl: cover.imageUrl,
+    slug: row.slug,
+    summary: row.summary,
+    title: row.title
+  };
+}
+
+async function fetchPublishedTranslationRows(locale: string, category?: string) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from('experience_translations')
+    .select(
+      `
+      slug,
+      title,
+      summary,
+      content,
+      faqs,
+      seo_title,
+      seo_description,
+      experience:experiences!inner(id, category, status, gallery, highlights, deleted_at),
+      og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .eq('experience.status', 'published')
+    .is('experience.deleted_at', null)
+    .not('published_at', 'is', null)
+    .not('content', 'is', null)
+    .order('title');
+
+  if (category) {
+    query = query.eq('experience.category', category);
+  }
+
+  const { data } = await query;
+  return (data ?? []) as ExperienceTranslationRow[];
+}
+
+export async function listPublishedExperiences({
+  category,
+  locale
+}: {
+  category?: string;
+  locale: string;
+}): Promise<PublicExperience[]> {
+  const rows = await fetchPublishedTranslationRows(locale, category);
+  const galleryIds = rows.flatMap((row) => {
+    const experience = unwrapRelation(row.experience);
+    return parseStringArray(experience?.gallery);
+  });
+  const mediaById = await resolveMediaByIds(galleryIds);
+
+  return rows.flatMap((row) => {
+    const mapped = mapExperienceRow(row, locale, mediaById);
+    return mapped ? [mapped] : [];
+  });
+}
+
+export async function getExperienceCategories(locale: string): Promise<string[]> {
+  const experiences = await listPublishedExperiences({ locale });
+  const categories = new Set<string>();
+
+  for (const experience of experiences) {
+    if (experience.category) categories.add(experience.category);
+  }
+
+  return [...categories].toSorted((a, b) => a.localeCompare(b));
+}
+
+export async function getPublishedExperienceBySlug(
+  locale: string,
+  slug: string
+): Promise<PublicExperienceDetail | null> {
+  const supabase = await createClient();
+
+  const { data: row } = await supabase
+    .from('experience_translations')
+    .select(
+      `
+      slug,
+      title,
+      summary,
+      content,
+      faqs,
+      seo_title,
+      seo_description,
+      experience:experiences!inner(id, category, status, gallery, highlights, deleted_at),
+      og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .eq('slug', slug)
+    .eq('experience.status', 'published')
+    .is('experience.deleted_at', null)
+    .not('published_at', 'is', null)
+    .not('content', 'is', null)
+    .maybeSingle<ExperienceTranslationRow>();
+
+  if (!row) return null;
+
+  const experience = unwrapRelation(row.experience);
+  if (!experience || !hasTranslationContent(row.content)) return null;
+
+  const galleryIds = parseStringArray(experience.gallery);
+  const mediaById = await resolveMediaByIds(galleryIds);
+  const cover = coverFromGallery(galleryIds, mediaById, row.title);
+  const ogImage = unwrapRelation(row.og_image);
+
+  const gallery = galleryIds.flatMap((id) => {
+    const asset = mediaById.get(id);
+    return asset ? [asset] : [];
+  });
+
+  return {
+    category: experience.category,
+    contentHtml: parseContentHtml(row.content),
+    experienceId: experience.id,
+    faqs: parseFaqs(row.faqs),
+    gallery,
+    highlights: parseStringArray(experience.highlights),
+    href: localePath(locale, `/experiences/${row.slug}`),
+    id: experience.id,
+    imageAlt: ogImage?.alt ?? cover.imageAlt,
+    imageUrl: ogImage?.url ?? cover.imageUrl,
+    seoDescription: row.seo_description,
+    seoTitle: row.seo_title,
+    slug: row.slug,
+    summary: row.summary,
+    title: row.title
+  };
+}
+
+async function fetchParksByTourId(
+  tourIds: string[],
+  locale: string
+): Promise<Map<string, string[]>> {
+  if (!tourIds.length) return new Map();
+
+  const supabase = await createClient();
+  const { data: parkLinks } = await supabase
+    .from('tour_national_parks')
+    .select('tour_id, park_id, position')
+    .in('tour_id', tourIds)
+    .order('position');
+
+  const parkIds = [...new Set((parkLinks ?? []).map((link) => link.park_id))];
+  if (!parkIds.length) return new Map();
+
+  const { data: parkTranslations } = await supabase
+    .from('national_park_translations')
+    .select('park_id, name')
+    .eq('locale', locale)
+    .in('park_id', parkIds)
+    .not('published_at', 'is', null);
+
+  const parkNameById = new Map((parkTranslations ?? []).map((park) => [park.park_id, park.name]));
+  const parksByTourId = new Map<string, string[]>();
+
+  for (const link of parkLinks ?? []) {
+    const name = parkNameById.get(link.park_id);
+    if (!name) continue;
+
+    const existing = parksByTourId.get(link.tour_id) ?? [];
+    existing.push(name);
+    parksByTourId.set(link.tour_id, existing);
+  }
+
+  return parksByTourId;
+}
+
+export async function getRelatedToursForExperience(
+  experienceId: string,
+  locale: string
+): Promise<PublicExperienceRelatedTour[]> {
+  const supabase = await createClient();
+
+  const { data: experienceLinks } = await supabase
+    .from('tour_experiences')
+    .select('tour_id, position')
+    .eq('experience_id', experienceId)
+    .order('position');
+
+  if (!experienceLinks?.length) return [];
+
+  const tourIds = experienceLinks.map((link) => link.tour_id);
+  const orderByTourId = new Map(
+    experienceLinks.map((link, index) => [link.tour_id, link.position ?? index])
+  );
+
+  const { data: tourRows } = await supabase
+    .from('tour_translations')
+    .select(
+      `
+      slug,
+      title,
+      excerpt,
+      tour_id,
+      tour:tours!inner(id, status, days, nights, price_from),
+      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .in('tour_id', tourIds)
+    .eq('tour.status', 'published')
+    .not('published_at', 'is', null);
+
+  const parksByTourId = await fetchParksByTourId(tourIds, locale);
+
+  return (tourRows ?? [])
+    .flatMap((row: TourTranslationRow) => {
+      const tour = unwrapRelation(row.tour);
+      if (!tour) return [];
+
+      const parks = parksByTourId.get(row.tour_id) ?? [];
+
+      return [
+        {
+          days: tour.days,
+          excerpt: row.excerpt,
+          href: localePath(locale, `/tours/${row.slug}`),
+          id: tour.id,
+          imageAlt: mediaAlt(row.og_image, row.title),
+          imageUrl: mediaUrl(row.og_image),
+          nights: tour.nights,
+          parksLabel: parks.length ? parks.slice(0, 3).join(' · ') : null,
+          priceFrom: tour.price_from,
+          slug: row.slug,
+          title: row.title
+        }
+      ];
+    })
+    .toSorted((a, b) => (orderByTourId.get(a.id) ?? 0) - (orderByTourId.get(b.id) ?? 0));
+}
+
+export async function getRelatedAccommodationsForExperience(
+  experienceId: string,
+  locale: string,
+  limit = 6
+): Promise<PublicExperienceRelatedAccommodation[]> {
+  const supabase = await createClient();
+
+  const { data: tourLinks } = await supabase
+    .from('tour_experiences')
+    .select('tour_id')
+    .eq('experience_id', experienceId);
+
+  if (!tourLinks?.length) return [];
+
+  const tourIds = tourLinks.map((link) => link.tour_id);
+
+  const { data: accommodationLinks } = await supabase
+    .from('tour_accommodations')
+    .select('accommodation_id, position')
+    .in('tour_id', tourIds)
+    .order('position');
+
+  const seen = new Set<string>();
+  const accommodationIds: string[] = [];
+
+  for (const link of accommodationLinks ?? []) {
+    if (seen.has(link.accommodation_id)) continue;
+    seen.add(link.accommodation_id);
+    accommodationIds.push(link.accommodation_id);
+    if (accommodationIds.length >= limit) break;
+  }
+
+  if (!accommodationIds.length) return [];
+
+  const { data: rows } = await supabase
+    .from('accommodation_translations')
+    .select(
+      `
+      slug,
+      name,
+      summary,
+      accommodation_id,
+      accommodation:accommodations!inner(id, status, region, country),
+      og_image:media_assets!accommodation_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .in('accommodation_id', accommodationIds)
+    .eq('accommodation.status', 'published')
+    .not('published_at', 'is', null);
+
+  const orderMap = new Map(accommodationIds.map((id, index) => [id, index]));
+
+  return (rows ?? [])
+    .flatMap((row: AccommodationTranslationRow) => {
+      const accommodation = unwrapRelation(row.accommodation);
+      if (!accommodation) return [];
+
+      const locationParts = [accommodation.region, accommodation.country].filter(
+        (part): part is string => Boolean(part)
+      );
+
+      return [
+        {
+          country: accommodation.country,
+          href: localePath(locale, `/accommodations/${row.slug}`),
+          id: accommodation.id,
+          imageAlt: mediaAlt(row.og_image, row.name),
+          imageUrl: mediaUrl(row.og_image),
+          locationLabel: locationParts.length ? locationParts.join(', ') : null,
+          name: row.name,
+          slug: row.slug,
+          summary: row.summary
+        }
+      ];
+    })
+    .toSorted((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+}

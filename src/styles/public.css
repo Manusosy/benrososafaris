@@ -1,0 +1,1436 @@
+/* Benroso Safaris — public brand tokens (#3C5142 primary, Benroso + FlashMC header) */
+
+.public-site {
+  --benroso-primary: #3c5142;
+  --benroso-primary-dark: #2f4034;
+  --benroso-primary-light: #4a6354;
+  --benroso-accent: #3c5142;
+  --benroso-accent-hover: #2f4034;
+  --benroso-gold: #c9a227;
+  --benroso-gold-hover: #b08f1f;
+  --benroso-brand-gold: #fecd5b;
+  --benroso-footer-accent: rgba(255, 255, 255, 0.55);
+  /* Brown retired in favour of neutral ink for consistent, highlight-free emphasis. */
+  --benroso-brown: #1a1a1a;
+  --benroso-charcoal: #2a2a2a;
+  --benroso-ivory: #f8f5ef;
+  --benroso-contact-body-bg: #ffffff;
+  --benroso-contact-cream: #f7f7f7;
+  --benroso-contact-sidebar-bg: #f8f8f8;
+  --benroso-contact-traveler-bg: #f0f0f0;
+  --benroso-contact-link: #34e0a1;
+  --benroso-contact-link-hover: #2bc48e;
+  --benroso-contact-input-border: #d9d9d9;
+  --benroso-contact-field-radius: 5px;
+  --benroso-warm-gray: #f5f4f0;
+  --benroso-white: #ffffff;
+  --benroso-ink: #1a1a1a;
+  --benroso-heading: #1a1a1a;
+  --benroso-muted: #5c665f;
+  --benroso-line: #e4dfd4;
+  --benroso-header-h: 80px;
+  --benroso-topbar-h: 88px;
+  --benroso-radius: 3px;
+  --benroso-button-radius: 3px;
+  --benroso-container: min(1298px, calc(100% - 2rem));
+
+  background-color: var(--benroso-white);
+  color: var(--benroso-ink);
+  font-family: var(--font-inter), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.public-site h1,
+.public-site h2,
+.public-site h3,
+.public-site h4,
+.public-site .font-display {
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.public-site .benroso-container {
+  width: var(--benroso-container);
+  margin-inline: auto;
+}
+
+.public-site .benroso-section {
+  padding-block: clamp(3.5rem, 6vw, 5.5rem);
+}
+
+.public-site .benroso-eyebrow {
+  color: var(--benroso-gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.public-site .benroso-gold-line {
+  display: block;
+  width: 72px;
+  height: 3px;
+  margin: 1rem auto 0;
+  background: var(--benroso-gold);
+}
+
+.public-site .benroso-gold-line--brand {
+  background: var(--benroso-brand-gold);
+}
+
+.public-site .benroso-gold-line--left {
+  margin-inline: 0 auto;
+}
+
+.public-site .benroso-heading {
+  color: var(--benroso-heading);
+}
+
+.public-site .benroso-body {
+  color: var(--benroso-muted);
+}
+
+@keyframes benroso-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.public-site [data-animate='hero'] {
+  animation: benroso-fade-up 0.8s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site [data-animate='hero'] {
+    animation: none;
+  }
+}
+
+.public-site .benroso-legal-prose {
+  color: var(--benroso-muted);
+}
+
+.public-site .benroso-legal-section + .benroso-legal-section {
+  margin-top: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--benroso-line);
+}
+
+.public-site .benroso-legal-prose h2 {
+  color: var(--benroso-heading);
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+}
+
+.public-site .benroso-legal-prose p {
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.public-site .benroso-legal-prose ul {
+  list-style: disc;
+  margin: 0 0 1rem 1.25rem;
+}
+
+.public-site .benroso-legal-prose li + li {
+  margin-top: 0.5rem;
+}
+
+/* Footer */
+.public-site .benroso-footer-heading {
+  color: var(--benroso-white);
+  display: block;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  margin-bottom: 1.125rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 2px solid var(--benroso-footer-accent);
+}
+
+.public-site .benroso-footer-link {
+  color: rgb(255 255 255 / 0.82);
+  display: inline-block;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  transition: color 0.2s ease;
+}
+
+.public-site .benroso-footer-link:hover {
+  color: var(--benroso-footer-accent);
+}
+
+.public-site .benroso-footer-brand-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.public-site .benroso-footer-brand-logo {
+  align-self: flex-start;
+}
+
+.public-site .benroso-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.public-site .benroso-footer-contact-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-footer-contact-row {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-footer-brand-grid {
+    align-items: center;
+    display: grid;
+    gap: 1.5rem 2rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .public-site .benroso-footer-contact {
+    align-items: center;
+    text-align: center;
+  }
+
+  .public-site .benroso-footer-contact-row {
+    justify-content: center;
+  }
+
+  .public-site .benroso-footer-contact > p {
+    justify-content: center;
+  }
+}
+
+.public-site .benroso-footer-socials {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  gap: 0.375rem;
+  justify-content: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-footer-socials {
+    justify-content: flex-end;
+  }
+}
+
+.public-site .benroso-footer-social {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 2.375rem;
+  justify-content: center;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  width: 2.375rem;
+}
+
+.public-site .benroso-footer-social-icon {
+  display: block;
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-footer-social {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+
+  .public-site .benroso-footer-social-icon {
+    height: 1.375rem;
+    width: 1.375rem;
+  }
+}
+
+@media (hover: hover) {
+  .public-site .benroso-footer-social:hover {
+    background-color: rgb(255 255 255 / 0.12);
+    border-color: var(--benroso-footer-accent);
+  }
+}
+
+.public-site .benroso-footer-social:focus-visible {
+  background-color: rgb(255 255 255 / 0.12);
+  border-color: var(--benroso-footer-accent);
+  outline: 2px solid var(--benroso-footer-accent);
+  outline-offset: 1px;
+}
+
+/* Contact page — Flash MC-inspired form steps (no boxed cards) */
+.public-site .benroso-contact-step {
+  margin-bottom: 2.5rem;
+  padding: 0;
+}
+
+.public-site .benroso-contact-step:last-of-type {
+  margin-bottom: 0;
+}
+
+.public-site .benroso-contact-step-number {
+  align-items: center;
+  background-color: var(--benroso-brand-gold);
+  border-radius: 9999px;
+  color: var(--benroso-heading);
+  display: flex;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.public-site .benroso-contact-step-title {
+  color: var(--benroso-heading);
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.public-site .benroso-contact-field {
+  background-color: var(--benroso-white);
+  border: 1px solid var(--benroso-contact-input-border);
+  border-radius: var(--benroso-contact-field-radius);
+  color: var(--benroso-ink);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  outline: none;
+  padding: 0.625rem 0.875rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.public-site .benroso-contact-field:focus {
+  border-color: var(--benroso-primary);
+  box-shadow: 0 0 0 2px rgb(60 81 66 / 0.12);
+}
+
+.public-site .benroso-contact-field:disabled {
+  background-color: var(--benroso-contact-cream);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.public-site .benroso-contact-field::placeholder {
+  color: rgb(92 102 95 / 0.65);
+  font-weight: 400;
+}
+
+/* Country combobox — portaled popover (outside .public-site), use root selectors */
+.benroso-country-combobox-popover {
+  --accent: rgb(60 81 66 / 0.12);
+  --accent-foreground: #1a1a1a;
+  --popover-foreground: #1a1a1a;
+  background-color: #fff;
+  border-color: #d9d9d9;
+  color: #1a1a1a;
+  overflow: hidden;
+  padding: 0;
+}
+
+.benroso-country-combobox-popover [data-slot='command'],
+.benroso-country-combobox-command {
+  background-color: #fff;
+  color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  max-height: min(360px, 70vh);
+  overflow: hidden;
+}
+
+.benroso-country-combobox-search {
+  align-items: center;
+  background-color: #fff;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.625rem;
+  min-height: 3rem;
+  padding: 0.625rem 0.875rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.benroso-country-combobox-search-icon {
+  color: #5c665f;
+  flex-shrink: 0;
+  height: 1rem;
+  width: 1rem;
+}
+
+.benroso-country-combobox-search-input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #1a1a1a;
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.4;
+  min-height: 1.5rem;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.benroso-country-combobox-search-input::placeholder {
+  color: rgb(92 102 95 / 0.75);
+  opacity: 1;
+}
+
+.benroso-country-combobox-search-input:focus {
+  outline: none;
+}
+
+.benroso-country-combobox-popover [data-slot='command-list'],
+.benroso-country-combobox-list,
+.benroso-country-combobox-popover [cmdk-group] {
+  background-color: #fff;
+  color: #1a1a1a;
+}
+
+.benroso-country-combobox-popover [data-slot='command-list'],
+.benroso-country-combobox-list {
+  flex: 1;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.benroso-country-combobox-popover [cmdk-item],
+.benroso-country-combobox-popover [data-slot='command-item'],
+.benroso-country-combobox-popover .benroso-country-combobox-item {
+  color: #1a1a1a;
+}
+
+.benroso-country-combobox-popover [cmdk-item][data-selected='true'],
+.benroso-country-combobox-popover [data-slot='command-item'][data-selected='true'],
+.benroso-country-combobox-popover .benroso-country-combobox-item[data-selected='true'] {
+  background-color: rgb(60 81 66 / 0.12);
+  color: #1a1a1a;
+}
+
+.benroso-country-combobox-popover [cmdk-empty] {
+  color: #5c665f;
+}
+
+.public-site .benroso-country-combobox-trigger {
+  background-color: var(--benroso-white);
+}
+
+.public-site .benroso-country-combobox-trigger:hover,
+.public-site .benroso-country-combobox-trigger:focus-visible {
+  background-color: var(--benroso-white);
+}
+
+/* Contact page — two-column layout (sidebar aligned with tabs) */
+.public-site .benroso-contact-layout {
+  align-items: start;
+  display: grid;
+  gap: 2.5rem;
+}
+
+.public-site .benroso-contact-primary,
+.public-site .benroso-contact-main,
+.public-site .benroso-contact-sidebar,
+.public-site .benroso-contact-tabs {
+  min-width: 0;
+}
+
+.public-site .benroso-contact-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-contact-layout {
+    column-gap: 3rem;
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 0.9fr);
+  }
+}
+
+/* Contact page — Flash MC sidebar */
+.public-site .benroso-contact-details-block,
+.public-site .benroso-contact-advantages-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.public-site .benroso-contact-credentials-box {
+  background-color: var(--benroso-contact-cream);
+  border: 0;
+  border-radius: var(--benroso-contact-field-radius);
+  box-shadow: none;
+  padding: 1rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-contact-credentials-box {
+    padding: 1.125rem 1.375rem;
+  }
+}
+
+.public-site .benroso-contact-sidebar-heading {
+  color: var(--benroso-heading);
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.public-site .benroso-contact-sidebar-heading--sm {
+  font-size: 1.125rem;
+}
+
+.public-site .benroso-contact-sidebar-list {
+  margin: 0;
+}
+
+.public-site .benroso-contact-sidebar-row + .public-site .benroso-contact-sidebar-row {
+  margin-top: 1rem;
+}
+
+.public-site .benroso-contact-sidebar-label {
+  color: var(--benroso-heading);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.public-site .benroso-contact-sidebar-value {
+  margin: 0.25rem 0 0;
+}
+
+.public-site .benroso-contact-sidebar-phones {
+  display: block;
+  line-height: 1.6;
+}
+
+.public-site .benroso-contact-sidebar-link {
+  color: var(--benroso-contact-link);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.6;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
+}
+
+.public-site .benroso-contact-sidebar-link:hover {
+  color: var(--benroso-contact-link-hover);
+  text-decoration: underline;
+}
+
+.public-site .benroso-contact-sidebar-link--email {
+  text-decoration: underline;
+}
+
+.public-site .benroso-contact-sidebar-link--whatsapp {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.public-site .benroso-contact-sidebar-link--whatsapp svg {
+  flex-shrink: 0;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+.public-site .benroso-contact-sidebar-separator {
+  color: var(--benroso-contact-link);
+  margin-inline: 0.35rem;
+}
+
+.public-site .benroso-contact-sidebar-address {
+  color: var(--benroso-heading);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.public-site .benroso-contact-sidebar-address p {
+  margin: 0;
+}
+
+.public-site .benroso-contact-sidebar-address p + p {
+  margin-top: 0.25rem;
+}
+
+.public-site .benroso-contact-sidebar-map {
+  margin-top: 0;
+}
+
+.public-site .benroso-contact-sidebar-map-frame {
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: var(--benroso-radius);
+  display: block;
+  width: 100%;
+}
+
+.public-site .benroso-contact-sidebar-map-link {
+  align-items: center;
+  color: var(--benroso-primary);
+  display: inline-flex;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  transition: color 0.2s ease;
+}
+
+.public-site .benroso-contact-sidebar-map-link:hover {
+  color: var(--benroso-gold);
+}
+
+.public-site .benroso-contact-sidebar-advantages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.public-site .benroso-contact-sidebar-advantage {
+  align-items: flex-start;
+  color: var(--benroso-muted);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.625rem;
+  line-height: 1.65;
+}
+
+.public-site .benroso-contact-sidebar-advantage + .public-site .benroso-contact-sidebar-advantage {
+  margin-top: 0.75rem;
+}
+
+.public-site .benroso-contact-sidebar-advantage-icon {
+  align-items: center;
+  background-color: var(--benroso-brand-gold);
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 1.375rem;
+  justify-content: center;
+  margin-top: 0.15rem;
+  width: 1.375rem;
+}
+
+.public-site .benroso-contact-sidebar-advantage-icon svg {
+  height: 0.6875rem;
+  stroke-width: 3;
+  width: 0.6875rem;
+}
+
+/* Traveler category cards — subtle gray mini-cards */
+.public-site .benroso-traveler-card {
+  align-items: center;
+  background-color: var(--benroso-contact-traveler-bg);
+  border: 1px solid rgb(0 0 0 / 0.06);
+  border-radius: var(--benroso-contact-field-radius);
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.public-site .benroso-traveler-card-icon {
+  align-items: center;
+  color: #4a4a4a;
+  display: flex;
+  justify-content: center;
+}
+
+.public-site .benroso-traveler-card-label {
+  color: var(--benroso-heading);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+}
+
+.public-site .benroso-traveler-card-age {
+  color: var(--benroso-muted);
+  font-size: 0.75rem;
+  margin-top: 0.125rem;
+}
+
+.public-site .benroso-traveler-stepper {
+  align-items: center;
+  background-color: var(--benroso-white);
+  border: 1px solid var(--benroso-contact-input-border);
+  border-radius: var(--benroso-contact-field-radius);
+  display: flex;
+  margin-top: 0.875rem;
+  width: 100%;
+}
+
+.public-site .benroso-traveler-stepper-btn {
+  align-items: center;
+  color: var(--benroso-primary);
+  display: flex;
+  flex-shrink: 0;
+  height: 2.25rem;
+  justify-content: center;
+  transition: color 0.2s ease;
+  width: 2.25rem;
+}
+
+.public-site .benroso-traveler-stepper-btn:hover:not(:disabled) {
+  color: var(--benroso-gold);
+}
+
+.public-site .benroso-traveler-stepper-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.public-site .benroso-traveler-stepper-value {
+  color: var(--benroso-ink);
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Travel date picker — Booking-style carousel + calendar */
+.public-site .benroso-travel-date-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.public-site .benroso-travel-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.public-site .benroso-travel-date-field-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: space-between;
+}
+
+.public-site .benroso-travel-date-label {
+  color: var(--benroso-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.public-site .benroso-travel-date-show-more {
+  background: transparent;
+  border: 0;
+  color: var(--benroso-primary, #3c5142);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.public-site .benroso-travel-date-show-more:hover {
+  opacity: 0.85;
+}
+
+.public-site .benroso-travel-date-carousel-wrap {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.public-site .benroso-travel-date-nav {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--benroso-border, #e5e5e5);
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  color: var(--benroso-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
+}
+
+.public-site .benroso-travel-date-nav:hover:not(:disabled) {
+  border-color: var(--benroso-primary, #3c5142);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-nav:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.public-site .benroso-travel-date-carousel {
+  display: flex;
+  flex: 1;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.public-site .benroso-travel-date-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.public-site .benroso-travel-date-card {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--benroso-border, #e5e5e5);
+  border-radius: 0.5rem;
+  color: var(--benroso-ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.125rem;
+  min-width: 4.5rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.public-site .benroso-travel-date-card:hover {
+  border-color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-card--selected {
+  background: rgb(60 81 66 / 8%);
+  border-color: var(--benroso-primary, #3c5142);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-card-weekday,
+.public-site .benroso-travel-date-card-month {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.public-site .benroso-travel-date-card-month {
+  color: var(--benroso-muted);
+}
+
+.public-site .benroso-travel-date-card--selected .benroso-travel-date-card-month {
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-card-day {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.public-site .benroso-travel-date-card-badge {
+  background: var(--benroso-primary, #3c5142);
+  border-radius: 0.25rem;
+  bottom: 0.375rem;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 600;
+  left: 0.375rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  position: absolute;
+}
+
+.public-site .benroso-travel-date-card--more {
+  gap: 0.375rem;
+  justify-content: center;
+  min-width: 5.5rem;
+  padding-inline: 0.5rem;
+}
+
+.public-site .benroso-travel-date-card-more-icon {
+  color: var(--benroso-muted);
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.public-site .benroso-travel-date-card--more span {
+  color: var(--benroso-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.public-site .benroso-travel-date-nav--calendar {
+  border-color: var(--benroso-primary, #3c5142);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-calendar {
+  background: #fff;
+  border: 1px solid var(--benroso-contact-input-border, #d9d9d9);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  max-width: 100%;
+  padding: 1rem;
+  width: min(100%, 24rem);
+}
+
+.public-site .benroso-travel-date-calendar-ui {
+  width: 100%;
+}
+
+.public-site .benroso-travel-date-calendar-header {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.public-site .benroso-travel-date-calendar-title {
+  color: var(--benroso-heading);
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  text-align: center;
+}
+
+.public-site .benroso-travel-date-calendar-nav {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--benroso-contact-input-border, #d9d9d9);
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  color: var(--benroso-ink);
+  cursor: pointer;
+  display: inline-flex;
+  height: 2.5rem;
+  justify-content: center;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  width: 2.5rem;
+}
+
+.public-site .benroso-travel-date-calendar-nav:hover:not(:disabled) {
+  background: rgb(60 81 66 / 8%);
+  border-color: var(--benroso-primary, #3c5142);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-calendar-nav:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.public-site .benroso-travel-date-calendar-weekdays {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 0.5rem;
+}
+
+.public-site .benroso-travel-date-calendar-weekday {
+  color: var(--benroso-heading);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
+}
+
+.public-site .benroso-travel-date-calendar-grid {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.public-site .benroso-travel-date-calendar-cell {
+  align-items: center;
+  aspect-ratio: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  color: var(--benroso-ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 2.5rem;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  width: 100%;
+}
+
+.public-site .benroso-travel-date-calendar-cell--empty {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.public-site .benroso-travel-date-calendar-cell:hover:not(:disabled) {
+  background: rgb(60 81 66 / 10%);
+  border-color: rgb(60 81 66 / 20%);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-calendar-cell--selected {
+  background: var(--benroso-primary, #3c5142);
+  border-color: var(--benroso-primary, #3c5142);
+  color: #fff;
+  font-weight: 700;
+}
+
+.public-site .benroso-travel-date-calendar-cell--selected:hover:not(:disabled) {
+  background: var(--benroso-primary-dark, #2f4034);
+  border-color: var(--benroso-primary-dark, #2f4034);
+  color: #fff;
+}
+
+.public-site
+  .benroso-travel-date-calendar-cell--today:not(.benroso-travel-date-calendar-cell--selected) {
+  border-color: var(--benroso-brand-gold, #fecd5b);
+  box-shadow: inset 0 0 0 1px var(--benroso-brand-gold, #fecd5b);
+  color: var(--benroso-primary, #3c5142);
+}
+
+.public-site .benroso-travel-date-calendar-cell--disabled {
+  background: transparent;
+  border-color: transparent;
+  color: #d0d5d1;
+  cursor: not-allowed;
+  font-weight: 500;
+}
+
+.public-site .benroso-travel-date-calendar-cell--disabled:hover {
+  background: transparent;
+  border-color: transparent;
+  color: #d0d5d1;
+}
+
+.public-site .benroso-travel-date-helper {
+  color: var(--benroso-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.public-site .benroso-travel-date-flex-note {
+  color: var(--benroso-muted);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Radio option lists — visible circles, no heavy boxes */
+.public-site .benroso-contact-radio-list {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.public-site .benroso-contact-radio-list--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+}
+
+.public-site .benroso-contact-radio-option {
+  align-items: center;
+  color: var(--benroso-heading);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.9375rem;
+  gap: 0.5rem;
+  line-height: 1.5;
+}
+
+.public-site .benroso-contact-radio-option:has(.benroso-contact-radio-input:checked) {
+  color: var(--benroso-primary);
+  font-weight: 600;
+}
+
+.public-site .benroso-contact-radio-input {
+  appearance: none;
+  background-color: var(--benroso-white);
+  border: 2px solid #bbb;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 1.125rem;
+  margin: 0;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  width: 1.125rem;
+}
+
+.public-site .benroso-contact-radio-input:checked {
+  background-color: var(--benroso-white);
+  border-color: var(--benroso-primary);
+}
+
+.public-site .benroso-contact-radio-input:checked::after {
+  background-color: var(--benroso-gold);
+  border-radius: 50%;
+  content: '';
+  height: 0.5rem;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5rem;
+}
+
+.public-site .benroso-contact-radio-input:focus-visible {
+  outline: 2px solid rgb(60 81 66 / 0.35);
+  outline-offset: 2px;
+}
+
+.public-site .benroso-contact-checkbox-input {
+  appearance: none;
+  background-color: var(--benroso-white);
+  border: 2px solid #bbb;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 1.125rem;
+  margin: 0;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  width: 1.125rem;
+}
+
+.public-site .benroso-contact-checkbox-input:checked {
+  background-color: var(--benroso-primary);
+  border-color: var(--benroso-primary);
+}
+
+.public-site .benroso-contact-checkbox-input:checked::after {
+  border: solid var(--benroso-white);
+  border-width: 0 2px 2px 0;
+  content: '';
+  height: 0.55rem;
+  left: 50%;
+  position: absolute;
+  top: 45%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 0.3rem;
+}
+
+.public-site .benroso-contact-checkbox-input:focus-visible {
+  outline: 2px solid rgb(60 81 66 / 0.35);
+  outline-offset: 2px;
+}
+
+/* Destination countries — compact checkbox dropdown (portaled popover) */
+.public-site .benroso-destination-trigger {
+  background-color: var(--benroso-white);
+}
+
+.public-site .benroso-destination-trigger:hover,
+.public-site .benroso-destination-trigger:focus-visible {
+  background-color: var(--benroso-white);
+}
+
+.benroso-destination-popover {
+  background-color: #fff;
+  border-color: #d9d9d9;
+  color: #1a1a1a;
+  overflow: hidden;
+  padding: 0;
+}
+
+.benroso-destination-popover-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.375rem;
+}
+
+.benroso-destination-popover-item {
+  align-items: center;
+  border-radius: calc(var(--benroso-contact-field-radius, 5px) - 1px);
+  cursor: pointer;
+  display: flex;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.625rem;
+  transition: background-color 0.15s ease;
+}
+
+.benroso-destination-popover-item:hover {
+  background-color: rgb(60 81 66 / 0.06);
+}
+
+.benroso-destination-popover-item--selected {
+  background-color: rgb(60 81 66 / 0.08);
+}
+
+.benroso-destination-popover-item-label {
+  color: #1a1a1a;
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.benroso-destination-popover-item--selected .benroso-destination-popover-item-label {
+  color: #3c5142;
+  font-weight: 600;
+}
+
+.benroso-destination-popover-item-code {
+  color: #5c665f;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.benroso-destination-popover .benroso-contact-checkbox-input {
+  appearance: none;
+  background-color: #fff;
+  border: 2px solid #bbb;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 1.125rem;
+  margin: 0;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  width: 1.125rem;
+}
+
+.benroso-destination-popover .benroso-contact-checkbox-input:checked {
+  background-color: #3c5142;
+  border-color: #3c5142;
+}
+
+.benroso-destination-popover .benroso-contact-checkbox-input:checked::after {
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  content: '';
+  height: 0.55rem;
+  left: 50%;
+  position: absolute;
+  top: 45%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 0.3rem;
+}
+
+.benroso-destination-popover .benroso-contact-checkbox-input:focus-visible {
+  outline: 2px solid rgb(60 81 66 / 0.35);
+  outline-offset: 2px;
+}
+
+/* Inline referral step — horizontal feedback card within form */
+.public-site .benroso-referral-step {
+  background-color: var(--benroso-white);
+  border: 1px solid var(--benroso-contact-input-border);
+  border-radius: var(--benroso-contact-field-radius);
+  position: relative;
+}
+
+.public-site .benroso-referral-step-inner {
+  align-items: center;
+  display: flex;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 639px) {
+  .public-site .benroso-referral-step-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.public-site .benroso-referral-step-close {
+  align-items: center;
+  color: var(--benroso-muted);
+  display: flex;
+  height: 1.75rem;
+  justify-content: center;
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  transition: color 0.2s ease;
+  width: 1.75rem;
+  z-index: 1;
+}
+
+.public-site .benroso-referral-step-close:hover {
+  color: var(--benroso-heading);
+}
+
+.public-site .benroso-referral-step-art {
+  flex-shrink: 0;
+  width: 100px;
+}
+
+.public-site .benroso-referral-step-content {
+  flex: 1;
+  min-width: 0;
+  padding-right: 1.5rem;
+}
+
+.public-site .benroso-referral-step-title {
+  color: var(--benroso-heading);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Gold full-width submit button — Flash MC style */
+.public-site .benroso-contact-submit {
+  align-items: center;
+  background-color: var(--benroso-brand-gold);
+  border: 1px solid var(--benroso-brand-gold);
+  border-radius: var(--benroso-contact-field-radius);
+  color: var(--benroso-heading);
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 3.75rem;
+  padding: 1rem 1.5rem;
+  text-transform: uppercase;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.public-site .benroso-contact-submit:hover:not(:disabled) {
+  background-color: var(--benroso-brand-gold);
+  border-color: var(--benroso-brand-gold);
+  color: var(--benroso-heading);
+}
+
+.public-site .benroso-contact-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Contact page — trust row (response, KATO, SafariBookings) */
+.public-site .benroso-contact-trust-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 120px;
+}
+
+.public-site .benroso-contact-trust-image {
+  width: auto;
+  height: auto;
+  max-height: 100px;
+  object-fit: contain;
+}
+
+.public-site .benroso-contact-trust-image--response {
+  max-width: 120px;
+}
+
+.public-site .benroso-contact-trust-image--kato {
+  max-width: 100px;
+}
+
+.public-site .benroso-contact-trust-image--safari-bookings {
+  max-height: 80px;
+  max-width: 180px;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-contact-trust-image--response {
+    max-width: 140px;
+  }
+
+  .public-site .benroso-contact-trust-image--safari-bookings {
+    max-width: 200px;
+  }
+}
+
+.public-site [aria-label='Breadcrumb'] a {
+  text-decoration: none;
+}
+
+.public-site [aria-label='Breadcrumb'] a:hover {
+  text-decoration: none;
+}
+
+.public-site .benroso-breadcrumb-current {
+  color: var(--benroso-brand-gold);
+  text-decoration: none;
+}

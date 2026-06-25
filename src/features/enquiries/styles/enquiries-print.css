@@ -1,0 +1,78 @@
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  [data-sidebar='sidebar'],
+  [data-sidebar='trigger'],
+  [data-sidebar='rail'],
+  [data-slot='sidebar-gap'],
+  [data-slot='sidebar-inset'] > header {
+    display: none !important;
+  }
+
+  .enquiry-detail-page > div {
+    padding: 0 !important;
+  }
+
+  .enquiry-detail-page > div > div:first-child {
+    display: none !important;
+  }
+
+  .enquiry-detail-no-print {
+    display: none !important;
+  }
+
+  [data-slot='sidebar-inset'] {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body,
+  [data-theme='benroso'] {
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .enquiry-detail-document {
+    box-shadow: none !important;
+  }
+
+  .enquiry-detail-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .enquiry-trip-table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .enquiry-trip-table table {
+    border: 1px solid #d1d5db !important;
+  }
+
+  .enquiry-trip-table th,
+  .enquiry-trip-table td {
+    border-bottom: 1px solid #e5e7eb !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .enquiry-trip-table thead th {
+    background: #3c5142 !important;
+    border-bottom: 1px solid #2f4034 !important;
+    color: #ffffff !important;
+  }
+
+  .enquiry-trip-table tbody th[scope='row'] {
+    font-weight: 600 !important;
+  }
+
+  .enquiry-trip-table tbody tr:nth-child(even) {
+    background: #fafafa !important;
+  }
+}
