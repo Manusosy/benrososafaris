@@ -6,6 +6,7 @@ import { ExperienceListingIntro } from '@/components/public/experiences/experien
 import { ExperiencesListingSection } from '@/components/public/experiences/experiences-listing-section';
 import { EmptyState } from '@/components/public/page-shell';
 import { PublicPageHero } from '@/components/public/public-page-hero';
+import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import {
   buildExperienceListingIntro,
@@ -65,20 +66,29 @@ export default async function ExperiencesPage({ params, searchParams }: Experien
       <PublicPageHero
         breadcrumbStyle='pipe-uppercase'
         breadcrumbs={[{ href: localePath(locale), label: 'Home' }, { label: 'Safari Experiences' }]}
-        cta={{ href: localePath(locale, '/contact'), label: 'Help me plan' }}
-        ctaVariant='ghost-hero'
         eyebrow='Unforgettable Wildlife Encounters'
         eyebrowTone='white'
         hero={pageHero}
         imageAlt={hero.imageAlt}
         imageUrl={hero.imageUrl}
+        overlayTone='black'
         showGoldLine={false}
         title='Safari Experiences'
-        titleTone='gold'
-      />
+        titleTone='white'
+      >
+        <div className='mt-8 flex flex-wrap justify-center gap-4'>
+          <BenrosoButton href={localePath(locale, '/contact')} variant='gold'>
+            Help Me Plan
+          </BenrosoButton>
+          <BenrosoButton href='#experiences-list' variant='gold-outline'>
+            View Experiences
+          </BenrosoButton>
+        </div>
+      </PublicPageHero>
       <ExperienceListingIntro intro={intro} />
       <ExperienceAfricaMap />
       <ExperiencesListingSection
+        id='experiences-list'
         filters={
           <div className='space-y-4'>
             <h2 className='benroso-heading font-display text-xl'>Filter By Type</h2>

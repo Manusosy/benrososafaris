@@ -133,8 +133,8 @@ export function buildPublicNavigation(
       label: 'Safari Tours',
       href: path('/tours'),
       items: [
-        { label: 'Tour Safaris', href: path('/tours') },
-        { label: 'East Africa Safari Deals', href: path('/safari-packages') },
+        { label: 'All Trips & Safaris', href: path('/tours') },
+        { label: 'Safari Experiences', href: path('/experiences') },
         { label: 'Safari Vehicles', href: path('/our-fleet') }
       ],
       variant: 'simple'

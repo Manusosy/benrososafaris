@@ -44,6 +44,26 @@ export type PublicExperienceRelatedTour = {
   title: string;
 };
 
+export type PublicExperiencePackageCell = {
+  groupBand: string;
+  price: number;
+};
+
+export type PublicExperiencePackageSeason = {
+  cells: PublicExperiencePackageCell[];
+  label: string;
+};
+
+export type PublicExperiencePackageLevel = {
+  blurb: string;
+  currency: string;
+  key: 'economy' | 'budget' | 'mid_range' | 'luxury' | 'high_end' | 'custom';
+  label: string;
+  priceFrom: number | null;
+  seasons: PublicExperiencePackageSeason[];
+  tripCount: number;
+};
+
 export type PublicExperienceRelatedAccommodation = {
   country: string | null;
   href: string;

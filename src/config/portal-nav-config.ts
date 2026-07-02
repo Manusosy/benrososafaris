@@ -46,13 +46,6 @@ export const portalNavGroups: NavGroup[] = [
         items: []
       },
       {
-        title: 'Safari Packages',
-        url: '/portal/packages',
-        icon: 'package',
-        access: { minRole: 'viewer' },
-        items: []
-      },
-      {
         title: 'Experiences',
         url: '/portal/experiences',
         icon: 'sparkles',

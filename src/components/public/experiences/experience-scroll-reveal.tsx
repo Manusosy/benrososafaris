@@ -12,13 +12,17 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 type ExperienceScrollRevealProps = {
   children: React.ReactNode;
   className?: string;
+  id?: string;
   stagger?: boolean;
+  styleImage?: string | null;
 };
 
 export function ExperienceScrollReveal({
   children,
   className,
-  stagger = false
+  id,
+  stagger = false,
+  styleImage
 }: ExperienceScrollRevealProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +52,12 @@ export function ExperienceScrollReveal({
   );
 
   return (
-    <div className={cn(className)} ref={containerRef}>
+    <div
+      className={cn(className)}
+      id={id}
+      ref={containerRef}
+      style={styleImage ? { backgroundImage: `url(${styleImage})` } : undefined}
+    >
       {children}
     </div>
   );

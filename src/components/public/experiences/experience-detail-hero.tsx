@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
+import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { localePath } from '@/lib/public/locale-path';
 
@@ -79,14 +80,14 @@ export function ExperienceDetailHero({
           <div className='absolute inset-0 bg-[var(--benroso-primary-light)]' />
         )}
       </div>
-      <div
-        aria-hidden
-        className='absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-black/25'
-      />
+      <div aria-hidden className='absolute inset-0 bg-black/60' />
 
-      <div className='relative z-10 flex min-h-[min(78vh,720px)] items-end'>
-        <div className='benroso-container w-full pb-12 pt-28 md:pb-16 md:pt-32'>
-          <nav aria-label='Breadcrumb' className='mb-8 flex flex-wrap gap-2 text-sm text-white/70'>
+      <div className='relative z-10 flex min-h-[min(78vh,720px)] items-center'>
+        <div className='benroso-container w-full py-28 md:py-32'>
+          <nav
+            aria-label='Breadcrumb'
+            className='mb-8 flex flex-wrap justify-center gap-2 text-sm text-white/75'
+          >
             <a className='hover:text-white' href={localePath(locale)}>
               Home
             </a>
@@ -98,24 +99,28 @@ export function ExperienceDetailHero({
             <span className='text-white'>{title}</span>
           </nav>
 
-          <div className='max-w-4xl' ref={contentRef}>
+          <div className='mx-auto max-w-4xl text-center' ref={contentRef}>
             {category ? (
-              <p className='text-xs font-bold uppercase tracking-[0.2em] text-[var(--benroso-gold)]'>
-                {category}
-              </p>
+              <p className='text-xs font-bold uppercase tracking-[0.2em] text-white'>{category}</p>
             ) : null}
             <h1 className='mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.06] text-white'>
               {title}
             </h1>
             {summary ? (
-              <p className='mt-5 max-w-2xl text-lg leading-8 text-white/88'>{summary}</p>
+              <p className='mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/88'>{summary}</p>
             ) : null}
-            <div className='mt-8 flex flex-wrap gap-4'>
-              <BenrosoButton href={localePath(locale, '/contact')}>
+            <div className='mt-8 flex flex-wrap justify-center gap-4'>
+              <BenrosoButton className='group' href={localePath(locale, '/contact')}>
                 Let&apos;s Start Planning
+                <Icons.arrowRight className='h-4 w-4 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100' />
               </BenrosoButton>
-              <BenrosoButton href={localePath(locale, '/tours')} variant='gold-outline'>
+              <BenrosoButton
+                className='group'
+                href={localePath(locale, '/tours')}
+                variant='gold-outline'
+              >
                 View Tours
+                <Icons.arrowRight className='h-4 w-4 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100' />
               </BenrosoButton>
             </div>
           </div>

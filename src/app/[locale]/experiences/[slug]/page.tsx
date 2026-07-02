@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { ExperienceDetailShell } from '@/components/public/experience-detail-shell';
 import {
+  getPackageLevelsForExperience,
   getPublishedExperienceBySlug,
   getRelatedAccommodationsForExperience,
   getRelatedToursForExperience
@@ -56,9 +57,10 @@ export default async function ExperienceDetailPage(props: ExperiencePageProps) {
 
   if (!experience) notFound();
 
-  const [tours, accommodations] = await Promise.all([
+  const [tours, accommodations, packageLevels] = await Promise.all([
     getRelatedToursForExperience(experience.experienceId, locale),
-    getRelatedAccommodationsForExperience(experience.experienceId, locale)
+    getRelatedAccommodationsForExperience(experience.experienceId, locale),
+    getPackageLevelsForExperience(experience.experienceId)
   ]);
 
   const faqJsonLd = buildFaqJsonLd(experience.faqs);
@@ -75,6 +77,7 @@ export default async function ExperienceDetailPage(props: ExperiencePageProps) {
         accommodations={accommodations}
         experience={experience}
         locale={locale}
+        packageLevels={packageLevels}
         tours={tours}
       />
     </>

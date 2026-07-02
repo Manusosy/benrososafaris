@@ -2,6 +2,33 @@ import * as z from 'zod';
 
 import { SEO_LIMITS } from '../seo/analyze';
 
+const faqItemSchema = z.object({
+  answer: z.string(),
+  question: z.string()
+});
+
+const packagePricingCellSchema = z.object({
+  groupBand: z.string(),
+  price: z.string()
+});
+
+const packagePricingSeasonSchema = z.object({
+  cells: z.array(packagePricingCellSchema),
+  label: z.string()
+});
+
+const packagePricingLevelSchema = z.object({
+  blurb: z.string(),
+  currency: z.string(),
+  key: z.enum(['economy', 'budget', 'mid_range', 'luxury', 'high_end', 'custom']),
+  label: z.string(),
+  seasons: z.array(packagePricingSeasonSchema)
+});
+
+export type PackagePricingCell = z.infer<typeof packagePricingCellSchema>;
+export type PackagePricingLevel = z.infer<typeof packagePricingLevelSchema>;
+export type PackagePricingSeason = z.infer<typeof packagePricingSeasonSchema>;
+
 /**
  * Experience wizard form contract.
  *
@@ -23,10 +50,13 @@ export const experienceFormSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens only'),
   summary: z.string().max(280, 'Keep the summary under 280 characters'),
   description: z.string(),
+  faqs: z.array(faqItemSchema),
   // Base
   category: z.string(),
   /** Highlights list, stored directly as a jsonb array. */
   highlights: z.array(z.string()),
+  /** Package price tables for this experience page. */
+  packagePricing: z.array(packagePricingLevelSchema),
   /** Ordered media_assets ids; the first is the cover image. */
   gallery: z.array(z.string()),
   // SEO
@@ -46,7 +76,13 @@ export type ExperienceFormValues = z.infer<typeof experienceFormSchema>;
 export const experienceStepSchemas = [
   experienceFormSchema.pick({ title: true, slug: true, category: true }),
   experienceFormSchema.pick({ gallery: true }),
-  experienceFormSchema.pick({ summary: true, description: true, highlights: true }),
+  experienceFormSchema.pick({
+    summary: true,
+    description: true,
+    highlights: true,
+    faqs: true
+  }),
+  experienceFormSchema.pick({ packagePricing: true }),
   experienceFormSchema.pick({
     seoTitle: true,
     seoDescription: true,
@@ -57,10 +93,26 @@ export const experienceStepSchemas = [
 ];
 
 export const experienceWizardSteps = [
-  { title: 'Basics', description: 'Title, type, and the auto-generated URL slug.' },
-  { title: 'Gallery', description: 'Choose the images shown on this experience.' },
-  { title: 'Story', description: 'Summary, full description, and highlights.' },
-  { title: 'SEO', description: 'Search appearance, keywords, and readiness score.' },
+  {
+    title: 'Experience Basics',
+    description: 'Title, package style, and the public URL slug.'
+  },
+  {
+    title: 'Gallery',
+    description: 'Choose the images shown on this experience.'
+  },
+  {
+    title: 'Story & FAQs',
+    description: 'Summary, full description, highlights, and FAQs.'
+  },
+  {
+    title: 'Package Tables',
+    description: 'Ready-made pricing tables; enter only the figures.'
+  },
+  {
+    title: 'SEO',
+    description: 'Search appearance, keywords, and readiness score.'
+  },
   { title: 'Review', description: 'Confirm everything, then save or publish.' }
 ];
 
@@ -69,8 +121,125 @@ export const emptyExperienceValues: ExperienceFormValues = {
   slug: '',
   summary: '',
   description: '',
+  faqs: [],
   category: '',
   highlights: [],
+  packagePricing: [
+    {
+      blurb: 'Good-value package option for this experience.',
+      currency: 'USD',
+      key: 'budget',
+      label: 'Budget Package',
+      seasons: [
+        {
+          label: 'Low Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'High Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'Peak Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        }
+      ]
+    },
+    {
+      blurb: 'Comfortable package option with stronger lodge positioning.',
+      currency: 'USD',
+      key: 'mid_range',
+      label: 'Mid-Range Package',
+      seasons: [
+        {
+          label: 'Low Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'High Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'Peak Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        }
+      ]
+    },
+    {
+      blurb: 'Premium package option for elevated camps, lodges, and service.',
+      currency: 'USD',
+      key: 'luxury',
+      label: 'Luxury Package',
+      seasons: [
+        {
+          label: 'Low Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'High Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        },
+        {
+          label: 'Peak Season',
+          cells: [
+            { groupBand: '2 pax', price: '' },
+            { groupBand: '3 pax', price: '' },
+            { groupBand: '4 pax', price: '' },
+            { groupBand: '5 pax', price: '' },
+            { groupBand: '6 pax', price: '' }
+          ]
+        }
+      ]
+    }
+  ],
   gallery: [],
   seoTitle: '',
   seoDescription: '',

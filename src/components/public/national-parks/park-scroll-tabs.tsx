@@ -44,15 +44,15 @@ export function ParkScrollTabs({ tabs }: { tabs: ParkTab[] }) {
   }, [tabs]);
 
   return (
-    <div className='sticky top-[var(--benroso-header-h)] z-30 border-b border-[var(--benroso-line)] bg-white/95 backdrop-blur'>
-      <div className='benroso-container flex gap-1 overflow-x-auto'>
+    <div className='sticky top-[var(--benroso-header-h)] z-30 border-b border-[var(--benroso-line)] bg-white'>
+      <div className='benroso-container flex overflow-x-auto'>
         {tabs.map((tab) => (
           <button
             className={cn(
-              'relative shrink-0 whitespace-nowrap border-b-2 px-4 py-4 text-sm font-semibold uppercase tracking-[0.04em] transition-colors',
+              'relative shrink-0 whitespace-nowrap px-5 py-4 text-sm font-bold uppercase tracking-[0.08em] transition-colors md:px-6',
               active === tab.id
-                ? 'border-[var(--benroso-primary)] text-[var(--benroso-primary)]'
-                : 'border-transparent text-[var(--benroso-muted)] hover:text-[var(--benroso-primary)]'
+                ? 'bg-[var(--benroso-lime)] text-[var(--benroso-primary-dark)]'
+                : 'text-[var(--benroso-muted)] hover:bg-[var(--benroso-ivory)] hover:text-[var(--benroso-primary)]'
             )}
             key={tab.id}
             onClick={() => scrollToSection(tab.id)}

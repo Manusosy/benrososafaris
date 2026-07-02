@@ -42,6 +42,7 @@ export async function saveExperience(input: {
   const basePayload = {
     category: values.category || null,
     highlights: values.highlights,
+    package_pricing: values.packagePricing,
     gallery: values.gallery,
     status: input.status,
     updated_at: now
@@ -80,6 +81,7 @@ export async function saveExperience(input: {
     summary: values.summary || null,
     // Rich text editor output is HTML; stored under `html` going forward.
     content: values.description ? { html: values.description } : null,
+    faqs: values.faqs,
     seo_title: values.seoTitle || values.title,
     seo_description: values.seoDescription || null,
     focus_keyword: values.focusKeyword || null,
@@ -118,6 +120,9 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
     .maybeSingle();
 
   const highlights = Array.isArray(base.highlights) ? (base.highlights as string[]) : [];
+  const packagePricing = Array.isArray(base.package_pricing)
+    ? (base.package_pricing as ExperienceFormValues['packagePricing'])
+    : [];
   const gallery = Array.isArray(base.gallery) ? (base.gallery as string[]) : [];
   // Newer records store HTML under `html`; older drafts used `text`.
   const content = (translation?.content as { html?: string; text?: string } | null) ?? null;
@@ -128,11 +133,15 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
     status: base.status,
     category: base.category ?? '',
     highlights,
+    packagePricing,
     gallery,
     title: translation?.title ?? '',
     slug: translation?.slug ?? '',
     summary: translation?.summary ?? '',
     description: content?.html ?? content?.text ?? '',
+    faqs: Array.isArray(translation?.faqs)
+      ? (translation.faqs as ExperienceFormValues['faqs'])
+      : [],
     seoTitle: translation?.seo_title ?? '',
     seoDescription: translation?.seo_description ?? '',
     focusKeyword: translation?.focus_keyword ?? '',

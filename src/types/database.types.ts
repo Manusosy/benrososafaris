@@ -657,6 +657,7 @@ export type Database = {
           gallery: Json;
           highlights: Json;
           id: string;
+          package_pricing: Json;
           status: string;
           updated_at: string;
         };
@@ -667,6 +668,7 @@ export type Database = {
           gallery?: Json;
           highlights?: Json;
           id?: string;
+          package_pricing?: Json;
           status?: string;
           updated_at?: string;
         };
@@ -677,6 +679,7 @@ export type Database = {
           gallery?: Json;
           highlights?: Json;
           id?: string;
+          package_pricing?: Json;
           status?: string;
           updated_at?: string;
         };

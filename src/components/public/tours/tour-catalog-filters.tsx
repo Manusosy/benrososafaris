@@ -89,6 +89,69 @@ function FilterCheckbox({
   );
 }
 
+function RangeFilter({
+  max,
+  min,
+  onCommit,
+  onValueChange,
+  suffix,
+  title,
+  value
+}: {
+  max: number;
+  min: number;
+  onCommit: (value: [number, number]) => void;
+  onValueChange: (value: [number, number]) => void;
+  suffix?: string;
+  title: string;
+  value: [number, number];
+}) {
+  return (
+    <div className='space-y-4 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
+      <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>{title}</h3>
+      <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-4 py-4'>
+        <Slider
+          max={max}
+          min={min}
+          step={title === 'Price From' ? 50 : 1}
+          value={value}
+          onValueChange={(next) => onValueChange([next[0], next[1]])}
+          onValueCommit={(next) => onCommit([next[0], next[1]])}
+        />
+        <div className='mt-4 grid grid-cols-2 gap-3 text-xs text-[var(--benroso-muted)]'>
+          <RangeValue label='Min' suffix={suffix} value={value[0]} />
+          <RangeValue align='right' label='Max' suffix={suffix} value={value[1]} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RangeValue({
+  align = 'left',
+  label,
+  suffix,
+  value
+}: {
+  align?: 'left' | 'right';
+  label: string;
+  suffix?: string;
+  value: number;
+}) {
+  return (
+    <span className={cn('block', align === 'right' && 'text-right')}>
+      <span className='block text-[10px] font-bold uppercase tracking-wide text-[var(--benroso-muted)]/75'>
+        {label}
+      </span>
+      <strong className='mt-1 block text-sm text-[var(--benroso-ink)]'>
+        {suffix === 'USD'
+          ? `USD ${value.toLocaleString()}`
+          : `${value.toLocaleString()} ${suffix ?? ''}`.trim()}
+      </strong>
+    </span>
+  );
+}
+
 export function TourCatalogFilters({ active, facets, locale }: TourCatalogFiltersProps) {
   const router = useRouter();
   const basePath = localePath(locale, '/tours');
@@ -205,52 +268,38 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
         </FilterGroup>
       ) : null}
 
-      <div className='space-y-4 border-b border-[var(--benroso-line)] pb-5'>
-        <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>
-          Durations
-        </h3>
-        <Slider
-          max={durationMax}
-          min={durationMin}
-          step={1}
-          value={durationRange}
-          onValueChange={(value) => setDurationRange([value[0], value[1]])}
-          onValueCommit={(value) =>
-            update({
-              durationMin: value[0] <= durationMin ? undefined : String(value[0]),
-              durationMax: value[1] >= durationMax ? undefined : String(value[1])
-            })
-          }
-        />
-        <div className='flex items-center justify-between text-xs text-[var(--benroso-muted)]'>
-          <span>{durationRange[0]} days</span>
-          <span>{durationRange[1]} days</span>
-        </div>
-      </div>
+      <RangeFilter
+        max={durationMax}
+        min={durationMin}
+        suffix='days'
+        title='Duration'
+        value={durationRange}
+        onValueChange={(value) => setDurationRange(value)}
+        onCommit={(value) =>
+          update({
+            durationMin: value[0] <= durationMin ? undefined : String(value[0]),
+            durationMax: value[1] >= durationMax ? undefined : String(value[1])
+          })
+        }
+      />
 
-      <div className='space-y-4'>
-        <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>
-          Price From
-        </h3>
-        <Slider
+      <div className='space-y-5'>
+        <RangeFilter
           max={priceMax}
           min={priceMin}
-          step={50}
+          suffix='USD'
+          title='Price From'
           value={priceRange}
-          onValueChange={(value) => setPriceRange([value[0], value[1]])}
-          onValueCommit={(value) =>
+          onValueChange={(value) => setPriceRange(value)}
+          onCommit={(value) =>
             update({
               priceMin: value[0] <= priceMin ? undefined : String(value[0]),
               priceMax: value[1] >= priceMax ? undefined : String(value[1])
             })
           }
         />
-        <div className='flex items-center justify-between text-xs text-[var(--benroso-muted)]'>
-          <span>${priceRange[0].toLocaleString()}</span>
-          <span>${priceRange[1].toLocaleString()}</span>
-        </div>
         <button
-          className='text-sm font-semibold text-[var(--benroso-primary)] underline-offset-4 hover:underline'
+          className='inline-flex w-full items-center justify-center rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:border-[var(--benroso-primary)] hover:bg-[var(--benroso-ivory)]'
           onClick={() =>
             navigate({
               destination: [],

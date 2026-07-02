@@ -126,6 +126,7 @@ export type PublicDestinationDetail = {
 };
 
 export type PublicTour = {
+  countryLabels?: string[];
   days: number | null;
   destinationLabels?: string[];
   excerpt: string | null;
@@ -137,6 +138,7 @@ export type PublicTour = {
   maxPrice?: number | null;
   minPrice?: number | null;
   nights: number | null;
+  parkLabels?: string[];
   priceFrom: number | null;
   pricingTiers?: PublicTourPricingTier[];
   slug: string;
@@ -147,6 +149,11 @@ export type PublicTourItineraryDay = {
   day: number;
   title: string;
   description: string;
+};
+
+export type PublicTourRouteLeg = {
+  from: string;
+  to: string;
 };
 
 export type PublicTourPricingCell = {
@@ -177,10 +184,12 @@ export type PublicTourDetail = PublicTour & {
   descriptionHtml: string | null;
   endLocation: string | null;
   exclusions: string[];
+  faqs: { question: string; answer: string }[];
   gallery: PublicDestinationMedia[];
   importantNotice: string | null;
   inclusions: string[];
   itineraryDays: PublicTourItineraryDay[];
+  routeLegs: PublicTourRouteLeg[];
   startLocation: string | null;
 };
 

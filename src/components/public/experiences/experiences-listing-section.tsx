@@ -6,11 +6,16 @@ import { ExperienceScrollReveal } from '@/components/public/experiences/experien
 type ExperiencesListingSectionProps = {
   children: React.ReactNode;
   filters?: React.ReactNode;
+  id?: string;
 };
 
-export function ExperiencesListingSection({ children, filters }: ExperiencesListingSectionProps) {
+export function ExperiencesListingSection({
+  children,
+  filters,
+  id
+}: ExperiencesListingSectionProps) {
   return (
-    <ExperienceScrollReveal>
+    <ExperienceScrollReveal id={id}>
       <ListingShell className='bg-white' filters={filters}>
         {children}
       </ListingShell>

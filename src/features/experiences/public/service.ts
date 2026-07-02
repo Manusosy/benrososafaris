@@ -6,6 +6,7 @@ import type {
   PublicExperienceDetail,
   PublicExperienceFaq,
   PublicExperienceMedia,
+  PublicExperiencePackageLevel,
   PublicExperienceRelatedAccommodation,
   PublicExperienceRelatedTour
 } from './types';
@@ -19,6 +20,7 @@ type ExperienceTranslationRow = {
         gallery: string[] | null;
         highlights: string[] | null;
         id: string;
+        package_pricing?: unknown;
         status: string;
       }
     | Array<{
@@ -27,6 +29,7 @@ type ExperienceTranslationRow = {
         gallery: string[] | null;
         highlights: string[] | null;
         id: string;
+        package_pricing?: unknown;
         status: string;
       }>
     | null;
@@ -120,6 +123,92 @@ function mediaAlt(
 function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+}
+
+function parsePackagePricing(value: unknown): PublicExperiencePackageLevel[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (typeof item !== 'object' || item === null) return [];
+    const record = item as Record<string, unknown>;
+    const key = typeof record.key === 'string' ? record.key : 'custom';
+    if (!['economy', 'budget', 'mid_range', 'luxury', 'high_end', 'custom'].includes(key)) {
+      return [];
+    }
+
+    const currency =
+      typeof record.currency === 'string' && record.currency ? record.currency : 'USD';
+    const seasons = Array.isArray(record.seasons)
+      ? record.seasons.flatMap((season) => {
+          if (typeof season !== 'object' || season === null) return [];
+          const seasonRecord = season as Record<string, unknown>;
+          const label = typeof seasonRecord.label === 'string' ? seasonRecord.label.trim() : '';
+          const cells = Array.isArray(seasonRecord.cells)
+            ? seasonRecord.cells.flatMap((cell) => {
+                if (typeof cell !== 'object' || cell === null) return [];
+                const cellRecord = cell as Record<string, unknown>;
+                const groupBand =
+                  typeof cellRecord.groupBand === 'string' ? cellRecord.groupBand.trim() : '';
+                const price = toFiniteNumber(cellRecord.price);
+                return groupBand && price != null ? [{ groupBand, price }] : [];
+              })
+            : [];
+          return label ? [{ cells, label }] : [];
+        })
+      : [];
+
+    const prices = seasons.flatMap((season) => season.cells.map((cell) => cell.price));
+    return [
+      {
+        blurb:
+          typeof record.blurb === 'string' && record.blurb.trim()
+            ? record.blurb.trim()
+            : packageLevelBlurb(key as PublicExperiencePackageLevel['key']),
+        currency,
+        key: key as PublicExperiencePackageLevel['key'],
+        label:
+          typeof record.label === 'string' && record.label.trim()
+            ? record.label.trim()
+            : packageLevelLabel(key as PublicExperiencePackageLevel['key']),
+        priceFrom: prices.length ? Math.min(...prices) : null,
+        seasons,
+        tripCount: 0
+      }
+    ];
+  });
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  const number = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function packageLevelLabel(tier: PublicExperiencePackageLevel['key']) {
+  if (tier === 'economy') return 'Economy Safari Package';
+  if (tier === 'budget') return 'Budget Safari Package';
+  if (tier === 'mid_range') return 'Mid-Range Safari Package';
+  if (tier === 'luxury') return 'Luxury Safari Package';
+  if (tier === 'high_end') return 'High-End Safari Package';
+  return 'Custom Safari Package';
+}
+
+function packageLevelBlurb(tier: PublicExperiencePackageLevel['key']) {
+  if (tier === 'economy') {
+    return 'A practical package option focused on essential inclusions, simple routing, and good value.';
+  }
+  if (tier === 'budget') {
+    return 'Good-value safari planning with reliable stays, guided game drives, and the same core wildlife route.';
+  }
+  if (tier === 'mid_range') {
+    return 'A balanced safari package with comfortable lodges or camps, strong locations, and thoughtful pacing.';
+  }
+  if (tier === 'luxury') {
+    return 'A polished safari package with premium camps, elevated service, and more exclusive locations where available.';
+  }
+  if (tier === 'high_end') {
+    return 'A top-tier package for the most exclusive stays, private pacing, and elevated arrangements.';
+  }
+  return 'A custom package table for this experience.';
 }
 
 function parseFaqs(value: unknown): PublicExperienceFaq[] {
@@ -218,7 +307,7 @@ async function fetchPublishedTranslationRows(locale: string, category?: string) 
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, status, gallery, highlights, deleted_at),
+      experience:experiences!inner(id, category, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -285,7 +374,7 @@ export async function getPublishedExperienceBySlug(
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, status, gallery, highlights, deleted_at),
+      experience:experiences!inner(id, category, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -431,6 +520,186 @@ export async function getRelatedToursForExperience(
       ];
     })
     .toSorted((a, b) => (orderByTourId.get(a.id) ?? 0) - (orderByTourId.get(b.id) ?? 0));
+}
+
+async function getExperienceTourIds(experienceId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('tour_experiences')
+    .select('tour_id, position')
+    .eq('experience_id', experienceId)
+    .order('position');
+
+  return [
+    ...new Set((data ?? []).map((link) => link.tour_id).filter((id): id is string => Boolean(id)))
+  ];
+}
+
+export async function getPackageLevelsForExperience(
+  experienceId: string
+): Promise<PublicExperiencePackageLevel[]> {
+  const tourIds = await getExperienceTourIds(experienceId);
+  const supabase = await createClient();
+
+  const { data: experiencePricing } = await supabase
+    .from('experiences')
+    .select('package_pricing')
+    .eq('id', experienceId)
+    .maybeSingle();
+
+  const savedLevels = parsePackagePricing(experiencePricing?.package_pricing);
+  if (savedLevels.length) {
+    return savedLevels.map((level) => ({
+      ...level,
+      tripCount: tourIds.length
+    }));
+  }
+
+  if (!tourIds.length) return [];
+
+  const { data: tiers } = await supabase
+    .from('tour_pricing_tiers')
+    .select('id, tour_id, tier, label, blurb, currency, position')
+    .in('tour_id', tourIds)
+    .order('position', { ascending: true });
+
+  const typedTiers = (
+    (tiers ?? []) as Array<{
+      blurb: string | null;
+      currency: string | null;
+      id: string;
+      label: string | null;
+      tier: PublicExperiencePackageLevel['key'];
+      tour_id: string;
+    }>
+  ).filter((tier) => ['budget', 'mid_range', 'luxury'].includes(tier.tier));
+
+  if (!typedTiers.length) return [];
+
+  const tierIds = typedTiers.map((tier) => tier.id);
+  const { data: seasons } = await supabase
+    .from('tour_pricing_seasons')
+    .select('id, tier_id, label, position')
+    .in('tier_id', tierIds)
+    .order('position', { ascending: true });
+
+  const typedSeasons = (seasons ?? []) as Array<{
+    id: string;
+    label: string;
+    tier_id: string;
+  }>;
+
+  const seasonIds = typedSeasons.map((season) => season.id);
+  const { data: cells } = seasonIds.length
+    ? await supabase
+        .from('tour_pricing_cells')
+        .select('season_id, group_band, band_position, price')
+        .in('season_id', seasonIds)
+        .order('band_position', { ascending: true })
+    : { data: [] };
+
+  const cellsBySeasonId = new Map<
+    string,
+    Array<{ groupBand: string; price: number; position: number }>
+  >();
+
+  for (const cell of (cells ?? []) as Array<{
+    band_position: number | null;
+    group_band: string | null;
+    price: number | null;
+    season_id: string;
+  }>) {
+    if (!cell.group_band) continue;
+    const price = toFiniteNumber(cell.price);
+    if (price == null) continue;
+    cellsBySeasonId.set(cell.season_id, [
+      ...(cellsBySeasonId.get(cell.season_id) ?? []),
+      {
+        groupBand: cell.group_band,
+        position: cell.band_position ?? 0,
+        price
+      }
+    ]);
+  }
+
+  const seasonsByTierId = new Map<string, typeof typedSeasons>();
+  for (const season of typedSeasons) {
+    seasonsByTierId.set(season.tier_id, [...(seasonsByTierId.get(season.tier_id) ?? []), season]);
+  }
+
+  const groups = new Map<
+    PublicExperiencePackageLevel['key'],
+    {
+      blurbs: string[];
+      currencies: string[];
+      labels: string[];
+      prices: number[];
+      seasonCells: Map<string, Map<string, { position: number; price: number }>>;
+      tourIds: Set<string>;
+    }
+  >();
+
+  for (const tier of typedTiers) {
+    const group = groups.get(tier.tier) ?? {
+      blurbs: [],
+      currencies: [],
+      labels: [],
+      prices: [],
+      seasonCells: new Map<string, Map<string, { position: number; price: number }>>(),
+      tourIds: new Set<string>()
+    };
+
+    if (tier.label) group.labels.push(tier.label);
+    if (tier.blurb) group.blurbs.push(tier.blurb);
+    if (tier.currency) group.currencies.push(tier.currency);
+    group.tourIds.add(tier.tour_id);
+
+    for (const season of seasonsByTierId.get(tier.id) ?? []) {
+      const seasonMap = group.seasonCells.get(season.label) ?? new Map();
+      for (const cell of cellsBySeasonId.get(season.id) ?? []) {
+        const existing = seasonMap.get(cell.groupBand);
+        if (!existing || cell.price < existing.price) {
+          seasonMap.set(cell.groupBand, {
+            position: cell.position,
+            price: cell.price
+          });
+        }
+        group.prices.push(cell.price);
+      }
+      group.seasonCells.set(season.label, seasonMap);
+    }
+
+    groups.set(tier.tier, group);
+  }
+
+  const order: PublicExperiencePackageLevel['key'][] = ['budget', 'mid_range', 'luxury'];
+
+  return order.flatMap((key) => {
+    const group = groups.get(key);
+    if (!group) return [];
+
+    return [
+      {
+        blurb: group.blurbs[0] ?? packageLevelBlurb(key),
+        currency: group.currencies[0] ?? 'USD',
+        key,
+        label: group.labels[0] ?? packageLevelLabel(key),
+        priceFrom: group.prices.length ? Math.min(...group.prices) : null,
+        seasons: [...group.seasonCells.entries()].map(([label, bandMap]) => ({
+          cells: [...bandMap.entries()]
+            .map(([groupBand, cell]) => ({
+              groupBand,
+              price: cell.price,
+              position: cell.position
+            }))
+            .toSorted((a, b) => a.position - b.position)
+            .map(({ groupBand, price }) => ({ groupBand, price })),
+          label
+        })),
+        tripCount: group.tourIds.size
+      }
+    ];
+  });
 }
 
 export async function getRelatedAccommodationsForExperience(

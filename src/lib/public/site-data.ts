@@ -26,7 +26,8 @@ import type {
   PublicTourItineraryDay,
   PublicTourPricingCell,
   PublicTourPricingSeason,
-  PublicTourPricingTier
+  PublicTourPricingTier,
+  PublicTourRouteLeg
 } from './types';
 
 function parseStringArray(value: unknown): string[] {
@@ -60,6 +61,17 @@ function parseItineraryDays(value: unknown): PublicTourItineraryDay[] {
         description: typeof record.description === 'string' ? record.description : ''
       }
     ];
+  });
+}
+
+function parseRouteLegs(value: unknown): PublicTourRouteLeg[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const from = typeof record.from === 'string' ? record.from.trim() : '';
+    const to = typeof record.to === 'string' ? record.to.trim() : '';
+    return from && to ? [{ from, to }] : [];
   });
 }
 
@@ -396,6 +408,7 @@ type TourTranslationListRow = {
         end_location?: string | null;
         important_notice?: string | null;
         itinerary_days?: unknown;
+        route_waypoints?: unknown;
         inclusions?: unknown;
         exclusions?: unknown;
         gallery?: unknown;
@@ -410,6 +423,7 @@ type TourTranslationListRow = {
         end_location?: string | null;
         important_notice?: string | null;
         itinerary_days?: unknown;
+        route_waypoints?: unknown;
         inclusions?: unknown;
         exclusions?: unknown;
         gallery?: unknown;
@@ -424,13 +438,15 @@ type TourTranslationListRow = {
 async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
   const uniqueIds = [...new Set(tourIds.filter(Boolean))];
   const empty = {
+    countries: new Map<string, string[]>(),
     destinations: new Map<string, string[]>(),
-    experiences: new Map<string, string[]>()
+    experiences: new Map<string, string[]>(),
+    parks: new Map<string, string[]>()
   };
   if (!uniqueIds.length) return empty;
 
   const supabase = await createClient();
-  const [destinationLinksResult, experienceLinksResult] = await Promise.all([
+  const [destinationLinksResult, experienceLinksResult, parkLinksResult] = await Promise.all([
     supabase
       .from('tour_destinations')
       .select('tour_id, destination_id, position')
@@ -440,23 +456,30 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
       .from('tour_experiences')
       .select('tour_id, experience_id, position')
       .in('tour_id', uniqueIds)
+      .order('position', { ascending: true }),
+    supabase
+      .from('tour_national_parks')
+      .select('tour_id, park_id, position')
+      .in('tour_id', uniqueIds)
       .order('position', { ascending: true })
   ]);
 
   const destinationLinks = destinationLinksResult.data ?? [];
   const experienceLinks = experienceLinksResult.data ?? [];
+  const parkLinks = parkLinksResult.data ?? [];
   const destinationIds = [
     ...new Set(destinationLinks.map((link) => link.destination_id as string).filter(Boolean))
   ];
   const experienceIds = [
     ...new Set(experienceLinks.map((link) => link.experience_id as string).filter(Boolean))
   ];
+  const parkIds = [...new Set(parkLinks.map((link) => link.park_id as string).filter(Boolean))];
 
-  const [destinationNamesResult, experienceNamesResult] = await Promise.all([
+  const [destinationNamesResult, experienceNamesResult, parkNamesResult] = await Promise.all([
     destinationIds.length
       ? supabase
           .from('destination_translations')
-          .select('destination_id, name')
+          .select('destination_id, name, destination:destinations(country)')
           .eq('locale', locale)
           .in('destination_id', destinationIds)
       : Promise.resolve({ data: [] }),
@@ -466,6 +489,13 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
           .select('experience_id, title')
           .eq('locale', locale)
           .in('experience_id', experienceIds)
+      : Promise.resolve({ data: [] }),
+    parkIds.length
+      ? supabase
+          .from('national_park_translations')
+          .select('park_id, name')
+          .eq('locale', locale)
+          .in('park_id', parkIds)
       : Promise.resolve({ data: [] })
   ]);
 
@@ -475,19 +505,36 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
       row.name as string
     ])
   );
+  const destinationCountryById = new Map(
+    (destinationNamesResult.data ?? []).flatMap((row) => {
+      const destination = unwrapRelation(
+        row.destination as { country?: string | null } | Array<{ country?: string | null }> | null
+      );
+      return destination?.country
+        ? [[row.destination_id as string, destination.country as string]]
+        : [];
+    })
+  );
   const experienceNameById = new Map(
     (experienceNamesResult.data ?? []).map((row) => [
       row.experience_id as string,
       row.title as string
     ])
   );
+  const parkNameById = new Map(
+    (parkNamesResult.data ?? []).map((row) => [row.park_id as string, row.name as string])
+  );
 
+  const countries = new Map<string, string[]>();
   const destinations = new Map<string, string[]>();
   for (const link of destinationLinks) {
     const tourId = link.tour_id as string;
     const label = destinationNameById.get(link.destination_id as string);
-    if (!label) continue;
-    destinations.set(tourId, [...(destinations.get(tourId) ?? []), label]);
+    if (label) destinations.set(tourId, [...(destinations.get(tourId) ?? []), label]);
+    const country = destinationCountryById.get(link.destination_id as string);
+    if (country && !(countries.get(tourId) ?? []).includes(country)) {
+      countries.set(tourId, [...(countries.get(tourId) ?? []), country]);
+    }
   }
 
   const experiences = new Map<string, string[]>();
@@ -498,7 +545,15 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
     experiences.set(tourId, [...(experiences.get(tourId) ?? []), label]);
   }
 
-  return { destinations, experiences };
+  const parks = new Map<string, string[]>();
+  for (const link of parkLinks) {
+    const tourId = link.tour_id as string;
+    const label = parkNameById.get(link.park_id as string);
+    if (!label) continue;
+    parks.set(tourId, [...(parks.get(tourId) ?? []), label]);
+  }
+
+  return { countries, destinations, experiences, parks };
 }
 
 async function getTourPricingMap(tourIds: string[]) {
@@ -624,6 +679,7 @@ function mapTourListRows(
 
     return [
       {
+        countryLabels: relationLabels.countries.get(tour.id) ?? [],
         days: tour.days,
         destinationLabels: relationLabels.destinations.get(tour.id) ?? [],
         excerpt: row.excerpt,
@@ -635,6 +691,7 @@ function mapTourListRows(
         maxPrice: bounds.max,
         minPrice: bounds.min,
         nights: tour.nights,
+        parkLabels: relationLabels.parks.get(tour.id) ?? [],
         priceFrom: bounds.min ?? tour.price_from,
         pricingTiers,
         slug: row.slug,
@@ -744,6 +801,7 @@ async function fetchPublishedTourRows(
         end_location,
         important_notice,
         itinerary_days,
+        route_waypoints,
         inclusions,
         exclusions,
         gallery
@@ -891,6 +949,7 @@ export async function getPublicTourDetail(
         end_location,
         important_notice,
         itinerary_days,
+        route_waypoints,
         inclusions,
         exclusions,
         gallery
@@ -923,10 +982,12 @@ export async function getPublicTourDetail(
     descriptionHtml: parseRichTextHtml(data.overview),
     endLocation: tour.end_location ?? null,
     exclusions: parseStringArray(tour.exclusions),
+    faqs: normalizeDirectAnswers(data.faqs),
     gallery,
     importantNotice: tour.important_notice ?? null,
     inclusions: parseStringArray(tour.inclusions),
     itineraryDays: parseItineraryDays(tour.itinerary_days),
+    routeLegs: parseRouteLegs(tour.route_waypoints),
     startLocation: tour.start_location ?? null
   };
 }

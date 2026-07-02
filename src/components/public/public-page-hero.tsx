@@ -30,6 +30,7 @@ type PublicPageHeroProps = {
   hero?: PageHero | null;
   imageAlt: string;
   imageUrl: string;
+  overlayTone?: 'green' | 'black';
   showGoldLine?: boolean;
   title: string;
   titleTone?: 'white' | 'gold';
@@ -48,6 +49,7 @@ export function PublicPageHero({
   hero,
   imageAlt,
   imageUrl,
+  overlayTone = 'green',
   showGoldLine = true,
   title,
   titleTone = 'white',
@@ -128,7 +130,10 @@ export function PublicPageHero({
             aria-hidden
             className='absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000'
             key={`${url}-${index}`}
-            style={{ backgroundImage: `url("${url}")`, opacity: index === activeSlide ? 1 : 0 }}
+            style={{
+              backgroundImage: `url("${url}")`,
+              opacity: index === activeSlide ? 1 : 0
+            }}
           />
         ))
       ) : (
@@ -142,7 +147,12 @@ export function PublicPageHero({
       <div
         aria-hidden
         className='absolute inset-0'
-        style={{ backgroundColor: `rgba(60,81,66,${overlayAlpha})` }}
+        style={{
+          backgroundColor:
+            overlayTone === 'black'
+              ? `rgba(0,0,0,${overlayAlpha})`
+              : `rgba(60,81,66,${overlayAlpha})`
+        }}
       />
       <div className='relative z-10 w-full py-10 md:py-14'>
         <div className='benroso-container'>

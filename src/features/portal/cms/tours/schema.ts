@@ -15,6 +15,13 @@ const itineraryDaySchema = z.object({
 
 export type ItineraryDay = z.infer<typeof itineraryDaySchema>;
 
+const routeLegSchema = z.object({
+  from: z.string(),
+  to: z.string()
+});
+
+export type RouteLeg = z.infer<typeof routeLegSchema>;
+
 const pricingCellSchema = z.object({
   groupBand: z.string(),
   price: z.string()
@@ -65,6 +72,7 @@ export const tourFormSchema = z.object({
   priceFrom: z.string(),
   startLocation: z.string(),
   endLocation: z.string(),
+  routeLegs: z.array(routeLegSchema),
   itineraryDays: z.array(itineraryDaySchema),
   inclusions: z.array(z.string()),
   exclusions: z.array(z.string()),
@@ -101,7 +109,7 @@ export const tourStepSchemas = [
     startLocation: true,
     endLocation: true
   }),
-  tourFormSchema.pick({ itineraryDays: true }),
+  tourFormSchema.pick({ itineraryDays: true, routeLegs: true }),
   tourFormSchema.pick({
     parkIds: true,
     destinationIds: true,
@@ -124,11 +132,11 @@ export const tourStepSchemas = [
 ];
 
 export const tourWizardSteps = [
-  { title: 'Basics', description: 'Title, duration, price, and start / end points.' },
-  { title: 'Itinerary', description: 'Day-by-day route for this safari.' },
+  { title: 'Basics & Route', description: 'Title, duration, price, and map start / end points.' },
+  { title: 'Itinerary Map', description: 'Day-by-day route used by the public trip map.' },
   {
-    title: 'Parks & Inclusions',
-    description: 'National parks, linked content, and what’s included.'
+    title: 'Parks & Links',
+    description: 'Parks, destinations, experiences, route lodges, and inclusions.'
   },
   { title: 'Gallery', description: 'Choose the images shown on this tour.' },
   { title: 'Story', description: 'Overview, notices, and traveler FAQs.' },
@@ -149,6 +157,7 @@ export const emptyTourValues: TourFormValues = {
   priceFrom: '',
   startLocation: '',
   endLocation: '',
+  routeLegs: [],
   itineraryDays: [],
   inclusions: [],
   exclusions: [],

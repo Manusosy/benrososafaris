@@ -24,7 +24,6 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
     { label: 'Region / circuit', value: destination.region },
     { label: 'Best time to visit', value: destination.bestTime }
   ].filter((fact) => fact.value);
-
   return (
     <main className='bg-[var(--benroso-ivory)]'>
       <section className='border-b border-[var(--benroso-line)] bg-white'>

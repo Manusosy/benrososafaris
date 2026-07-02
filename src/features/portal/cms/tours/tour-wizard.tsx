@@ -33,6 +33,7 @@ import {
   tourWizardSteps,
   type ItineraryDay,
   type PricingTier,
+  type RouteLeg,
   type TourFormValues
 } from './schema';
 import { saveTour, type RelationOption, type SaveStatus } from './service';
@@ -101,6 +102,180 @@ function ItineraryInput({
         <Icons.add className='mr-2 size-4' />
         Add day
       </Button>
+    </div>
+  );
+}
+
+function RouteLegsInput({
+  endLocation,
+  onChange,
+  startLocation,
+  value
+}: {
+  endLocation: string;
+  onChange: (next: RouteLeg[]) => void;
+  startLocation: string;
+  value: RouteLeg[];
+}) {
+  function addLeg() {
+    const previousTo = value[value.length - 1]?.to;
+    onChange([
+      ...value,
+      {
+        from: previousTo || startLocation || '',
+        to: value.length ? '' : endLocation || ''
+      }
+    ]);
+  }
+
+  function updateLeg(index: number, patch: Partial<RouteLeg>) {
+    onChange(value.map((leg, i) => (i === index ? { ...leg, ...patch } : leg)));
+  }
+
+  function removeLeg(index: number) {
+    onChange(value.filter((_, i) => i !== index));
+  }
+
+  const mapSrc = buildWizardMapSrc(value, startLocation, endLocation);
+
+  return (
+    <div className='rounded-lg border bg-muted/20 p-4'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div>
+          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            Google route search
+          </p>
+          <h3 className='mt-1 text-sm font-semibold'>Map route legs</h3>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            Enter each path as from where to where. The public map uses these directions first.
+          </p>
+        </div>
+        <Button type='button' size='sm' variant='outline' onClick={addLeg}>
+          <Icons.add className='mr-2 size-4' />
+          Add route leg
+        </Button>
+      </div>
+
+      {value.length ? (
+        <div className='mt-4 grid gap-3'>
+          {value.map((leg, index) => (
+            <div
+              className='grid gap-3 rounded-md border bg-background p-3 md:grid-cols-[1fr_1fr_auto]'
+              key={index}
+            >
+              <div className='grid gap-1.5'>
+                <Label htmlFor={`route-leg-from-${index}`}>From</Label>
+                <Input
+                  id={`route-leg-from-${index}`}
+                  value={leg.from}
+                  onChange={(event) => updateLeg(index, { from: event.target.value })}
+                  placeholder='e.g. Nairobi'
+                />
+              </div>
+              <div className='grid gap-1.5'>
+                <Label htmlFor={`route-leg-to-${index}`}>To</Label>
+                <Input
+                  id={`route-leg-to-${index}`}
+                  value={leg.to}
+                  onChange={(event) => updateLeg(index, { to: event.target.value })}
+                  placeholder='e.g. Lake Naivasha'
+                />
+              </div>
+              <Button
+                className='self-end'
+                type='button'
+                size='icon'
+                variant='ghost'
+                onClick={() => removeLeg(index)}
+              >
+                <Icons.trash className='size-4' />
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className='mt-4 rounded-md border border-dashed bg-background p-3 text-sm text-muted-foreground'>
+          No custom route legs yet. The map preview will use the basic start and end locations.
+        </p>
+      )}
+
+      {mapSrc ? (
+        <div className='mt-4 overflow-hidden rounded-md border bg-background'>
+          <iframe
+            className='h-64 w-full'
+            loading='lazy'
+            referrerPolicy='no-referrer-when-downgrade'
+            sandbox='allow-forms allow-popups allow-scripts'
+            src={mapSrc}
+            title='Google route preview'
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function RoutePreview({
+  destinations,
+  values
+}: {
+  destinations: RelationOption[];
+  values: TourFormValues;
+}) {
+  const stops = buildWizardRouteStops(values, destinations);
+  const mapSrc = buildWizardMapSrc(values.routeLegs, values.startLocation, values.endLocation);
+
+  return (
+    <div className='rounded-lg border bg-muted/25 p-4'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div>
+          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            Public route map preview
+          </p>
+          <h3 className='mt-1 text-sm font-semibold'>How this trip route will appear</h3>
+        </div>
+        <span className='rounded-md border bg-background px-2 py-1 text-xs text-muted-foreground'>
+          {stops.length || 0} route point{stops.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      {stops.length ? (
+        <ol className='mt-4 grid gap-3 sm:grid-cols-2'>
+          {stops.map((stop, index) => (
+            <li className='flex gap-3 rounded-md border bg-background p-3' key={stop.key}>
+              <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground'>
+                {index + 1}
+              </span>
+              <span className='min-w-0'>
+                <span className='block text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                  {stop.label}
+                </span>
+                <span className='block truncate text-sm font-medium'>{stop.value}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className='mt-3 text-sm text-muted-foreground'>
+          Add the start point, destination links, itinerary day titles, and end point to build the
+          public trip map.
+        </p>
+      )}
+      <p className='mt-3 text-xs text-muted-foreground'>
+        The public trip page uses this route preview beside the itinerary and cost tables, so keep
+        the start/end locations human-readable and make day titles location-aware.
+      </p>
+      {mapSrc ? (
+        <div className='mt-4 overflow-hidden rounded-md border bg-background'>
+          <iframe
+            className='h-56 w-full'
+            loading='lazy'
+            referrerPolicy='no-referrer-when-downgrade'
+            sandbox='allow-forms allow-popups allow-scripts'
+            src={mapSrc}
+            title='Route map preview'
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -448,24 +623,53 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
               <form.AppField name='startLocation'>
-                {(field) => <field.TextField label='Starts in' placeholder='e.g. Nairobi' />}
+                {(field) => (
+                  <field.TextField
+                    label='Starts in'
+                    placeholder='e.g. Nairobi'
+                    description='Shown on the trip sidebar and as the first route-map point.'
+                  />
+                )}
               </form.AppField>
               <form.AppField name='endLocation'>
-                {(field) => <field.TextField label='Ends in' placeholder='e.g. Nairobi' />}
+                {(field) => (
+                  <field.TextField
+                    label='Ends in'
+                    placeholder='e.g. Nairobi'
+                    description='Shown on the trip sidebar and as the final route-map point.'
+                  />
+                )}
               </form.AppField>
             </div>
+            <RouteLegsInput
+              endLocation={values.endLocation}
+              startLocation={values.startLocation}
+              value={values.routeLegs}
+              onChange={(next) => form.setFieldValue('routeLegs', next)}
+            />
+            <RoutePreview destinations={options.destinations} values={values} />
           </div>
         ) : null}
 
         {currentStep === 2 ? (
-          <ItineraryInput
-            value={values.itineraryDays}
-            onChange={(next) => form.setFieldValue('itineraryDays', next)}
-          />
+          <div className='grid gap-4'>
+            <RoutePreview destinations={options.destinations} values={values} />
+            <RouteLegsInput
+              endLocation={values.endLocation}
+              startLocation={values.startLocation}
+              value={values.routeLegs}
+              onChange={(next) => form.setFieldValue('routeLegs', next)}
+            />
+            <ItineraryInput
+              value={values.itineraryDays}
+              onChange={(next) => form.setFieldValue('itineraryDays', next)}
+            />
+          </div>
         ) : null}
 
         {currentStep === 3 ? (
           <div className='grid gap-5'>
+            <RoutePreview destinations={options.destinations} values={values} />
             <div className='grid gap-2'>
               <Label htmlFor='tour-parks'>National parks</Label>
               <MultiCombobox
@@ -656,6 +860,69 @@ function countLabels(ids: string[], options: RelationOption[]): string {
   if (!ids.length) return '';
   const byValue = new Map(options.map((option) => [option.value, option.label]));
   return ids.map((id) => byValue.get(id) ?? id).join(', ');
+}
+
+function buildWizardDirectionPoints(
+  routeLegs: RouteLeg[],
+  startLocation: string,
+  endLocation: string
+) {
+  const legPoints = routeLegs
+    .filter((leg) => leg.from.trim() && leg.to.trim())
+    .flatMap((leg, index) => (index === 0 ? [leg.from.trim(), leg.to.trim()] : [leg.to.trim()]));
+
+  if (legPoints.length >= 2) return legPoints;
+
+  return [startLocation.trim(), endLocation.trim()].filter(Boolean);
+}
+
+function buildWizardMapSrc(routeLegs: RouteLeg[], startLocation: string, endLocation: string) {
+  const points = buildWizardDirectionPoints(routeLegs, startLocation, endLocation);
+  if (points.length < 2) return null;
+
+  return `https://maps.google.com/maps?saddr=${encodeURIComponent(points[0])}&daddr=${encodeURIComponent(points.slice(1).join(' to '))}&output=embed`;
+}
+
+function buildWizardRouteStops(values: TourFormValues, destinations: RelationOption[]) {
+  const stops: Array<{ key: string; label: string; value: string }> = [];
+  const seen = new Set<string>();
+  const destinationLabels = new Map(destinations.map((option) => [option.value, option.label]));
+
+  function add(label: string, value: string | null | undefined) {
+    const clean = value?.trim();
+    if (!clean) return;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    stops.push({ key: `${label}-${key}`, label, value: clean });
+  }
+
+  const directionPoints = buildWizardDirectionPoints(
+    values.routeLegs,
+    values.startLocation,
+    values.endLocation
+  );
+
+  if (directionPoints.length >= 2) {
+    directionPoints.forEach((point, index) => {
+      const label = index === 0 ? 'Start' : index === directionPoints.length - 1 ? 'End' : 'Stop';
+      add(label, point);
+    });
+  } else {
+    add('Start', values.startLocation);
+    for (const destinationId of values.destinationIds) {
+      add('Destination', destinationLabels.get(destinationId) ?? destinationId);
+    }
+  }
+
+  if (stops.length <= 1) {
+    for (const day of values.itineraryDays.slice(0, 4)) {
+      add(`Day ${day.day}`, day.title);
+    }
+  }
+  if (directionPoints.length < 2) add('End', values.endLocation);
+
+  return stops;
 }
 
 function ReviewSummary({

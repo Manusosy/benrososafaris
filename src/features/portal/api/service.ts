@@ -41,8 +41,6 @@ export async function getPortalOverviewStats(): Promise<PortalOverviewStats> {
     destinationsPublished,
     toursTotal,
     toursPublished,
-    packagesTotal,
-    packagesPublished,
     experiencesTotal,
     experiencesPublished,
     accommodationsTotal,
@@ -58,8 +56,6 @@ export async function getPortalOverviewStats(): Promise<PortalOverviewStats> {
     countByStatus('destinations', 'published'),
     countTable('tours'),
     countByStatus('tours', 'published'),
-    countTable('packages'),
-    countByStatus('packages', 'published'),
     countTable('experiences'),
     countByStatus('experiences', 'published'),
     countTable('accommodations'),
@@ -98,14 +94,6 @@ export async function getPortalOverviewStats(): Promise<PortalOverviewStats> {
         published: toursPublished,
         draft: toursTotal - toursPublished,
         href: '/portal/tours'
-      },
-      {
-        key: 'packages',
-        label: 'Safari Packages',
-        total: packagesTotal,
-        published: packagesPublished,
-        draft: packagesTotal - packagesPublished,
-        href: '/portal/packages'
       },
       {
         key: 'experiences',
