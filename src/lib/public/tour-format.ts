@@ -34,3 +34,18 @@ export function formatTourDuration(days?: number | null, nights?: number | null)
   if (days) return `${days} Days`;
   return 'Safari';
 }
+
+export const TOUR_CATALOG_COUNTRIES = [
+  { country: 'Kenya', slug: 'kenya', flag: '🇰🇪' },
+  { country: 'Tanzania', slug: 'tanzania', flag: '🇹🇿' },
+  { country: 'Uganda', slug: 'uganda', flag: '🇺🇬' },
+  { country: 'Rwanda', slug: 'rwanda', flag: '🇷🇼' },
+  { country: 'South Africa', slug: 'south-africa', flag: '🇿🇦' }
+] as const;
+
+export const TOUR_CATALOG_DURATION_BOUNDS = { min: 1, max: 14 } as const;
+export const TOUR_CATALOG_PRICE_BOUNDS = { min: 200, max: 10000 } as const;
+
+export function tourCountryLabelFromSlug(slug: string): string | null {
+  return TOUR_CATALOG_COUNTRIES.find((item) => item.slug === slug)?.country ?? null;
+}

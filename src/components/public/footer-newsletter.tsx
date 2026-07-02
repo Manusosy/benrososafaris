@@ -56,7 +56,7 @@ export function FooterNewsletter({ locale = 'en' }: FooterNewsletterProps) {
             Your name
           </label>
           <input
-            className='min-h-11 rounded-[var(--benroso-radius)] border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/50 focus:border-[var(--benroso-lime)] focus:outline-none'
+            className='min-h-11 rounded-[var(--benroso-radius)] border border-white/30 bg-white px-4 text-sm text-[var(--benroso-primary-dark)] placeholder:text-[var(--benroso-primary-dark)]/45 focus:border-[var(--benroso-lime)] focus:outline-none'
             id='footer-newsletter-name'
             name='name'
             placeholder='Your name'
@@ -67,7 +67,7 @@ export function FooterNewsletter({ locale = 'en' }: FooterNewsletterProps) {
           </label>
           <div className='flex flex-col gap-3 sm:flex-row'>
             <input
-              className='min-h-11 flex-1 rounded-[var(--benroso-radius)] border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/50 focus:border-[var(--benroso-lime)] focus:outline-none'
+              className='min-h-11 flex-1 rounded-[var(--benroso-radius)] border border-white/30 bg-white px-4 text-sm text-[var(--benroso-primary-dark)] placeholder:text-[var(--benroso-primary-dark)]/45 focus:border-[var(--benroso-lime)] focus:outline-none'
               id='footer-newsletter-email'
               name='email'
               placeholder='Your email address'

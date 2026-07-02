@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+
 import { TourCard } from '@/components/public/cards/content-cards';
 import { TourCatalogFilters } from '@/components/public/tours/tour-catalog-filters';
 import { EmptyState, ListingShell } from '@/components/public/page-shell';
@@ -5,18 +7,24 @@ import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicTourCatalog } from '@/lib/public/site-data';
+import { TOUR_CATALOG_COUNTRIES } from '@/lib/public/tour-format';
 import type { PublicTourPricingTier } from '@/lib/public/types';
+import { absoluteUrl } from '@/lib/seo';
+
+const toursPageTitle = 'Safari Tours & Itineraries';
+const toursPageDescription =
+  'Find the safari that fits you. Benroso Safaris brings together expert-led tours across Kenya, Tanzania, Uganda, Rwanda, and South Africa, so you can compare trip lengths, prices, and routes at your own pace.';
 
 type ToursPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{
+    country?: string;
     destination?: string;
     duration_max?: string;
     duration_min?: string;
     experience?: string;
     price_max?: string;
     price_min?: string;
-    sort?: string;
     tier?: string;
   }>;
 };
@@ -42,30 +50,57 @@ function parseTierList(value?: string): PublicTourPricingTier['tier'][] {
   );
 }
 
+function parseCountry(value?: string) {
+  const slug = value?.trim();
+  if (!slug) return undefined;
+  return TOUR_CATALOG_COUNTRIES.some((item) => item.slug === slug) ? slug : undefined;
+}
+
+export async function generateMetadata({ params }: ToursPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const pageHero = await getPageHero('tours');
+  const title = pageHero?.heading ?? toursPageTitle;
+  const description = pageHero?.subheading ?? toursPageDescription;
+  const metaTitle = title.includes('Benroso') ? title : `${title} | Benroso Safaris`;
+  const canonical = absoluteUrl(`/${locale}/tours`);
+
+  return {
+    title: metaTitle,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: metaTitle,
+      description,
+      url: canonical,
+      type: 'website'
+    }
+  };
+}
+
 export default async function ToursPage({ params, searchParams }: ToursPageProps) {
   const { locale } = await params;
   const query = await searchParams;
   const activeFilters = {
+    country: parseCountry(query.country),
     destination: parseFilterList(query.destination),
     durationMax: query.duration_max?.trim() || undefined,
     durationMin: query.duration_min?.trim() || undefined,
     experience: parseFilterList(query.experience),
     priceMax: query.price_max?.trim() || undefined,
     priceMin: query.price_min?.trim() || undefined,
-    pricingTier: parseTierList(query.tier),
-    sort: query.sort === 'price' ? ('price' as const) : ('name' as const)
+    pricingTier: parseTierList(query.tier)
   };
 
   const [{ tours, facets }, pageHero] = await Promise.all([
     getPublicTourCatalog(locale, {
+      country: activeFilters.country,
       destination: activeFilters.destination,
       durationMax: parsePrice(activeFilters.durationMax),
       durationMin: parsePrice(activeFilters.durationMin),
       experience: activeFilters.experience,
       priceMax: parsePrice(activeFilters.priceMax),
       priceMin: parsePrice(activeFilters.priceMin),
-      pricingTier: activeFilters.pricingTier,
-      sort: activeFilters.sort
+      pricingTier: activeFilters.pricingTier
     }),
     getPageHero('tours')
   ]);
@@ -75,12 +110,13 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
     <>
       <PublicPageHero
         breadcrumbs={[{ href: localePath(locale), label: 'Home' }, { label: 'Safari Tours' }]}
-        description='Browse Kenya and Tanzania safari tours with clear durations, pricing guidance, and expert-planned routes.'
+        description={toursPageDescription}
         eyebrow='Safari Tours'
         hero={pageHero}
         imageAlt={hero.imageAlt}
         imageUrl={hero.imageUrl}
-        title='Kenya & Tanzania Safari Tours'
+        overlayTone='black'
+        title={toursPageTitle}
       />
       <ListingShell
         filters={<TourCatalogFilters active={activeFilters} facets={facets} locale={locale} />}

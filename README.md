@@ -56,7 +56,7 @@ Default brand palette:
 1. Install dependencies:
 
    ```bash
-   npm install
+   bun install
    ```
 
 2. Create `.env.local` from `env.example.txt`. A local `.env.local.example` has also been placed in the workspace for the original setup checklist, but the starter's `.gitignore` ignores all `.env*` files.
@@ -73,11 +73,21 @@ Default brand palette:
    npx supabase db reset
    ```
 
-5. Start Next.js:
+5. Start the dev server:
 
    ```bash
-   npm run dev
+   bun run dev
    ```
+
+   The app runs at [http://localhost:3000](http://localhost:3000).
+
+Other scripts:
+
+```bash
+bun run build   # production build
+bun run start   # run production server
+bun run lint    # lint with oxlint
+```
 
 ## Current Setup Notes
 

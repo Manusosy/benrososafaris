@@ -219,8 +219,9 @@ export function AccommodationFilters({
         <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>
           Price Per Night (USD)
         </h3>
-        <div className='space-y-4 px-1'>
+        <div className='space-y-4 rounded-[var(--benroso-radius)] bg-[var(--benroso-warm-gray)] px-5 py-4'>
           <Slider
+            className='benroso-range-slider'
             max={sliderMax}
             min={sliderMin}
             step={25}

@@ -6,11 +6,18 @@ import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import type { PublicTourCatalogFacets, PublicTourPricingTier } from '@/lib/public/types';
 import { localePath } from '@/lib/public/locale-path';
-import { formatComfortTierLabel, TOUR_COMFORT_TIERS } from '@/lib/public/tour-format';
+import {
+  formatComfortTierLabel,
+  TOUR_CATALOG_COUNTRIES,
+  TOUR_CATALOG_DURATION_BOUNDS,
+  TOUR_CATALOG_PRICE_BOUNDS,
+  TOUR_COMFORT_TIERS
+} from '@/lib/public/tour-format';
 import { cn } from '@/lib/utils';
 
 type TourCatalogFiltersProps = {
   active: {
+    country?: string;
     destination: string[];
     durationMax?: string;
     durationMin?: string;
@@ -18,7 +25,6 @@ type TourCatalogFiltersProps = {
     priceMax?: string;
     priceMin?: string;
     pricingTier: PublicTourPricingTier['tier'][];
-    sort?: 'name' | 'price';
   };
   facets: PublicTourCatalogFacets;
   locale: string;
@@ -30,6 +36,7 @@ function toggleList(current: string[], value: string) {
 
 function buildQuery(active: TourCatalogFiltersProps['active']) {
   const params = new URLSearchParams();
+  if (active.country) params.set('country', active.country);
   if (active.destination.length) params.set('destination', active.destination.join(','));
   if (active.experience.length) params.set('experience', active.experience.join(','));
   if (active.pricingTier.length) params.set('tier', active.pricingTier.join(','));
@@ -37,7 +44,6 @@ function buildQuery(active: TourCatalogFiltersProps['active']) {
   if (active.durationMax) params.set('duration_max', active.durationMax);
   if (active.priceMin) params.set('price_min', active.priceMin);
   if (active.priceMax) params.set('price_max', active.priceMax);
-  if (active.sort && active.sort !== 'name') params.set('sort', active.sort);
   return params.toString();
 }
 
@@ -89,6 +95,42 @@ function FilterCheckbox({
   );
 }
 
+function FilterRadio({
+  checked,
+  id,
+  label,
+  name,
+  onSelect
+}: {
+  checked: boolean;
+  id: string;
+  label: string;
+  name: string;
+  onSelect: () => void;
+}) {
+  return (
+    <li>
+      <label
+        className={cn(
+          'flex cursor-pointer items-center gap-2.5 transition-colors hover:text-[var(--benroso-primary)]',
+          checked ? 'font-semibold text-[var(--benroso-primary)]' : 'text-[var(--benroso-ink)]'
+        )}
+        htmlFor={id}
+      >
+        <input
+          checked={checked}
+          className='benroso-contact-radio-input'
+          id={id}
+          name={name}
+          onChange={onSelect}
+          type='radio'
+        />
+        <span className='min-w-0 truncate'>{label}</span>
+      </label>
+    </li>
+  );
+}
+
 function RangeFilter({
   max,
   min,
@@ -109,8 +151,9 @@ function RangeFilter({
   return (
     <div className='space-y-4 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
       <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>{title}</h3>
-      <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-4 py-4'>
+      <div className='rounded-[var(--benroso-radius)] bg-[var(--benroso-warm-gray)] px-5 py-4'>
         <Slider
+          className='benroso-range-slider'
           max={max}
           min={min}
           step={title === 'Price From' ? 50 : 1}
@@ -156,10 +199,10 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
   const router = useRouter();
   const basePath = localePath(locale, '/tours');
 
-  const durationMin = facets.durationBounds.min;
-  const durationMax = Math.max(facets.durationBounds.max, durationMin + 1);
-  const priceMin = facets.priceBounds.min;
-  const priceMax = Math.max(facets.priceBounds.max, priceMin + 100);
+  const durationMin = TOUR_CATALOG_DURATION_BOUNDS.min;
+  const durationMax = TOUR_CATALOG_DURATION_BOUNDS.max;
+  const priceMin = TOUR_CATALOG_PRICE_BOUNDS.min;
+  const priceMax = TOUR_CATALOG_PRICE_BOUNDS.max;
 
   const [durationRange, setDurationRange] = React.useState<[number, number]>([
     asNumber(active.durationMin, durationMin),
@@ -196,24 +239,25 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
 
   return (
     <div className='benroso-accommodation-filters space-y-5'>
-      <div className='space-y-2 border-b border-[var(--benroso-line)] pb-5'>
-        <label
-          className='benroso-heading block font-display text-sm uppercase tracking-[0.12em]'
-          htmlFor='tour-sort'
-        >
-          Sort By
-        </label>
-        <select
-          className='benroso-contact-field'
-          id='tour-sort'
-          name='sort'
-          onChange={(event) => update({ sort: event.target.value as 'name' | 'price' })}
-          value={active.sort ?? 'name'}
-        >
-          <option value='name'>Name</option>
-          <option value='price'>Price</option>
-        </select>
-      </div>
+      <FilterGroup title='Country'>
+        <FilterRadio
+          checked={!active.country}
+          id='tour-country-all'
+          label='All'
+          name='tour-country'
+          onSelect={() => update({ country: undefined })}
+        />
+        {TOUR_CATALOG_COUNTRIES.map(({ country, slug }) => (
+          <FilterRadio
+            checked={active.country === slug}
+            id={`tour-country-${slug}`}
+            key={slug}
+            label={country}
+            name='tour-country'
+            onSelect={() => update({ country: slug })}
+          />
+        ))}
+      </FilterGroup>
 
       {facets.destinationLabels.length ? (
         <FilterGroup title='Destinations'>
@@ -302,10 +346,10 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
           className='inline-flex w-full items-center justify-center rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:border-[var(--benroso-primary)] hover:bg-[var(--benroso-ivory)]'
           onClick={() =>
             navigate({
+              country: undefined,
               destination: [],
               experience: [],
-              pricingTier: [],
-              sort: 'name'
+              pricingTier: []
             })
           }
           type='button'

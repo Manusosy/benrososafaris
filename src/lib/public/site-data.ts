@@ -8,6 +8,11 @@ import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
 import { localePath } from './locale-path';
 import { activeHeroSlides, normalizeHeroSlides } from './hero-slides';
 import { normalizePageHero, type PageHeroKey } from './page-heroes';
+import {
+  TOUR_CATALOG_DURATION_BOUNDS,
+  TOUR_CATALOG_PRICE_BOUNDS,
+  tourCountryLabelFromSlug
+} from './tour-format';
 import type { HomeReviewItem } from './home-reviews';
 import type {
   HeroSlide,
@@ -706,6 +711,18 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
   const experienceFilters = filters.experience?.map(normalizeFilterValue) ?? [];
   const tierFilters = filters.pricingTier ?? [];
 
+  if (filters.country) {
+    const countryLabel = tourCountryLabelFromSlug(filters.country);
+    if (
+      countryLabel &&
+      !tour.countryLabels?.some(
+        (label) => normalizeFilterValue(label) === normalizeFilterValue(countryLabel)
+      )
+    ) {
+      return false;
+    }
+  }
+
   if (
     destinationFilters.length &&
     !tour.destinationLabels?.some((label) =>
@@ -748,31 +765,18 @@ function buildTourCatalogFacets(tours: PublicTour[]): PublicTourCatalogFacets {
   const destinationLabels = new Set<string>();
   const experienceLabels = new Set<string>();
   const pricingTiers = new Set<PublicTourPricingTier['tier']>();
-  const days: number[] = [];
-  const prices: number[] = [];
 
   for (const tour of tours) {
     tour.destinationLabels?.forEach((label) => destinationLabels.add(label));
     tour.experienceLabels?.forEach((label) => experienceLabels.add(label));
     tour.pricingTiers?.forEach((tier) => pricingTiers.add(tier.tier));
-    if (tour.days != null) days.push(tour.days);
-    if (tour.minPrice != null) prices.push(tour.minPrice);
-    if (tour.maxPrice != null) prices.push(tour.maxPrice);
   }
-
-  const minDuration = days.length ? Math.min(...days) : 1;
-  const maxDuration = days.length ? Math.max(...days) : 14;
-  const minPrice = prices.length ? Math.min(...prices) : 0;
-  const maxPrice = prices.length ? Math.max(...prices) : 10000;
 
   return {
     destinationLabels: [...destinationLabels].toSorted((a, b) => a.localeCompare(b)),
-    durationBounds: { min: minDuration, max: maxDuration },
+    durationBounds: { ...TOUR_CATALOG_DURATION_BOUNDS },
     experienceLabels: [...experienceLabels].toSorted((a, b) => a.localeCompare(b)),
-    priceBounds: {
-      min: Math.floor(minPrice / 50) * 50,
-      max: Math.ceil(maxPrice / 50) * 50 || 10000
-    },
+    priceBounds: { ...TOUR_CATALOG_PRICE_BOUNDS },
     pricingTiers: [...pricingTiers]
   };
 }
@@ -847,12 +851,7 @@ export async function getPublicTourCatalog(
 
   const tours = allTours
     .filter((tour) => tourMatchesFilters(tour, filters))
-    .toSorted((a, b) => {
-      if (filters.sort === 'price') {
-        return (a.priceFrom ?? Number.MAX_SAFE_INTEGER) - (b.priceFrom ?? Number.MAX_SAFE_INTEGER);
-      }
-      return a.title.localeCompare(b.title);
-    });
+    .toSorted((a, b) => a.title.localeCompare(b.title));
 
   return { facets, tours };
 }

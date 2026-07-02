@@ -208,6 +208,7 @@ export type PublicTourCatalogFacets = {
 };
 
 export type PublicTourCatalogFilters = {
+  country?: string;
   destination?: string[];
   durationMax?: number;
   durationMin?: number;
@@ -215,7 +216,6 @@ export type PublicTourCatalogFilters = {
   priceMax?: number;
   priceMin?: number;
   pricingTier?: PublicTourPricingTier['tier'][];
-  sort?: 'name' | 'price';
 };
 
 export type PublicPackage = {

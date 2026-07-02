@@ -91,7 +91,7 @@ export function ListingShell({
   className?: string;
 }) {
   return (
-    <section className={cn('benroso-section bg-[var(--benroso-ivory)]', className)}>
+    <section className={cn('benroso-section bg-white', className)}>
       <div className='benroso-container'>
         {title ? (
           <h2 className='benroso-heading mb-8 font-display text-3xl md:hidden'>{title}</h2>

@@ -257,15 +257,9 @@
   align-items: center;
   display: flex;
   flex-shrink: 0;
-  flex-wrap: nowrap;
-  gap: 0.375rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: flex-start;
-}
-
-@media (min-width: 1024px) {
-  .public-site .benroso-footer-socials {
-    justify-content: flex-end;
-  }
 }
 
 .public-site .benroso-footer-social {
@@ -1232,9 +1226,68 @@
   outline-offset: 2px;
 }
 
-/* Accommodation listing filter sidebar — rounded checkboxes */
+/* Accommodation / tour listing filter sidebar */
+.public-site .benroso-accommodation-filters .benroso-contact-radio-input:checked {
+  background-color: var(--benroso-white);
+  border-color: var(--benroso-lime);
+}
+
+.public-site .benroso-accommodation-filters .benroso-contact-radio-input:checked::after {
+  background-color: var(--benroso-lime);
+}
+
+.public-site .benroso-accommodation-filters .benroso-contact-radio-input:focus-visible {
+  outline-color: rgb(169 192 56 / 0.45);
+}
+
 .public-site .benroso-accommodation-filters .benroso-contact-checkbox-input {
-  border-radius: 4px;
+  border-radius: 50%;
+}
+
+.public-site .benroso-accommodation-filters .benroso-contact-checkbox-input:checked {
+  background-color: var(--benroso-white);
+  border-color: var(--benroso-lime);
+}
+
+.public-site .benroso-accommodation-filters .benroso-contact-checkbox-input:checked::after {
+  border-color: var(--benroso-lime);
+}
+
+.public-site .benroso-accommodation-filters .benroso-contact-checkbox-input:focus-visible {
+  outline-color: rgb(169 192 56 / 0.45);
+}
+
+/* Listing filter range sliders — Benroso brand colors (public site has no shadcn theme tokens) */
+.public-site .benroso-range-slider {
+  padding-block: 0.625rem;
+}
+
+.public-site .benroso-range-slider [data-slot='slider-track'] {
+  background-color: rgb(60 81 66 / 0.14);
+  height: 0.25rem;
+}
+
+.public-site .benroso-range-slider [data-slot='slider-range'] {
+  background-color: var(--benroso-lime);
+}
+
+.public-site .benroso-range-slider [data-slot='slider-thumb'] {
+  background-color: var(--benroso-white);
+  border: 2px solid var(--benroso-lime);
+  box-shadow: 0 1px 3px rgb(26 26 26 / 0.12);
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+@media (hover: hover) {
+  .public-site .benroso-range-slider [data-slot='slider-thumb']:hover {
+    box-shadow: 0 0 0 3px rgb(169 192 56 / 0.28);
+  }
+}
+
+.public-site .benroso-range-slider [data-slot='slider-thumb']:focus-visible {
+  outline: 2px solid var(--benroso-lime);
+  outline-offset: 2px;
 }
 
 /* Destination countries — compact checkbox dropdown (portaled popover) */

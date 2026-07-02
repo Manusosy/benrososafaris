@@ -51,7 +51,7 @@ export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterPr
             <Link className='inline-flex items-center' href={homeHref}>
               <Image
                 alt={siteSettings.companyName}
-                className='h-[52px] w-auto max-w-none rounded-[var(--benroso-radius)] bg-white p-1.5'
+                className='h-[52px] w-auto max-w-none'
                 height={BENROSO_LOGO_HEIGHT}
                 src={BENROSO_LOGO_PATH}
                 width={BENROSO_LOGO_WIDTH}
@@ -61,7 +61,7 @@ export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterPr
               {siteSettings.description ||
                 'Committed to safaris done the right way across Kenya, Tanzania, Uganda, Rwanda, and South Africa. Tailored to you, guided by people who have known these parks since 2000.'}
             </p>
-            <div className='mt-6'>
+            <div className='mt-6 flex w-full flex-col items-start'>
               <FooterSocialLinks siteSettings={siteSettings} />
             </div>
           </div>
