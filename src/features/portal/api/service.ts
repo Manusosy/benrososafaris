@@ -137,6 +137,7 @@ type ContentModuleConfig = {
   baseTable: string;
   translationTable: string;
   foreignKey: string;
+  timestampField?: 'created_at' | 'updated_at';
   titleField: string;
 };
 
@@ -181,6 +182,7 @@ const CONTENT_MODULES: Record<string, ContentModuleConfig> = {
     baseTable: 'fleet_vehicles',
     translationTable: 'fleet_vehicle_translations',
     foreignKey: 'vehicle_id',
+    timestampField: 'created_at',
     titleField: 'title'
   },
   blog: {
@@ -198,11 +200,12 @@ export async function getPortalContentList(moduleKey: string): Promise<PortalCon
   }
 
   const supabase = await createGenericClient();
+  const timestampField = config.timestampField ?? 'updated_at';
 
   const { data: baseRows, error: baseError } = await supabase
     .from(config.baseTable)
-    .select('id, status, updated_at')
-    .order('updated_at', { ascending: false })
+    .select(`id, status, ${timestampField}`)
+    .order(timestampField, { ascending: false })
     .limit(50);
 
   if (baseError || !baseRows?.length) {
@@ -229,7 +232,7 @@ export async function getPortalContentList(moduleKey: string): Promise<PortalCon
     title: titleById.get(row.id as string) ?? 'Untitled',
     status: row.status as string,
     locale: 'en',
-    updatedAt: row.updated_at as string
+    updatedAt: row[timestampField as keyof typeof row] as string
   }));
 
   return { rows, total: rows.length };

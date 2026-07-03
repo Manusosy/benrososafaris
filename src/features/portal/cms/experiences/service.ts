@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { requirePortalSession } from '@/lib/auth/portal';
+import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
 import { experienceFormSchema, type ExperienceFormValues } from './schema';
 
@@ -24,6 +25,14 @@ async function assertCanWrite() {
   return session;
 }
 
+function revalidateExperiencePublicPaths() {
+  for (const locale of SUPPORTED_LOCALES) {
+    revalidatePath(`/${locale}`);
+    revalidatePath(`/${locale}/experiences`);
+    revalidatePath(`/${locale}/tours`);
+  }
+}
+
 /**
  * Creates or updates an experience and its English translation in one call.
  * Publishing stamps `published_at`; saving a draft clears it (unpublishes).
@@ -41,6 +50,7 @@ export async function saveExperience(input: {
 
   const basePayload = {
     category: values.category || null,
+    menu_group: values.menuGroup,
     highlights: values.highlights,
     package_pricing: values.packagePricing,
     gallery: values.gallery,
@@ -102,6 +112,7 @@ export async function saveExperience(input: {
   }
 
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
   return { id: experienceId };
 }
 
@@ -132,6 +143,10 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
     id: base.id,
     status: base.status,
     category: base.category ?? '',
+    menuGroup:
+      base.menu_group === 'wildlife_safari' || base.menu_group === 'top_experiences'
+        ? base.menu_group
+        : 'top_experiences',
     highlights,
     packagePricing,
     gallery,
@@ -178,4 +193,5 @@ export async function deleteExperience(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
 }

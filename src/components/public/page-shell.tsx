@@ -98,7 +98,7 @@ export function ListingShell({
         ) : null}
         <div className='grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]'>
           {filters ? (
-            <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-5 lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]'>
+            <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-5 lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]'>
               {filters}
             </aside>
           ) : null}

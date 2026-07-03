@@ -29,6 +29,9 @@ export type PackagePricingCell = z.infer<typeof packagePricingCellSchema>;
 export type PackagePricingLevel = z.infer<typeof packagePricingLevelSchema>;
 export type PackagePricingSeason = z.infer<typeof packagePricingSeasonSchema>;
 
+export const experienceMenuGroupSchema = z.enum(['top_experiences', 'wildlife_safari']);
+export type ExperienceMenuGroup = z.infer<typeof experienceMenuGroupSchema>;
+
 /**
  * Experience wizard form contract.
  *
@@ -53,6 +56,7 @@ export const experienceFormSchema = z.object({
   faqs: z.array(faqItemSchema),
   // Base
   category: z.string(),
+  menuGroup: experienceMenuGroupSchema,
   /** Highlights list, stored directly as a jsonb array. */
   highlights: z.array(z.string()),
   /** Package price tables for this experience page. */
@@ -74,7 +78,7 @@ export type ExperienceFormValues = z.infer<typeof experienceFormSchema>;
 
 /** Per-step validators consumed by `useFormStepper`. */
 export const experienceStepSchemas = [
-  experienceFormSchema.pick({ title: true, slug: true, category: true }),
+  experienceFormSchema.pick({ title: true, slug: true, category: true, menuGroup: true }),
   experienceFormSchema.pick({ gallery: true }),
   experienceFormSchema.pick({
     summary: true,
@@ -123,6 +127,7 @@ export const emptyExperienceValues: ExperienceFormValues = {
   description: '',
   faqs: [],
   category: '',
+  menuGroup: 'top_experiences',
   highlights: [],
   packagePricing: [
     {

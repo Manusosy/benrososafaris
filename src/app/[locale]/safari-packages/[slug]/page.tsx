@@ -1,12 +1,150 @@
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
+
+import { TourPricingTable } from '@/components/public/tours/tour-pricing-table';
+import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { PublicPageHero } from '@/components/public/public-page-hero';
+import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
+import { localePath } from '@/lib/public/locale-path';
+import { formatComfortTierLabel } from '@/lib/public/site-data';
+import { formatTourDuration, formatTourPrice } from '@/lib/public/tour-format';
+import { getPublicPackageDetail } from '@/lib/public/site-data';
 
 type SafariPackageDetailPageProps = {
   params: Promise<{
     locale: string;
+    slug: string;
   }>;
 };
 
 export default async function SafariPackageDetailPage({ params }: SafariPackageDetailPageProps) {
-  const { locale } = await params;
-  redirect(`/${locale}/experiences`);
+  const { locale, slug } = await params;
+  const safariPackage = await getPublicPackageDetail(locale, slug);
+  if (!safariPackage) notFound();
+
+  const hero = BENROSO_PUBLIC_HERO_IMAGES.tours;
+  const linkedTour = safariPackage.linkedTour;
+  const packagePrice = formatTourPrice(safariPackage.priceFrom);
+
+  return (
+    <>
+      <PublicPageHero
+        breadcrumbs={[
+          { href: localePath(locale), label: 'Home' },
+          { href: localePath(locale, '/safari-packages'), label: 'Safari Packages' },
+          { label: safariPackage.title }
+        ]}
+        description={
+          safariPackage.excerpt ??
+          linkedTour?.excerpt ??
+          'A Benroso Safaris package shaped around route, season, group size, and comfort level.'
+        }
+        eyebrow={formatComfortTierLabel(safariPackage.comfortTier)}
+        imageAlt={safariPackage.imageAlt ?? hero.imageAlt}
+        imageUrl={safariPackage.imageUrl ?? hero.imageUrl}
+        overlayTone='black'
+        title={safariPackage.title}
+      />
+
+      <section className='bg-white'>
+        <div className='benroso-container py-10 md:py-14'>
+          <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
+            <article>
+              <section>
+                <h2 className='benroso-heading font-display text-[clamp(1.9rem,3vw,2.55rem)] leading-tight'>
+                  Package Overview
+                </h2>
+                <div className='mt-5 grid gap-3 sm:grid-cols-3'>
+                  <PackageFact
+                    label='Comfort'
+                    value={formatComfortTierLabel(safariPackage.comfortTier)}
+                  />
+                  <PackageFact
+                    label='Duration'
+                    value={
+                      linkedTour
+                        ? formatTourDuration(linkedTour.days, linkedTour.nights)
+                        : 'Custom safari'
+                    }
+                  />
+                  <PackageFact label='From' value={packagePrice ?? 'On request'} />
+                </div>
+                {safariPackage.contentHtml ? (
+                  <div
+                    className='benroso-legal-prose mt-7'
+                    dangerouslySetInnerHTML={{ __html: safariPackage.contentHtml }}
+                  />
+                ) : safariPackage.excerpt ? (
+                  <p className='benroso-body mt-7 text-lg leading-8'>{safariPackage.excerpt}</p>
+                ) : null}
+              </section>
+
+              {linkedTour ? (
+                <section className='mt-12 border-t border-[var(--benroso-line)] pt-10'>
+                  <h2 className='benroso-heading font-display text-[clamp(1.75rem,2.6vw,2.35rem)] leading-tight'>
+                    Linked Safari Route
+                  </h2>
+                  <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
+                    This package is built on {linkedTour.title}. Compare the route, itinerary, and
+                    inclusions on the full trip detail page.
+                  </p>
+                  <div className='mt-6'>
+                    <BenrosoButton href={linkedTour.href}>View Full Trip</BenrosoButton>
+                  </div>
+                </section>
+              ) : null}
+
+              {safariPackage.pricingTier ? (
+                <section className='mt-12 border-t border-[var(--benroso-line)] pt-10'>
+                  <h2 className='benroso-heading font-display text-[clamp(1.75rem,2.6vw,2.35rem)] leading-tight'>
+                    Package Price Table
+                  </h2>
+                  <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
+                    Prices are per person and vary by season, group size, rooming, and lodge
+                    availability.
+                  </p>
+                  <div className='mt-6'>
+                    <TourPricingTable locale={locale} tiers={[safariPackage.pricingTier]} />
+                  </div>
+                </section>
+              ) : null}
+            </article>
+
+            <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
+              <p className='text-xs font-bold uppercase tracking-[0.14em] text-[var(--benroso-muted)]'>
+                Package from
+              </p>
+              <strong className='mt-2 block font-display text-3xl text-[var(--benroso-brown)]'>
+                {packagePrice ?? 'Custom quote'}
+              </strong>
+              <p className='benroso-body mt-4 text-sm leading-6'>
+                Request the exact quote for your dates, preferred comfort level, and number of
+                travelers.
+              </p>
+              <div className='mt-5 space-y-3'>
+                <BenrosoButton className='w-full' href={localePath(locale, '/contact')}>
+                  Enquire About Package
+                </BenrosoButton>
+                {linkedTour ? (
+                  <BenrosoButton className='w-full' href={linkedTour.href} variant='accent-outline'>
+                    View Full Trip
+                  </BenrosoButton>
+                ) : null}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function PackageFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-4'>
+      <span className='block text-xs font-bold uppercase tracking-[0.12em] text-[var(--benroso-muted)]'>
+        {label}
+      </span>
+      <strong className='mt-1 block text-[var(--benroso-heading)]'>{value}</strong>
+    </div>
+  );
 }

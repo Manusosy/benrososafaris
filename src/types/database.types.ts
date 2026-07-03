@@ -657,6 +657,8 @@ export type Database = {
           gallery: Json;
           highlights: Json;
           id: string;
+          menu_group: string;
+          menu_position: number;
           package_pricing: Json;
           status: string;
           updated_at: string;
@@ -668,6 +670,8 @@ export type Database = {
           gallery?: Json;
           highlights?: Json;
           id?: string;
+          menu_group?: string;
+          menu_position?: number;
           package_pricing?: Json;
           status?: string;
           updated_at?: string;
@@ -679,6 +683,8 @@ export type Database = {
           gallery?: Json;
           highlights?: Json;
           id?: string;
+          menu_group?: string;
+          menu_position?: number;
           package_pricing?: Json;
           status?: string;
           updated_at?: string;
@@ -1683,7 +1689,19 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      experience_menu_items: {
+        Row: {
+          experience_id: string | null;
+          label: string | null;
+          locale: string | null;
+          menu_group: string | null;
+          menu_position: number | null;
+          slug: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Functions: {
       get_portal_team: {

@@ -5,6 +5,7 @@ import type {
   PublicExperience,
   PublicExperienceDetail,
   PublicExperienceFaq,
+  PublicExperienceMenuItem,
   PublicExperienceMedia,
   PublicExperiencePackageLevel,
   PublicExperienceRelatedAccommodation,
@@ -20,6 +21,7 @@ type ExperienceTranslationRow = {
         gallery: string[] | null;
         highlights: string[] | null;
         id: string;
+        menu_group: string | null;
         package_pricing?: unknown;
         status: string;
       }
@@ -29,6 +31,7 @@ type ExperienceTranslationRow = {
         gallery: string[] | null;
         highlights: string[] | null;
         id: string;
+        menu_group: string | null;
         package_pricing?: unknown;
         status: string;
       }>
@@ -287,10 +290,17 @@ function mapExperienceRow(
     id: experience.id,
     imageAlt: cover.imageAlt,
     imageUrl: cover.imageUrl,
+    menuGroup: normalizeMenuGroup(experience.menu_group),
     slug: row.slug,
     summary: row.summary,
     title: row.title
   };
+}
+
+function normalizeMenuGroup(
+  value: string | null | undefined
+): PublicExperienceMenuItem['menuGroup'] {
+  return value === 'wildlife_safari' ? 'wildlife_safari' : 'top_experiences';
 }
 
 async function fetchPublishedTranslationRows(locale: string, category?: string) {
@@ -307,7 +317,7 @@ async function fetchPublishedTranslationRows(locale: string, category?: string) 
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, menu_group, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -346,6 +356,60 @@ export async function listPublishedExperiences({
   });
 }
 
+export async function listExperienceMenuItems(locale: string): Promise<PublicExperienceMenuItem[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from('experience_menu_items')
+    .select(
+      `
+      experience_id,
+      label,
+      slug,
+      menu_group,
+      menu_position
+    `
+    )
+    .eq('locale', locale)
+    .order('menu_group')
+    .order('menu_position')
+    .order('label');
+
+  const seen = new Set<string>();
+  return (
+    (data ?? []) as Array<{
+      experience_id: string;
+      label: string;
+      menu_group: string | null;
+      menu_position: number | null;
+      slug: string;
+    }>
+  )
+    .flatMap((row) => {
+      const label = row.label.trim();
+      if (!label) return [];
+      const key = label.toLowerCase();
+      if (seen.has(key)) return [];
+      seen.add(key);
+
+      return [
+        {
+          href: localePath(locale, `/experiences?category=${encodeURIComponent(label)}`),
+          id: row.experience_id,
+          label,
+          menuGroup: normalizeMenuGroup(row.menu_group),
+          menuPosition: typeof row.menu_position === 'number' ? row.menu_position : 100
+        } satisfies PublicExperienceMenuItem
+      ];
+    })
+    .toSorted(
+      (a, b) =>
+        a.menuGroup.localeCompare(b.menuGroup) ||
+        a.menuPosition - b.menuPosition ||
+        a.label.localeCompare(b.label)
+    );
+}
+
 export async function getExperienceCategories(locale: string): Promise<string[]> {
   const experiences = await listPublishedExperiences({ locale });
   const categories = new Set<string>();
@@ -374,7 +438,7 @@ export async function getPublishedExperienceBySlug(
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, menu_group, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -412,6 +476,7 @@ export async function getPublishedExperienceBySlug(
     id: experience.id,
     imageAlt: ogImage?.alt ?? cover.imageAlt,
     imageUrl: ogImage?.url ?? cover.imageUrl,
+    menuGroup: normalizeMenuGroup(experience.menu_group),
     seoDescription: row.seo_description,
     seoTitle: row.seo_title,
     slug: row.slug,

@@ -15,9 +15,18 @@ export type PublicExperience = {
   id: string;
   imageAlt: string | null;
   imageUrl: string | null;
+  menuGroup: 'top_experiences' | 'wildlife_safari';
   slug: string;
   summary: string | null;
   title: string;
+};
+
+export type PublicExperienceMenuItem = {
+  href: string;
+  id: string;
+  label: string;
+  menuGroup: 'top_experiences' | 'wildlife_safari';
+  menuPosition: number;
 };
 
 export type PublicExperienceDetail = PublicExperience & {

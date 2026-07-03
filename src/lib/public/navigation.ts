@@ -3,6 +3,7 @@ import { buildLegalFooterLinks } from './legal-content';
 import type {
   PublicDestination,
   PublicExperience,
+  PublicExperienceMenuItem,
   PublicFooterColumn,
   PublicMegaMenu,
   PublicNavItem
@@ -101,9 +102,16 @@ function uniqueLinks(links: PublicNavItem[]): PublicNavItem[] {
 export function buildPublicNavigation(
   locale: string,
   _destinations: PublicDestination[],
-  experiences: PublicExperience[] = []
+  _experiences: PublicExperience[] = [],
+  experienceMenuItems: PublicExperienceMenuItem[] = []
 ): PublicNavItem[] {
   const path = (route: string) => lp(locale, route);
+  const topExperienceItems = experienceMenuItems.filter(
+    (item) => item.menuGroup === 'top_experiences'
+  );
+  const wildlifeExperienceItems = experienceMenuItems.filter(
+    (item) => item.menuGroup === 'wildlife_safari'
+  );
 
   return [
     { label: 'Home', href: path('/'), variant: 'simple' },
@@ -142,19 +150,16 @@ export function buildPublicNavigation(
     {
       label: 'Experiences',
       href: path('/experiences'),
-      items: uniqueLinks([
-        { label: 'All Experiences', href: path('/experiences') },
-        ...[...new Set(experiences.map((experience) => experience.category).filter(Boolean))].map(
-          (category) => ({
-            label: category as string,
-            href: path(`/experiences?category=${encodeURIComponent(category as string)}`)
-          })
-        ),
-        ...experiences.slice(0, 6).map((experience) => ({
-          label: experience.title,
-          href: experience.href
-        }))
-      ]),
+      sections: [
+        {
+          label: 'Top Experiences',
+          items: topExperienceItems
+        },
+        {
+          label: 'Wildlife Safari',
+          items: wildlifeExperienceItems
+        }
+      ],
       variant: 'dynamic'
     },
     {

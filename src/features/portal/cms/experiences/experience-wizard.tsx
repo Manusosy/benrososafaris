@@ -63,6 +63,19 @@ const CATEGORY_PRESETS: ComboboxOption[] = [
   { value: 'Gorilla Trekking', label: 'Gorilla Trekking' }
 ];
 
+const MENU_GROUP_OPTIONS = [
+  {
+    value: 'top_experiences',
+    label: 'Top Experiences',
+    description: 'Main lifestyle and travel-style experiences column.'
+  },
+  {
+    value: 'wildlife_safari',
+    label: 'Wildlife Safari',
+    description: 'Wildlife, activity, and field-safari experiences column.'
+  }
+] as const;
+
 /** Merges preset options with values already stored in the database,
  *  de-duplicating case-insensitively. */
 function buildOptions(presets: ComboboxOption[], fromDb: string[]): ComboboxOption[] {
@@ -465,6 +478,33 @@ export function ExperienceWizard({
                 </div>
               )}
             </form.AppField>
+            <form.AppField name='menuGroup'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label htmlFor='experience-menu-group'>Navigation menu classification</Label>
+                  <select
+                    className='border-input bg-background h-10 rounded-md border px-3 text-sm'
+                    id='experience-menu-group'
+                    value={field.state.value}
+                    onChange={(event) =>
+                      field.handleChange(event.target.value as ExperienceFormValues['menuGroup'])
+                    }
+                  >
+                    {MENU_GROUP_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className='text-muted-foreground text-xs'>
+                    {
+                      MENU_GROUP_OPTIONS.find((option) => option.value === field.state.value)
+                        ?.description
+                    }
+                  </p>
+                </div>
+              )}
+            </form.AppField>
           </div>
         ) : null}
 
@@ -592,6 +632,12 @@ function ReviewSummary({ values }: { values: ExperienceFormValues }) {
     { label: 'Title', value: values.title },
     { label: 'Slug', value: values.slug },
     { label: 'Package style', value: values.category },
+    {
+      label: 'Menu group',
+      value:
+        MENU_GROUP_OPTIONS.find((option) => option.value === values.menuGroup)?.label ??
+        'Top Experiences'
+    },
     {
       label: 'Gallery',
       value: values.gallery.length ? `${values.gallery.length} image(s)` : ''

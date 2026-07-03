@@ -93,6 +93,10 @@ export const BENROSO_PUBLIC_HERO_IMAGES = {
     imageUrl: '/assets/Elephant-in-Amboseli-National-Park-2.jpeg',
     imageAlt: 'Elephants walking across Amboseli National Park with Mount Kilimanjaro behind'
   },
+  fleet: {
+    imageUrl: '/assets/benroso-safaris-kenya.webp',
+    imageAlt: 'Benroso safari vehicle prepared for an East Africa game drive'
+  },
   accommodations: {
     imageUrl: '/assets/Saruni-Basecamp-The-Great-Migration-river-crossing.jpg',
     imageAlt: 'Luxury safari camp overlooking the Mara River during the Great Migration'

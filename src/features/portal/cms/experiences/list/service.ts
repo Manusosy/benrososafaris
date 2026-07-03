@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePortalSession } from '@/lib/auth/portal';
+import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
 import {
   EXPERIENCES_PAGE_SIZE,
@@ -22,6 +23,14 @@ async function assertCanWrite() {
   const session = await requirePortalSession();
   if (!WRITE_ROLES.has(session.role)) {
     throw new Error('You do not have permission to manage experiences.');
+  }
+}
+
+function revalidateExperiencePublicPaths() {
+  for (const locale of SUPPORTED_LOCALES) {
+    revalidatePath(`/${locale}`);
+    revalidatePath(`/${locale}/experiences`);
+    revalidatePath(`/${locale}/tours`);
   }
 }
 
@@ -199,6 +208,7 @@ export async function trashExperiences(ids: string[]): Promise<void> {
     .in('id', ids);
   if (error) throw new Error(error.message);
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
 }
 
 /** Restores trashed experiences, re-deriving status from the publish date. */
@@ -236,6 +246,7 @@ export async function restoreExperiences(ids: string[]): Promise<void> {
   }
 
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
 }
 
 /** Permanently deletes experiences (and their translations). */
@@ -249,6 +260,7 @@ export async function deleteExperiencesPermanently(ids: string[]): Promise<void>
   if (error) throw new Error(error.message);
 
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
 }
 
 /** Empties the trash — permanently deletes every trashed experience. */
@@ -294,4 +306,5 @@ export async function quickEditExperience(input: ExperienceQuickEditInput): Prom
   if (translationError) throw new Error(translationError.message);
 
   revalidatePath('/portal/experiences');
+  revalidateExperiencePublicPaths();
 }

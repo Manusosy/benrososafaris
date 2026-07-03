@@ -4,12 +4,17 @@ import { createClient } from '@/lib/supabase/server';
 import type { TourCardItem } from '@/components/public/cards/content-cards';
 
 export interface ParkListItem {
-  slug: string;
-  name: string;
-  summary: string | null;
+  activities: string[];
+  bestTimeSummary: string | null;
   country: string | null;
-  imageUrl: string | null;
   imageAlt: string | null;
+  imageUrl: string | null;
+  id: string;
+  name: string;
+  region: string | null;
+  slug: string;
+  summary: string | null;
+  wildlife: string[];
 }
 
 export interface ParkDetail {
@@ -33,6 +38,21 @@ export interface ParkDetail {
   ogImageAlt: string | null;
 }
 
+export type ParkListFilters = {
+  activities?: string[];
+  countries?: string[];
+  locale: string;
+  regions?: string[];
+  wildlife?: string[];
+};
+
+export type ParkFilterFacets = {
+  activities: string[];
+  countries: string[];
+  regions: string[];
+  wildlife: string[];
+};
+
 /** The newly-added `gallery` column is not in generated types yet. */
 async function genericClient(): Promise<SupabaseClient> {
   return (await createClient()) as unknown as SupabaseClient;
@@ -55,13 +75,46 @@ async function resolveMedia(
   return map;
 }
 
+function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => item.length > 0);
+}
+
+function normalizeFacet(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function matchesListFilter(value: string | null, filters?: string[]) {
+  if (!filters?.length) return true;
+  if (!value) return false;
+  const normalized = normalizeFacet(value);
+  return filters.some((filter) => normalizeFacet(filter) === normalized);
+}
+
+function matchesArrayFilter(values: string[], filters?: string[]) {
+  if (!filters?.length) return true;
+  const normalizedValues = values.map(normalizeFacet);
+  return filters.some((filter) => normalizedValues.includes(normalizeFacet(filter)));
+}
+
+function matchesFilters(item: ParkListItem, filters: Omit<ParkListFilters, 'locale'>) {
+  return (
+    matchesListFilter(item.country, filters.countries) &&
+    matchesListFilter(item.region, filters.regions) &&
+    matchesArrayFilter(item.wildlife, filters.wildlife) &&
+    matchesArrayFilter(item.activities, filters.activities)
+  );
+}
+
 /** Published parks for the listing grid, with cover image resolved. */
 export async function getPublishedParks(locale: string): Promise<ParkListItem[]> {
   const supabase = await genericClient();
 
   const { data: parks } = await supabase
     .from('national_parks')
-    .select('id, country, gallery, position')
+    .select('id, country, region, gallery, position, wildlife, activities, best_time')
     .eq('status', 'published')
     .order('position', { ascending: true });
 
@@ -88,16 +141,56 @@ export async function getPublishedParks(locale: string): Promise<ParkListItem[]>
       if (!translation) return null;
       const coverId = Array.isArray(park.gallery) ? (park.gallery as string[])[0] : undefined;
       const cover = coverId ? media.get(coverId) : undefined;
+      const bestTime = (park.best_time as { summary?: string } | null) ?? null;
       return {
-        slug: translation.slug as string,
-        name: translation.name as string,
-        summary: (translation.summary as string | null) ?? null,
+        activities: parseStringArray(park.activities),
+        bestTimeSummary: bestTime?.summary ?? null,
         country: (park.country as string | null) ?? null,
+        imageAlt: cover?.alt ?? null,
         imageUrl: cover?.url ?? null,
-        imageAlt: cover?.alt ?? null
+        id: park.id as string,
+        name: translation.name as string,
+        region: (park.region as string | null) ?? null,
+        slug: translation.slug as string,
+        summary: (translation.summary as string | null) ?? null,
+        wildlife: parseStringArray(park.wildlife)
       } satisfies ParkListItem;
     })
     .filter((item): item is ParkListItem => item !== null);
+}
+
+export async function listPublishedParks(filters: ParkListFilters): Promise<ParkListItem[]> {
+  const parks = await getPublishedParks(filters.locale);
+  return parks.filter((park) =>
+    matchesFilters(park, {
+      activities: filters.activities,
+      countries: filters.countries,
+      regions: filters.regions,
+      wildlife: filters.wildlife
+    })
+  );
+}
+
+export async function getParkFilterFacets(locale: string): Promise<ParkFilterFacets> {
+  const parks = await getPublishedParks(locale);
+  const activities = new Set<string>();
+  const countries = new Set<string>();
+  const regions = new Set<string>();
+  const wildlife = new Set<string>();
+
+  for (const park of parks) {
+    if (park.country) countries.add(park.country);
+    if (park.region) regions.add(park.region);
+    park.activities.forEach((activity) => activities.add(activity));
+    park.wildlife.forEach((animal) => wildlife.add(animal));
+  }
+
+  return {
+    activities: [...activities].toSorted((a, b) => a.localeCompare(b)),
+    countries: [...countries].toSorted((a, b) => a.localeCompare(b)),
+    regions: [...regions].toSorted((a, b) => a.localeCompare(b)),
+    wildlife: [...wildlife].toSorted((a, b) => a.localeCompare(b))
+  };
 }
 
 /** A single published park by slug, with gallery + facts resolved. */
@@ -140,8 +233,8 @@ export async function getParkBySlug(locale: string, slug: string): Promise<ParkD
     parkSizeKm2: (park.park_size_km2 as number | null) ?? null,
     establishedYear: (park.established_year as number | null) ?? null,
     bestTimeSummary: bestTime?.summary ?? null,
-    wildlife: Array.isArray(park.wildlife) ? (park.wildlife as string[]) : [],
-    activities: Array.isArray(park.activities) ? (park.activities as string[]) : [],
+    wildlife: parseStringArray(park.wildlife),
+    activities: parseStringArray(park.activities),
     gallery,
     faqs: translation.faqs,
     seoTitle: (translation.seo_title as string | null) ?? null,

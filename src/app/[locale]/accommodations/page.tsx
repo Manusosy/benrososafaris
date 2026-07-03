@@ -27,7 +27,7 @@ type AccommodationsPageProps = {
 };
 
 const accommodationsDescription =
-  'From luxury safari lodges deep in the bush to cosy Nairobi apartments — browse our handpicked properties and enquire directly via WhatsApp.';
+  'Browse handpicked safari lodges, tented camps, boutique stays, and Nairobi apartments, then enquire directly with our team.';
 
 function parsePrice(value?: string) {
   if (!value?.trim()) return undefined;
@@ -95,9 +95,10 @@ export default async function AccommodationsPage({
         hero={pageHero}
         imageAlt={hero.imageAlt}
         imageUrl={hero.imageUrl}
+        overlayTone='black'
         showGoldLine={false}
         title='Accommodations'
-        titleTone='gold'
+        titleTone='white'
       />
       <ListingShell
         className='bg-white'

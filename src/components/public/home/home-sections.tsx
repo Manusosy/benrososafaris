@@ -79,9 +79,9 @@ export function HomeHero({
 
   const eyebrow = hero?.eyebrow ?? 'Welcome to Benroso Safaris';
   const heading = hero?.heading ?? 'Unforgettable East African Safaris, Crafted Around You';
-  const subheading =
-    hero?.subheading ??
-    'For twenty-five years we have guided travelers across Kenya, Tanzania, Uganda, and Rwanda — every itinerary built by people who know these parks firsthand, not from a brochure. Tell us how you like to travel, and we will take care of the rest.';
+  const fallbackHomeSubheading =
+    'For twenty-five years we have guided travelers across Kenya, Tanzania, Uganda, and Rwanda. Every itinerary is built by people who know these parks firsthand, not from a brochure. Tell us how you like to travel, and we will take care of the rest.';
+  const subheading = hero?.subheading ?? fallbackHomeSubheading;
   const primaryCtaLabel = hero?.ctaLabel ?? 'Plan My Safari';
   const primaryCtaHref = hero?.ctaHref ? localePath(locale, hero.ctaHref) : contactHref;
 

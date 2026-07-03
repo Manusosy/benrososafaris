@@ -17,6 +17,7 @@ export type PageHeroKey =
   | 'packages'
   | 'experiences'
   | 'accommodations'
+  | 'fleet'
   | 'blog'
   | 'about'
   | 'contact';
@@ -82,6 +83,13 @@ export const PAGE_HERO_REGISTRY: PageHeroRegistryEntry[] = [
     path: '/accommodations',
     description: 'Hero on the accommodations listing page.',
     defaultImageUrl: BENROSO_PUBLIC_HERO_IMAGES.accommodations.imageUrl
+  },
+  {
+    key: 'fleet',
+    label: 'Our Fleet',
+    path: '/our-fleet',
+    description: 'Hero on the safari vehicles and fleet listing page.',
+    defaultImageUrl: BENROSO_PUBLIC_HERO_IMAGES.fleet.imageUrl
   },
   {
     key: 'blog',

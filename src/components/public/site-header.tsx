@@ -42,6 +42,10 @@ function getDropdownPositionClass(label: string) {
   return 'left-1/2 -translate-x-1/2';
 }
 
+function hasNavChildren(item: PublicNavItem) {
+  return Boolean(item.items?.length || item.sections?.some((section) => section.items.length));
+}
+
 export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }: SiteHeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -157,7 +161,7 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
             <ul className='flex flex-nowrap items-center gap-x-4 overflow-visible xl:gap-x-7'>
               {navOnlyItems.map((item) => {
                 const isOpen = openGroup === item.label;
-                const hasChildren = !!item.items?.length;
+                const hasChildren = hasNavChildren(item);
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
                 return (
@@ -182,6 +186,8 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                     </Link>
                     {isOpen && item.variant === 'mega' && destinationsMenu ? (
                       <DestinationsMegaPanel menu={destinationsMenu} viewAllHref={item.href} />
+                    ) : isOpen && item.variant === 'dynamic' && item.sections?.length ? (
+                      <ExperiencesMegaPanel sections={item.sections} />
                     ) : hasChildren && isOpen ? (
                       <div
                         className={cn(
@@ -190,7 +196,7 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                         )}
                       >
                         <ul className='overflow-hidden rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white py-1'>
-                          {item.items!.map((child) => (
+                          {(item.items ?? []).map((child) => (
                             <li key={`${item.label}-${child.href}`}>
                               <Link
                                 className='block px-4 py-2.5 text-[15px] leading-snug text-[var(--benroso-muted)] transition-colors hover:bg-[var(--benroso-primary)] hover:text-white'
@@ -244,7 +250,7 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
 
               {navOnlyItems.map((item) => {
                 const expanded = openGroup === item.label;
-                const hasChildren = !!item.items?.length;
+                const hasChildren = hasNavChildren(item);
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
                 return (
@@ -277,19 +283,44 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                       ) : null}
                     </div>
                     {hasChildren && expanded ? (
-                      <ul className='space-y-0.5 pb-2 pl-3'>
-                        {item.items!.map((child) => (
-                          <li key={`mobile-${child.href}`}>
-                            <Link
-                              className='block py-2.5 text-sm text-white/85 transition-colors hover:text-white'
-                              href={child.href}
-                              onClick={() => setMobileOpen(false)}
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className='space-y-3 pb-3 pl-3'>
+                        {item.sections?.length ? (
+                          item.sections.map((section) => (
+                            <div key={`mobile-${item.label}-${section.label}`}>
+                              <p className='pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--benroso-lime)]'>
+                                {section.label}
+                              </p>
+                              <ul className='space-y-0.5'>
+                                {section.items.map((child) => (
+                                  <li key={`mobile-${child.href}`}>
+                                    <Link
+                                      className='block py-2 text-sm text-white/85 transition-colors hover:text-white'
+                                      href={child.href}
+                                      onClick={() => setMobileOpen(false)}
+                                    >
+                                      {child.label}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))
+                        ) : (
+                          <ul className='space-y-0.5'>
+                            {(item.items ?? []).map((child) => (
+                              <li key={`mobile-${child.href}`}>
+                                <Link
+                                  className='block py-2.5 text-sm text-white/85 transition-colors hover:text-white'
+                                  href={child.href}
+                                  onClick={() => setMobileOpen(false)}
+                                >
+                                  {child.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     ) : null}
                   </div>
                 );
@@ -317,6 +348,44 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
       </header>
       {isAtTop ? null : <div aria-hidden className='h-[var(--benroso-header-h)] shrink-0' />}
     </>
+  );
+}
+
+function ExperiencesMegaPanel({ sections }: { sections: NonNullable<PublicNavItem['sections']> }) {
+  const visibleSections = sections.filter((section) => section.items.length);
+
+  return (
+    <div className='absolute left-1/2 top-full z-50 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2'>
+      <div className='grid grid-cols-2 gap-10 rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-7 py-5 text-left shadow-2xl'>
+        {visibleSections.length ? (
+          visibleSections.map((section) => (
+            <div key={section.label}>
+              <p className='mb-3 text-sm font-bold uppercase tracking-[0.06em] text-[var(--benroso-muted)]'>
+                {section.label}
+              </p>
+              <ul className='space-y-2'>
+                {section.items.map((child) => (
+                  <li key={child.href}>
+                    <Link
+                      className='block text-[15px] leading-snug text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-primary)]'
+                      href={child.href}
+                    >
+                      {child.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        ) : (
+          <div className='col-span-2'>
+            <p className='text-sm text-[var(--benroso-muted)]'>
+              Experience categories will appear here as they are added in the portal.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

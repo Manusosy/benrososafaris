@@ -1,6 +1,9 @@
 import { SiteFooter } from '@/components/public/site-footer';
 import { SiteHeader } from '@/components/public/site-header';
-import { listPublishedExperiences } from '@/features/experiences/public/service';
+import {
+  listExperienceMenuItems,
+  listPublishedExperiences
+} from '@/features/experiences/public/service';
 import {
   buildDestinationsMegaMenu,
   buildFooterNavigation,
@@ -14,13 +17,14 @@ type PublicShellProps = {
 };
 
 export async function PublicShell({ children, locale }: PublicShellProps) {
-  const [siteSettings, destinations, experiences] = await Promise.all([
+  const [siteSettings, destinations, experiences, experienceMenuItems] = await Promise.all([
     getPublicSiteSettings(),
     getPublicDestinations(locale),
-    listPublishedExperiences({ locale })
+    listPublishedExperiences({ locale }),
+    listExperienceMenuItems(locale)
   ]);
 
-  const navItems = buildPublicNavigation(locale, destinations, experiences);
+  const navItems = buildPublicNavigation(locale, destinations, experiences, experienceMenuItems);
   const footerColumns = buildFooterNavigation(locale, destinations, experiences);
   const destinationsMenu = buildDestinationsMegaMenu(locale, destinations);
 

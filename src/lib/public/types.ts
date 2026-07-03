@@ -2,7 +2,13 @@ export type PublicNavItem = {
   href: string;
   items?: PublicNavItem[];
   label: string;
+  sections?: PublicNavSection[];
   variant?: 'dynamic' | 'mega' | 'simple';
+};
+
+export type PublicNavSection = {
+  items: PublicNavItem[];
+  label: string;
 };
 
 export type PublicFooterColumn = {
@@ -125,6 +131,14 @@ export type PublicDestinationDetail = {
   wildlife: string[];
 };
 
+export type PublicExperienceMenuItem = {
+  href: string;
+  id: string;
+  label: string;
+  menuGroup: 'top_experiences' | 'wildlife_safari';
+  menuPosition: number;
+};
+
 export type PublicTour = {
   countryLabels?: string[];
   days: number | null;
@@ -236,6 +250,27 @@ export type PublicPackageDetail = PublicPackage & {
   contentHtml: string | null;
   linkedTour: PublicTourDetail | null;
   pricingTier: PublicTourPricingTier | null;
+};
+
+export type PublicFleetVehicle = {
+  capacity: number | null;
+  features: string[];
+  gallery: PublicDestinationMedia[];
+  href: string;
+  id: string;
+  imageAlt: string | null;
+  imageUrl: string | null;
+  slug: string;
+  summary: string | null;
+  title: string;
+  vehicleType: string | null;
+};
+
+export type PublicFleetVehicleDetail = PublicFleetVehicle & {
+  descriptionHtml: string | null;
+  faqs: { question: string; answer: string }[];
+  seoDescription: string | null;
+  seoTitle: string | null;
 };
 
 export type { PublicExperience } from '@/features/experiences/public/types';

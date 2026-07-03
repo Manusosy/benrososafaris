@@ -52,6 +52,7 @@ interface PortalModulePageProps {
   /** Heading + body shown in the table's empty state. */
   emptyTitle?: string;
   emptyMessage?: string;
+  showStatusSummary?: boolean;
 }
 
 function isTrashStatus(status: string): boolean {
@@ -138,7 +139,8 @@ export function PortalModulePage({
   newHref,
   editBasePath,
   emptyTitle,
-  emptyMessage
+  emptyMessage,
+  showStatusSummary = true
 }: PortalModulePageProps) {
   const [query, setQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
@@ -169,33 +171,37 @@ export function PortalModulePage({
 
   return (
     <div className='space-y-5'>
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-        {STATUS_OPTIONS.map((option) => {
-          const count = counts[option.value];
-          const isActive = statusFilter === option.value;
+      {showStatusSummary ? (
+        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+          {STATUS_OPTIONS.map((option) => {
+            const count = counts[option.value];
+            const isActive = statusFilter === option.value;
 
-          return (
-            <button
-              key={option.value}
-              type='button'
-              aria-pressed={isActive}
-              className={cn(
-                'bg-card rounded-[5px] border p-4 text-left shadow-xs transition-colors hover:border-primary/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
-                isActive && 'border-primary/60 bg-primary/5'
-              )}
-              onClick={() => setStatusFilter(option.value)}
-            >
-              <span className='flex items-center justify-between gap-3'>
-                <span className='text-muted-foreground text-xs font-medium uppercase tracking-[0.08em]'>
-                  {option.label}
+            return (
+              <button
+                key={option.value}
+                type='button'
+                aria-pressed={isActive}
+                className={cn(
+                  'bg-card rounded-[5px] border p-4 text-left shadow-xs transition-colors hover:border-primary/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
+                  isActive && 'border-primary/60 bg-primary/5'
+                )}
+                onClick={() => setStatusFilter(option.value)}
+              >
+                <span className='flex items-center justify-between gap-3'>
+                  <span className='text-muted-foreground text-xs font-medium uppercase tracking-[0.08em]'>
+                    {option.label}
+                  </span>
+                  <Badge variant={isActive ? 'default' : 'outline'}>{count}</Badge>
                 </span>
-                <Badge variant={isActive ? 'default' : 'outline'}>{count}</Badge>
-              </span>
-              <span className='mt-2 block text-sm leading-5 font-medium'>{option.description}</span>
-            </button>
-          );
-        })}
-      </div>
+                <span className='mt-2 block text-sm leading-5 font-medium'>
+                  {option.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className='bg-card rounded-[5px] border p-3 shadow-xs'>
         <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
