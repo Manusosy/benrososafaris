@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
-import { ExperienceCard } from '@/components/public/cards/content-cards';
-import { ExperienceAfricaMap } from '@/components/public/experiences/experience-africa-map';
 import { ExperienceListingIntro } from '@/components/public/experiences/experience-listing-intro';
 import { ExperiencesListingSection } from '@/components/public/experiences/experiences-listing-section';
-import { EmptyState } from '@/components/public/page-shell';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
@@ -19,11 +17,10 @@ import {
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero } from '@/lib/public/site-data';
 import { absoluteUrl } from '@/lib/seo';
-import { cn } from '@/lib/utils';
 
 type ExperiencesPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; country?: string; group?: string }>;
 };
 
 const experiencesDescription =
@@ -46,19 +43,39 @@ export async function generateMetadata({ params }: ExperiencesPageProps): Promis
   };
 }
 
+function ExperiencesListingFallback() {
+  return (
+    <div className='benroso-section bg-white'>
+      <div className='benroso-container'>
+        <div className='grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10'>
+          <div className='h-64 animate-pulse rounded-[var(--benroso-radius)] bg-[var(--benroso-line)]/40' />
+          <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                className='aspect-[4/5] animate-pulse rounded-[var(--benroso-radius)] bg-[var(--benroso-line)]/40'
+                key={index}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function ExperiencesPage({ params, searchParams }: ExperiencesPageProps) {
   const { locale } = await params;
-  const { category } = await searchParams;
-  const activeCategory = category?.trim() || undefined;
+  const query = await searchParams;
+  const legacyCategory = query.category?.trim() || undefined;
 
   const [experiences, categories, pageHero] = await Promise.all([
-    listPublishedExperiences({ category: activeCategory, locale }),
+    listPublishedExperiences({ locale }),
     getExperienceCategories(locale),
     getPageHero('experiences')
   ]);
 
   const intro = buildExperienceListingIntro(categories);
-  const categoryBlurb = getExperienceCategoryBlurb(activeCategory);
+  const categoryBlurb = getExperienceCategoryBlurb(legacyCategory);
   const hero = BENROSO_PUBLIC_HERO_IMAGES.experiences;
 
   return (
@@ -85,92 +102,18 @@ export default async function ExperiencesPage({ params, searchParams }: Experien
           </BenrosoButton>
         </div>
       </PublicPageHero>
-      <ExperienceListingIntro intro={intro} />
-      <ExperienceAfricaMap />
-      <ExperiencesListingSection
-        id='experiences-list'
-        filters={
-          <div className='space-y-4'>
-            <h2 className='benroso-heading font-display text-xl'>Filter By Type</h2>
-            <ul className='space-y-2 text-sm'>
-              <li>
-                <a
-                  className={cn(
-                    'transition-colors hover:text-[var(--benroso-primary)] hover:underline',
-                    !activeCategory
-                      ? 'font-semibold text-[var(--benroso-primary)]'
-                      : 'text-[var(--benroso-ink)]'
-                  )}
-                  href={localePath(locale, '/experiences')}
-                >
-                  All Experiences
-                </a>
-              </li>
-              {categories.map((entry) => {
-                const href = localePath(
-                  locale,
-                  `/experiences?category=${encodeURIComponent(entry)}`
-                );
-                const isActive = activeCategory === entry;
-
-                return (
-                  <li key={entry}>
-                    <a
-                      className={cn(
-                        'transition-colors hover:text-[var(--benroso-primary)] hover:underline',
-                        isActive
-                          ? 'font-semibold text-[var(--benroso-primary)]'
-                          : 'text-[var(--benroso-ink)]'
-                      )}
-                      href={href}
-                    >
-                      {entry}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        }
-      >
-        {activeCategory && categoryBlurb ? (
-          <div className='mb-8 rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6'>
-            <p className='benroso-eyebrow'>{activeCategory} Safaris</p>
-            <p className='mt-3 text-[15px] leading-7 text-[var(--benroso-ink)]'>{categoryBlurb}</p>
-          </div>
-        ) : null}
-
-        {experiences.length ? (
-          <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
-            {experiences.map((experience) => (
-              <ExperienceCard
-                item={{
-                  category: experience.category,
-                  excerpt: experience.summary,
-                  href: experience.href,
-                  imageAlt: experience.imageAlt,
-                  imageUrl: experience.imageUrl,
-                  title: experience.title
-                }}
-                key={experience.id}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            actionHref={localePath(locale, '/contact')}
-            actionLabel='Speak With a Safari Planner'
-            message={
-              activeCategory
-                ? `No published experiences match "${activeCategory}" yet. Try another category or contact us for a tailor-made safari.`
-                : 'Published experiences will appear here once they are added through the Benroso CMS.'
-            }
-            title={
-              activeCategory ? 'No experiences in this category' : 'No experiences published yet'
-            }
+      <div className='bg-white'>
+        <ExperienceListingIntro intro={intro} />
+        <Suspense fallback={<ExperiencesListingFallback />}>
+          <ExperiencesListingSection
+            categoryBlurb={categoryBlurb}
+            experiences={experiences}
+            id='experiences-list'
+            legacyCategory={legacyCategory}
+            locale={locale}
           />
-        )}
-      </ExperiencesListingSection>
+        </Suspense>
+      </div>
     </>
   );
 }

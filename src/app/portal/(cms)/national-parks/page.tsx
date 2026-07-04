@@ -16,7 +16,6 @@ export default async function PortalNationalParksPage() {
         newHref='/portal/national-parks/new'
         editBasePath='/portal/national-parks'
         emptyTitle='No national parks yet'
-        showStatusSummary={false}
         emptyMessage='Add your first park (e.g. Masai Mara, Amboseli) with “Add new”. Once published, it appears on the site and collects the tours routed to it.'
       />
     </PageContainer>

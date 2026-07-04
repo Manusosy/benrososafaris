@@ -2,6 +2,8 @@ export type BenrosoCountryId = 'kenya' | 'tanzania' | 'uganda' | 'rwanda' | 'sou
 
 export type BenrosoCountryMapEntry = {
   id: BenrosoCountryId;
+  /** Two-letter country code shown on listing cards (e.g. KE, TZ) */
+  code: string;
   isoA3: string;
   name: string;
   headline: string;
@@ -16,6 +18,7 @@ export type BenrosoCountryMapEntry = {
 export const BENROSO_OPERATING_COUNTRIES: BenrosoCountryMapEntry[] = [
   {
     id: 'kenya',
+    code: 'KE',
     isoA3: 'KEN',
     name: 'Kenya',
     headline: 'Maasai Mara, Amboseli & the Great Migration',
@@ -27,6 +30,7 @@ export const BENROSO_OPERATING_COUNTRIES: BenrosoCountryMapEntry[] = [
   },
   {
     id: 'tanzania',
+    code: 'TZ',
     isoA3: 'TZA',
     name: 'Tanzania',
     headline: 'Serengeti, Ngorongoro & Kilimanjaro horizons',
@@ -38,6 +42,7 @@ export const BENROSO_OPERATING_COUNTRIES: BenrosoCountryMapEntry[] = [
   },
   {
     id: 'uganda',
+    code: 'UG',
     isoA3: 'UGA',
     name: 'Uganda',
     headline: 'Mountain gorillas & the Pearl of Africa',
@@ -49,6 +54,7 @@ export const BENROSO_OPERATING_COUNTRIES: BenrosoCountryMapEntry[] = [
   },
   {
     id: 'rwanda',
+    code: 'RW',
     isoA3: 'RWA',
     name: 'Rwanda',
     headline: 'Volcanoes National Park & conservation travel',
@@ -60,6 +66,7 @@ export const BENROSO_OPERATING_COUNTRIES: BenrosoCountryMapEntry[] = [
   },
   {
     id: 'south-africa',
+    code: 'ZA',
     isoA3: 'ZAF',
     name: 'South Africa',
     headline: 'Kruger, private reserves & Cape extensions',
@@ -80,4 +87,12 @@ export const OPERATING_ISO_TO_ID = Object.fromEntries(
 
 export function getCountryById(id: BenrosoCountryId) {
   return BENROSO_OPERATING_COUNTRIES.find((country) => country.id === id)!;
+}
+
+export function formatExperienceCountryCodes(countries: BenrosoCountryId[]) {
+  return countries.map((id) => getCountryById(id).code);
+}
+
+export function formatExperienceCountryNames(countries: BenrosoCountryId[]) {
+  return countries.map((id) => getCountryById(id).name.toUpperCase()).join(', ');
 }

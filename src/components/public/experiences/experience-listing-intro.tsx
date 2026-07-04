@@ -1,6 +1,5 @@
 'use client';
 
-import { ContourBackground } from '@/components/public/contour-background';
 import { ExperienceScrollReveal } from '@/components/public/experiences/experience-scroll-reveal';
 import {
   EXPERIENCE_LISTING_INTRO_TITLE,
@@ -51,9 +50,8 @@ function IntroParagraphText({ segments }: { segments: IntroParagraph }) {
 export function ExperienceListingIntro({ intro }: ExperienceListingIntroProps) {
   return (
     <ExperienceScrollReveal>
-      <section className='relative overflow-hidden bg-[var(--benroso-warm-gray)]'>
-        <ContourBackground opacity={0.1} />
-        <div className='benroso-container relative py-16 md:py-20 lg:py-24'>
+      <section className='border-b border-[var(--benroso-line)] bg-white'>
+        <div className='benroso-container py-16 md:py-20 lg:py-24'>
           <div className='mx-auto max-w-4xl text-center'>
             <h2 className='benroso-heading font-display text-3xl leading-tight md:text-4xl lg:text-[2.75rem] lg:leading-[1.15]'>
               {EXPERIENCE_LISTING_INTRO_TITLE}

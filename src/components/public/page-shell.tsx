@@ -81,11 +81,13 @@ export function PageHero({
 
 export function ListingShell({
   children,
+  filterAsideClassName,
   filters,
   title,
   className
 }: {
   children: React.ReactNode;
+  filterAsideClassName?: string;
   filters?: React.ReactNode;
   title?: string;
   className?: string;
@@ -96,9 +98,15 @@ export function ListingShell({
         {title ? (
           <h2 className='benroso-heading mb-8 font-display text-3xl md:hidden'>{title}</h2>
         ) : null}
-        <div className='grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]'>
+        <div className='grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10'>
           {filters ? (
-            <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-5 lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]'>
+            <aside
+              className={cn(
+                'h-fit lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]',
+                filterAsideClassName ??
+                  'rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-5'
+              )}
+            >
               {filters}
             </aside>
           ) : null}

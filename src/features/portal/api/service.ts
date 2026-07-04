@@ -202,11 +202,14 @@ export async function getPortalContentList(moduleKey: string): Promise<PortalCon
   const supabase = await createGenericClient();
   const timestampField = config.timestampField ?? 'updated_at';
 
-  const { data: baseRows, error: baseError } = await supabase
+  const {
+    data: baseRows,
+    error: baseError,
+    count
+  } = await supabase
     .from(config.baseTable)
-    .select(`id, status, ${timestampField}`)
-    .order(timestampField, { ascending: false })
-    .limit(50);
+    .select(`id, status, ${timestampField}`, { count: 'exact' })
+    .order(timestampField, { ascending: false });
 
   if (baseError || !baseRows?.length) {
     return { rows: [], total: 0 };
@@ -235,7 +238,7 @@ export async function getPortalContentList(moduleKey: string): Promise<PortalCon
     updatedAt: row[timestampField as keyof typeof row] as string
   }));
 
-  return { rows, total: rows.length };
+  return { rows, total: count ?? rows.length };
 }
 
 export async function getPortalEnquiries() {

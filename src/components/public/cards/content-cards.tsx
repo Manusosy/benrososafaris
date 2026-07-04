@@ -202,6 +202,7 @@ export function ExperienceCard({
 }: {
   item: {
     category?: string | null;
+    countryCodes?: string[];
     excerpt?: string | null;
     href: string;
     imageAlt?: string | null;
@@ -243,7 +244,7 @@ export function ExperienceCard({
             {item.excerpt}
           </p>
         ) : null}
-        <div className='mt-5 border-t border-[var(--benroso-line)] pt-4'>
+        <div className='mt-5 flex items-center justify-between gap-4 border-t border-[var(--benroso-line)] pt-4'>
           <Link
             className={cn(
               'inline-flex items-center gap-1 border border-[var(--benroso-primary)] px-4 py-2 text-xs font-bold uppercase tracking-wide',
@@ -255,6 +256,12 @@ export function ExperienceCard({
             View Details
             <Icons.arrowRight className='h-3.5 w-3.5' />
           </Link>
+          {item.countryCodes?.length ? (
+            <p className='inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--benroso-muted)]'>
+              <Icons.mapPin className='size-3.5 shrink-0 text-[var(--benroso-primary)]' />
+              {item.countryCodes.join(', ')}
+            </p>
+          ) : null}
         </div>
       </div>
     </article>

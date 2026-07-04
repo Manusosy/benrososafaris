@@ -1,0 +1,1 @@
+export const PORTAL_MODULE_PAGE_SIZE = 20;

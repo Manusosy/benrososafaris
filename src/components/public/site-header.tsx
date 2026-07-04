@@ -39,7 +39,16 @@ function getDropdownPositionClass(label: string) {
     return 'left-0 translate-x-0';
   }
 
+  if (label === 'Destinations' || label === 'Experiences') {
+    return 'left-1/2 -translate-x-1/2';
+  }
+
   return 'left-1/2 -translate-x-1/2';
+}
+
+function getDefaultCountryIndex(columns: PublicMegaMenu['columns']) {
+  const withDestinations = columns.findIndex((column) => column.destinations.length > 0);
+  return withDestinations >= 0 ? withDestinations : 0;
 }
 
 function hasNavChildren(item: PublicNavItem) {
@@ -185,7 +194,11 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                       ) : null}
                     </Link>
                     {isOpen && item.variant === 'mega' && destinationsMenu ? (
-                      <DestinationsMegaPanel menu={destinationsMenu} viewAllHref={item.href} />
+                      <DestinationsMegaPanel
+                        key={destinationsMenu.columns.map((column) => column.country).join('-')}
+                        menu={destinationsMenu}
+                        viewAllHref={item.href}
+                      />
                     ) : isOpen && item.variant === 'dynamic' && item.sections?.length ? (
                       <ExperiencesMegaPanel sections={item.sections} />
                     ) : hasChildren && isOpen ? (
@@ -284,7 +297,13 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                     </div>
                     {hasChildren && expanded ? (
                       <div className='space-y-3 pb-3 pl-3'>
-                        {item.sections?.length ? (
+                        {item.variant === 'mega' && destinationsMenu ? (
+                          <DestinationsMobileMenu
+                            menu={destinationsMenu}
+                            onNavigate={() => setMobileOpen(false)}
+                            viewAllHref={item.href}
+                          />
+                        ) : item.sections?.length ? (
                           item.sections.map((section) => (
                             <div key={`mobile-${item.label}-${section.label}`}>
                               <p className='pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--benroso-lime)]'>
@@ -355,8 +374,13 @@ function ExperiencesMegaPanel({ sections }: { sections: NonNullable<PublicNavIte
   const visibleSections = sections.filter((section) => section.items.length);
 
   return (
-    <div className='absolute left-1/2 top-full z-50 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2'>
-      <div className='grid grid-cols-2 gap-10 rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-7 py-5 text-left shadow-2xl'>
+    <div
+      className={cn(
+        'absolute top-full z-50 w-[min(520px,calc(100vw-2rem))]',
+        getDropdownPositionClass('Experiences')
+      )}
+    >
+      <div className='grid grid-cols-2 gap-8 rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-6 py-5 text-left shadow-2xl'>
         {visibleSections.length ? (
           visibleSections.map((section) => (
             <div key={section.label}>
@@ -396,87 +420,189 @@ function DestinationsMegaPanel({
   menu: PublicMegaMenu;
   viewAllHref: string;
 }) {
+  const [activeIndex, setActiveIndex] = useState(() => getDefaultCountryIndex(menu.columns));
+  const activeColumn = menu.columns[activeIndex] ?? menu.columns[0];
+
+  if (!activeColumn) {
+    return null;
+  }
+
   return (
-    <div className='absolute left-0 top-full z-50 w-[min(880px,calc(100vw-2rem))]'>
-      <div className='grid grid-cols-1 overflow-hidden rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white text-left shadow-2xl md:grid-cols-[1fr_250px]'>
-        <div className='p-6'>
-          <div className='grid grid-cols-2 gap-x-8 gap-y-6'>
-            {menu.columns.map((column) => (
-              <div key={column.country}>
-                <Link
-                  className='block border-b border-[var(--benroso-line)] pb-2 text-sm font-semibold uppercase tracking-[0.05em] text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
-                  href={column.href}
-                >
-                  {column.country}
-                </Link>
-                <ul className='mt-2 space-y-1'>
-                  {column.destinations.length ? (
-                    column.destinations.map((destination) => (
-                      <li key={destination.href}>
-                        <Link
-                          className='block py-1 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-lime)]'
-                          href={destination.href}
-                        >
-                          {destination.label}
-                        </Link>
-                      </li>
-                    ))
-                  ) : (
-                    <li>
-                      <Link
-                        className='block py-1 text-[13px] italic text-[var(--benroso-muted)]/70 transition-colors hover:text-[var(--benroso-lime)]'
-                        href={column.href}
+    <div
+      className={cn(
+        'absolute left-1/2 top-full z-50 w-screen max-w-[100vw] -translate-x-1/2',
+        getDropdownPositionClass('Destinations')
+      )}
+    >
+      <div className='mx-auto w-[min(520px,calc(100vw-2rem))] px-4'>
+        <div className='overflow-hidden rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white text-left shadow-2xl'>
+          <div className='flex max-h-[min(320px,55vh)]'>
+            <nav
+              aria-label='Safari countries'
+              className='w-[132px] shrink-0 border-r border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/50 py-1.5'
+            >
+              <ul>
+                {menu.columns.map((column, index) => {
+                  const isActive = index === activeIndex;
+
+                  return (
+                    <li key={column.country}>
+                      <button
+                        className={cn(
+                          'flex w-full items-center px-3 py-2 text-left text-[13px] transition-colors',
+                          isActive
+                            ? 'bg-white font-semibold text-[var(--benroso-primary)] shadow-[inset_3px_0_0_var(--benroso-lime)]'
+                            : 'text-[var(--benroso-muted)] hover:bg-white/70 hover:text-[var(--benroso-primary)]'
+                        )}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        type='button'
                       >
-                        Explore {column.country} safaris →
+                        <span className='truncate'>{column.country}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            <div className='min-w-0 flex-1 overflow-y-auto px-4 py-3'>
+              <Link
+                className='mb-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+                href={activeColumn.href}
+              >
+                {activeColumn.country}
+                <Icons.chevronRight className='h-3.5 w-3.5' />
+              </Link>
+              {activeColumn.destinations.length ? (
+                <ul className='grid gap-x-5 gap-y-0.5 sm:grid-cols-2'>
+                  {activeColumn.destinations.map((destination) => (
+                    <li key={destination.href}>
+                      <Link
+                        className='block py-1.5 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-lime)]'
+                        href={destination.href}
+                      >
+                        {destination.label}
                       </Link>
                     </li>
-                  )}
+                  ))}
                 </ul>
-              </div>
-            ))}
+              ) : (
+                <div className='py-2'>
+                  <p className='text-sm text-[var(--benroso-muted)]'>
+                    Safari routes for {activeColumn.country} are being added.
+                  </p>
+                  <Link
+                    className='mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+                    href={activeColumn.href}
+                  >
+                    Explore {activeColumn.country}
+                    <Icons.arrowRight className='h-3.5 w-3.5' />
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-          <div className='mt-6 border-t border-[var(--benroso-line)] pt-4'>
+
+          <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/30 px-4 py-2'>
             <Link
-              className='group/all inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+              className='group/all inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
               href={viewAllHref}
             >
               View all destinations
-              <Icons.arrowRight className='h-4 w-4 transition-transform duration-300 group-hover/all:translate-x-1' />
+              <Icons.arrowRight className='h-3.5 w-3.5 transition-transform duration-300 group-hover/all:translate-x-1' />
             </Link>
+            {menu.featured ? (
+              <Link
+                className='inline-flex items-center gap-1 text-xs text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-primary)]'
+                href={menu.featured.href}
+              >
+                {menu.featured.cta}
+                <Icons.arrowRight className='h-3 w-3' />
+              </Link>
+            ) : null}
           </div>
         </div>
-
-        {menu.featured ? (
-          <Link
-            className='group relative hidden flex-col justify-end overflow-hidden bg-[var(--benroso-primary)] p-5 text-white md:flex'
-            href={menu.featured.href}
-          >
-            {menu.featured.imageUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt={menu.featured.imageAlt}
-                  className='absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
-                  src={menu.featured.imageUrl}
-                />
-                <div className='absolute inset-0 bg-gradient-to-t from-[var(--benroso-primary-dark)] via-[var(--benroso-primary-dark)]/60 to-transparent' />
-              </>
-            ) : (
-              <div className='absolute inset-0 bg-gradient-to-br from-[var(--benroso-primary)] to-[var(--benroso-primary-dark)]' />
-            )}
-            <div className='relative'>
-              <p className='text-base font-bold leading-tight'>{menu.featured.title}</p>
-              <p className='mt-1.5 text-[13px] leading-snug text-white/80'>
-                {menu.featured.description}
-              </p>
-              <span className='mt-3 inline-flex items-center gap-1.5 rounded-[var(--benroso-button-radius)] bg-[var(--benroso-lime)] px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.06em] text-[var(--benroso-primary-dark)] shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:bg-[var(--benroso-lime-hover)] group-hover:shadow-lg'>
-                {menu.featured.cta}
-                <Icons.arrowRight className='h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1' />
-              </span>
-            </div>
-          </Link>
-        ) : null}
       </div>
+    </div>
+  );
+}
+
+function DestinationsMobileMenu({
+  menu,
+  onNavigate,
+  viewAllHref
+}: {
+  menu: PublicMegaMenu;
+  onNavigate: () => void;
+  viewAllHref: string;
+}) {
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
+
+  return (
+    <div className='space-y-0.5'>
+      {menu.columns.map((column) => {
+        const isExpanded = expandedCountry === column.country;
+        const hasDestinations = column.destinations.length > 0;
+
+        return (
+          <div key={column.country}>
+            {hasDestinations ? (
+              <button
+                aria-expanded={isExpanded}
+                className='flex w-full items-center justify-between gap-2 py-2.5 text-left text-sm font-medium text-white/90 transition-colors hover:text-white'
+                onClick={() => setExpandedCountry(isExpanded ? null : column.country)}
+                type='button'
+              >
+                <span>{column.country}</span>
+                <Icons.chevronDown
+                  className={cn('h-3.5 w-3.5 shrink-0 text-white/70', isExpanded && 'rotate-180')}
+                />
+              </button>
+            ) : (
+              <Link
+                className='flex w-full items-center justify-between gap-2 py-2.5 text-sm font-medium text-white/90 transition-colors hover:text-white'
+                href={column.href}
+                onClick={onNavigate}
+              >
+                <span>{column.country}</span>
+                <span className='text-xs text-[var(--benroso-lime)]'>View</span>
+              </Link>
+            )}
+            {isExpanded && hasDestinations ? (
+              <ul className='mb-1 space-y-0.5 border-l border-white/15 pl-3'>
+                <li>
+                  <Link
+                    className='block py-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--benroso-lime)]'
+                    href={column.href}
+                    onClick={onNavigate}
+                  >
+                    All {column.country}
+                  </Link>
+                </li>
+                {column.destinations.map((destination) => (
+                  <li key={destination.href}>
+                    <Link
+                      className='block py-1.5 text-sm text-white/75 transition-colors hover:text-white'
+                      href={destination.href}
+                      onClick={onNavigate}
+                    >
+                      {destination.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        );
+      })}
+      <Link
+        className='mt-2 inline-flex items-center gap-1.5 py-2 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--benroso-lime)]'
+        href={viewAllHref}
+        onClick={onNavigate}
+      >
+        View all destinations
+        <Icons.arrowRight className='h-3.5 w-3.5' />
+      </Link>
     </div>
   );
 }

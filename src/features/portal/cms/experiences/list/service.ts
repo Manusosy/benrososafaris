@@ -8,6 +8,10 @@ import { requirePortalSession } from '@/lib/auth/portal';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
 import {
+  BENROSO_OPERATING_COUNTRIES,
+  type BenrosoCountryId
+} from '@/features/experiences/public/country-map-copy';
+import {
   EXPERIENCES_PAGE_SIZE,
   type ExperienceListItem,
   type ExperienceListParams,
@@ -35,6 +39,17 @@ function revalidateExperiencePublicPaths() {
 }
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function parseCountries(value: unknown): BenrosoCountryId[] {
+  if (!Array.isArray(value)) return [];
+
+  const allowed = new Set(BENROSO_OPERATING_COUNTRIES.map((country) => country.id));
+
+  return value.filter(
+    (item): item is BenrosoCountryId =>
+      typeof item === 'string' && allowed.has(item as BenrosoCountryId)
+  );
+}
 
 /** `YYYY-MM` → ISO range [start, nextMonthStart). */
 function monthRange(month: string): { start: string; end: string } | null {
@@ -78,7 +93,7 @@ export async function listExperiences(params: ExperienceListParams): Promise<Exp
   let query = supabase
     .from('experience_translations')
     .select(
-      'experience_id, title, slug, published_at, experiences!inner(id, status, category, updated_at, deleted_at)',
+      'experience_id, title, slug, published_at, experiences!inner(id, status, category, countries, updated_at, deleted_at)',
       { count: 'exact' }
     )
     .eq('locale', 'en');
@@ -117,6 +132,7 @@ export async function listExperiences(params: ExperienceListParams): Promise<Exp
       id: string;
       status: string;
       category: string | null;
+      countries: string[] | null;
       updated_at: string;
       deleted_at: string | null;
     } | null;
@@ -130,6 +146,7 @@ export async function listExperiences(params: ExperienceListParams): Promise<Exp
       slug: row.slug ?? '',
       status: row.experiences!.status,
       category: row.experiences!.category,
+      countries: parseCountries(row.experiences!.countries),
       publishedAt: row.published_at,
       updatedAt: row.experiences!.updated_at,
       trashed: row.experiences!.deleted_at !== null
@@ -293,6 +310,7 @@ export async function quickEditExperience(input: ExperienceQuickEditInput): Prom
     .update({
       status: input.status,
       category: input.category.trim() || null,
+      countries: parseCountries(input.countries),
       updated_at: now
     })
     .eq('id', input.id);

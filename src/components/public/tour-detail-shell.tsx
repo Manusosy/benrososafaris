@@ -6,6 +6,7 @@ import { Icons } from '@/components/icons';
 import { AccommodationGallery } from '@/components/public/accommodations/accommodation-gallery';
 import { ContactAdvantagesList } from '@/components/public/contact/contact-advantages-list';
 import { ContactScrollReveal } from '@/components/public/contact/contact-scroll-reveal';
+import { DestinationTripsSection } from '@/components/public/destinations/destination-trips-section';
 import { SectionAnchorNav } from '@/components/public/section-anchor-nav';
 import { RouteAccommodationsSection } from '@/components/public/tours/route-accommodations-section';
 import { TourInquiryPanel } from '@/components/public/tours/tour-inquiry-panel';
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/accordion';
 import { localePath } from '@/lib/public/locale-path';
 import { formatTourDuration, formatTourPrice } from '@/lib/public/tour-format';
-import type { PublicTourDetail, PublicTourPricingTier } from '@/lib/public/types';
+import type { PublicTour, PublicTourDetail, PublicTourPricingTier } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
 
 const baseTabs = [
@@ -45,7 +46,9 @@ type TourDetailShellProps = {
   eyebrow?: string;
   introHtml?: string | null;
   locale: string;
+  primaryDestination?: string | null;
   pricingTiers?: PublicTourPricingTier[];
+  similarTours?: PublicTour[];
   title?: string;
   tour: PublicTourDetail;
 };
@@ -56,7 +59,9 @@ export function TourDetailShell({
   eyebrow,
   introHtml,
   locale,
+  primaryDestination,
   pricingTiers,
+  similarTours = [],
   title,
   tour
 }: TourDetailShellProps) {
@@ -295,6 +300,19 @@ export function TourDetailShell({
           </div>
         </div>
       </section>
+
+      {similarTours.length ? (
+        <DestinationTripsSection
+          description={`Other published safaris that visit ${primaryDestination ?? 'the same destination'}. Compare duration, route, and price before you enquire.`}
+          destinationName={primaryDestination ?? 'this destination'}
+          eyebrow='More Safaris'
+          id='similar-tours'
+          locale={locale}
+          title={`Similar Safaris to ${primaryDestination ?? 'this destination'}`}
+          tours={similarTours}
+          variant='plain'
+        />
+      ) : null}
     </>
   );
 }

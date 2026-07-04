@@ -1,6 +1,18 @@
 import * as z from 'zod';
 
+import type { BenrosoCountryId } from '@/features/experiences/public/country-map-copy';
+
 import { SEO_LIMITS } from '../seo/analyze';
+
+export const benrosoCountryIdSchema = z.enum([
+  'kenya',
+  'tanzania',
+  'uganda',
+  'rwanda',
+  'south-africa'
+]);
+
+export type ExperienceCountryId = BenrosoCountryId;
 
 const faqItemSchema = z.object({
   answer: z.string(),
@@ -56,6 +68,8 @@ export const experienceFormSchema = z.object({
   faqs: z.array(faqItemSchema),
   // Base
   category: z.string(),
+  /** Operating countries where this experience is offered. */
+  countries: z.array(benrosoCountryIdSchema),
   menuGroup: experienceMenuGroupSchema,
   /** Highlights list, stored directly as a jsonb array. */
   highlights: z.array(z.string()),
@@ -78,7 +92,13 @@ export type ExperienceFormValues = z.infer<typeof experienceFormSchema>;
 
 /** Per-step validators consumed by `useFormStepper`. */
 export const experienceStepSchemas = [
-  experienceFormSchema.pick({ title: true, slug: true, category: true, menuGroup: true }),
+  experienceFormSchema.pick({
+    title: true,
+    slug: true,
+    category: true,
+    countries: true,
+    menuGroup: true
+  }),
   experienceFormSchema.pick({ gallery: true }),
   experienceFormSchema.pick({
     summary: true,
@@ -127,6 +147,7 @@ export const emptyExperienceValues: ExperienceFormValues = {
   description: '',
   faqs: [],
   category: '',
+  countries: [],
   menuGroup: 'top_experiences',
   highlights: [],
   packagePricing: [

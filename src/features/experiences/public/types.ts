@@ -1,3 +1,5 @@
+import type { BenrosoCountryId } from '@/features/experiences/public/country-map-copy';
+
 export type PublicExperienceMedia = {
   alt: string | null;
   id: string;
@@ -11,6 +13,7 @@ export type PublicExperienceFaq = {
 
 export type PublicExperience = {
   category: string | null;
+  countries: BenrosoCountryId[];
   href: string;
   id: string;
   imageAlt: string | null;

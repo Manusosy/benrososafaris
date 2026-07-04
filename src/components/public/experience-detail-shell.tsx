@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { ExperienceDetailHero } from '@/components/public/experiences/experience-detail-hero';
 import { ExperienceFaqSection } from '@/components/public/experiences/experience-faq-section';
+import { ExperienceGallery } from '@/components/public/experiences/experience-gallery';
 import { ExperiencePackageTabs } from '@/components/public/experiences/experience-package-tabs';
 import { ExperienceScrollReveal } from '@/components/public/experiences/experience-scroll-reveal';
 import { ExperienceTripsExplorer } from '@/components/public/experiences/experience-trips-explorer';
@@ -11,6 +12,7 @@ import { SectionAnchorNav } from '@/components/public/section-anchor-nav';
 import { SectionHeader } from '@/components/public/ui/section-header';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { localePath } from '@/lib/public/locale-path';
+import { buildExperienceGuideHeading } from '@/features/experiences/public/guide-heading';
 import type {
   PublicExperienceDetail,
   PublicExperiencePackageLevel,
@@ -40,6 +42,11 @@ export function ExperienceDetailShell({
   tours
 }: ExperienceDetailShellProps) {
   const galleryImages = experience.gallery.filter((image) => image.url);
+  const guideHeading = buildExperienceGuideHeading({
+    category: experience.category,
+    countries: experience.countries,
+    title: experience.title
+  });
   const anchorItems = [
     { href: '#experience-overview', label: 'Overview' },
     experience.highlights.length ? { href: '#experience-expect', label: 'What To Expect' } : null,
@@ -52,7 +59,7 @@ export function ExperienceDetailShell({
   return (
     <>
       <ExperienceDetailHero
-        category={experience.category}
+        countries={experience.countries}
         imageAlt={experience.imageAlt}
         imageUrl={experience.imageUrl}
         locale={locale}
@@ -71,7 +78,7 @@ export function ExperienceDetailShell({
             <section className='mx-auto max-w-4xl text-center'>
               <p className='benroso-eyebrow'>Experience Guide</p>
               <h2 className='benroso-heading mt-3 font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight'>
-                Follow the Migration, Then Shape the Safari Around You
+                {guideHeading}
               </h2>
               {experience.contentHtml ? (
                 <article
@@ -248,37 +255,5 @@ export function ExperienceDetailShell({
         </div>
       </main>
     </>
-  );
-}
-
-function ExperienceGallery({
-  images,
-  title
-}: {
-  images: PublicExperienceDetail['gallery'];
-  title: string;
-}) {
-  const [primary, ...rest] = images;
-  const supporting = rest.slice(0, 2);
-
-  return (
-    <div className='grid gap-3 md:grid-cols-3'>
-      {[primary, ...supporting].filter(Boolean).map((image, index) => (
-        <div
-          className='relative aspect-[4/3] overflow-hidden rounded-[var(--benroso-radius)] bg-[var(--benroso-primary)]'
-          key={image!.id}
-        >
-          {image?.url ? (
-            <Image
-              alt={image.alt || `${title} gallery ${index + 1}`}
-              className='object-cover'
-              fill
-              sizes='(max-width:768px) 100vw, 33vw'
-              src={image.url}
-            />
-          ) : null}
-        </div>
-      ))}
-    </div>
   );
 }

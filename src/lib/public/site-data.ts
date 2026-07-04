@@ -1,7 +1,9 @@
+import { unstable_cache } from 'next/cache';
+
 import { BENROSO_CONTACT_DEFAULTS } from '@/config/benroso';
 import { listPublishedAccommodations } from '@/features/accommodations/public/service';
 import type { PublicAccommodation } from '@/features/accommodations/public/types';
-import { createClient } from '@/lib/supabase/server';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
@@ -40,8 +42,8 @@ function parseStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
 }
 
-async function createGenericClient(): Promise<SupabaseClient> {
-  return (await createClient()) as unknown as SupabaseClient;
+function createGenericClient(): SupabaseClient {
+  return createEnquiryPublicClient() as unknown as SupabaseClient;
 }
 
 function parseRichTextHtml(value: unknown): string | null {
@@ -111,7 +113,7 @@ async function resolveMediaByIds(ids: string[]): Promise<Map<string, PublicDesti
   const uniqueIds = [...new Set(ids.filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase.from('media_assets').select('id, url, alt').in('id', uniqueIds);
 
   return new Map(
@@ -158,7 +160,14 @@ function readAnalytics(value: unknown): PublicSiteSettings['analytics'] {
 }
 
 export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
-  const supabase = await createClient();
+  return unstable_cache(fetchPublicSiteSettings, ['public-site-settings'], {
+    revalidate: 300,
+    tags: ['site-settings']
+  })();
+}
+
+async function fetchPublicSiteSettings(): Promise<PublicSiteSettings> {
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('site_settings')
     .select('*')
@@ -193,8 +202,15 @@ export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
  * when a page has no custom hero, so callers fall back to their default media.
  */
 export async function getPageHero(key: PageHeroKey): Promise<PageHero | null> {
+  return unstable_cache(() => fetchPageHero(key), ['page-hero', key], {
+    revalidate: 300,
+    tags: ['page-heroes']
+  })();
+}
+
+async function fetchPageHero(key: PageHeroKey): Promise<PageHero | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createEnquiryPublicClient();
     const { data } = await supabase
       .from('site_settings')
       .select('page_heroes')
@@ -209,8 +225,15 @@ export async function getPageHero(key: PageHeroKey): Promise<PageHero | null> {
 }
 
 export async function getHeroSlides(): Promise<HeroSlide[]> {
+  return unstable_cache(fetchHeroSlides, ['hero-slides'], {
+    revalidate: 300,
+    tags: ['hero-slides']
+  })();
+}
+
+async function fetchHeroSlides(): Promise<HeroSlide[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createEnquiryPublicClient();
     const { data } = await supabase
       .from('site_settings')
       .select('hero_slides')
@@ -229,7 +252,18 @@ export async function getPublicDestinations(
   locale: string,
   limit = 12
 ): Promise<PublicDestination[]> {
-  const supabase = await createClient();
+  return unstable_cache(
+    () => fetchPublicDestinations(locale, limit),
+    ['public-destinations', locale, String(limit)],
+    {
+      revalidate: 300,
+      tags: ['destinations']
+    }
+  )();
+}
+
+async function fetchPublicDestinations(locale: string, limit = 12): Promise<PublicDestination[]> {
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('destination_translations')
     .select(
@@ -286,7 +320,7 @@ export async function getDestinationTours(
   locale: string,
   destinationId: string
 ): Promise<PublicTour[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data: links } = await supabase
     .from('tour_destinations')
@@ -334,12 +368,88 @@ export async function getDestinationTours(
   });
 }
 
+/**
+ * Published tours that share at least one destination with the given tour.
+ * Excludes the current tour and caps results for detail-page carousels.
+ */
+export async function getSimilarToursForTour(
+  locale: string,
+  tourId: string,
+  limit = 6
+): Promise<PublicTour[]> {
+  const supabase = createEnquiryPublicClient();
+
+  const { data: destinationLinks } = await supabase
+    .from('tour_destinations')
+    .select('destination_id')
+    .eq('tour_id', tourId);
+
+  const destinationIds = [
+    ...new Set(
+      (destinationLinks ?? []).map((link) => link.destination_id as string).filter(Boolean)
+    )
+  ];
+  if (!destinationIds.length) return [];
+
+  const { data: tourLinks } = await supabase
+    .from('tour_destinations')
+    .select('tour_id, position')
+    .in('destination_id', destinationIds)
+    .neq('tour_id', tourId)
+    .order('position', { ascending: true });
+
+  const tourIds = [...new Set((tourLinks ?? []).map((link) => link.tour_id as string))].slice(
+    0,
+    limit
+  );
+  if (!tourIds.length) return [];
+
+  const { data } = await supabase
+    .from('tour_translations')
+    .select(
+      `
+      slug,
+      title,
+      excerpt,
+      tour:tours!inner(id, status, days, nights, price_from),
+      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .in('tour_id', tourIds)
+    .eq('tour.status', 'published')
+    .not('published_at', 'is', null);
+
+  const order = new Map(tourIds.map((id, index) => [id, index]));
+
+  return (data ?? [])
+    .flatMap((row) => {
+      const tour = unwrapRelation(row.tour);
+      if (!tour) return [];
+      return [
+        {
+          days: tour.days,
+          excerpt: row.excerpt,
+          href: localePath(locale, `/tours/${row.slug}`),
+          id: tour.id,
+          imageAlt: mediaAlt(row.og_image, row.title),
+          imageUrl: mediaUrl(row.og_image),
+          nights: tour.nights,
+          priceFrom: tour.price_from,
+          slug: row.slug,
+          title: row.title
+        }
+      ];
+    })
+    .toSorted((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+}
+
 /** Full destination detail (all wizard fields) for the public detail page. */
 export async function getPublicDestinationDetail(
   locale: string,
   slug: string
 ): Promise<PublicDestinationDetail | null> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data } = await supabase
     .from('destination_translations')
@@ -450,7 +560,7 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
   };
   if (!uniqueIds.length) return empty;
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const [destinationLinksResult, experienceLinksResult, parkLinksResult] = await Promise.all([
     supabase
       .from('tour_destinations')
@@ -566,7 +676,7 @@ async function getTourPricingMap(tourIds: string[]) {
   const pricingByTourId = new Map<string, PublicTourPricingTier[]>();
   if (!uniqueIds.length) return pricingByTourId;
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: tierRows } = await supabase
     .from('tour_pricing_tiers')
     .select('id, tour_id, tier, label, blurb, notes, currency, position')
@@ -785,7 +895,7 @@ async function fetchPublishedTourRows(
   locale: string,
   tourIds?: string[]
 ): Promise<TourTranslationListRow[]> {
-  const supabase = await createGenericClient();
+  const supabase = createGenericClient();
   let query = supabase
     .from('tour_translations')
     .select(
@@ -857,6 +967,17 @@ export async function getPublicTourCatalog(
 }
 
 export async function getPublicTours(locale: string, limit = 6): Promise<PublicTour[]> {
+  return unstable_cache(
+    () => fetchPublicTours(locale, limit),
+    ['public-tours', locale, String(limit)],
+    {
+      revalidate: 300,
+      tags: ['tours']
+    }
+  )();
+}
+
+async function fetchPublicTours(locale: string, limit = 6): Promise<PublicTour[]> {
   const rows = (await fetchPublishedTourRows(locale)).slice(0, limit);
   return buildToursFromRows(locale, rows);
 }
@@ -873,7 +994,7 @@ async function getRouteAccommodations(
   locale: string,
   tourId: string
 ): Promise<PublicAccommodation[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: links } = await supabase
     .from('tour_accommodations')
     .select('accommodation_id, position')
@@ -894,7 +1015,7 @@ export async function getDestinationAccommodations(
   locale: string,
   destinationId: string
 ): Promise<PublicAccommodation[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: tourLinks } = await supabase
     .from('tour_destinations')
     .select('tour_id, position')
@@ -928,7 +1049,7 @@ export async function getPublicTourDetail(
   locale: string,
   slug: string
 ): Promise<PublicTourDetail | null> {
-  const supabase = await createGenericClient();
+  const supabase = createGenericClient();
   const { data } = await supabase
     .from('tour_translations')
     .select(
@@ -1022,7 +1143,7 @@ async function fetchPublishedPackageRows(
   locale: string,
   slug?: string
 ): Promise<PackageTranslationRow[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   let query = supabase
     .from('package_translations')
     .select(
@@ -1125,7 +1246,18 @@ export async function getPublicPackageDetail(
 }
 
 export async function getPublicBlogPosts(locale: string, limit = 3): Promise<PublicBlogPost[]> {
-  const supabase = await createClient();
+  return unstable_cache(
+    () => fetchPublicBlogPosts(locale, limit),
+    ['public-blog-posts', locale, String(limit)],
+    {
+      revalidate: 300,
+      tags: ['blog-posts']
+    }
+  )();
+}
+
+async function fetchPublicBlogPosts(locale: string, limit = 3): Promise<PublicBlogPost[]> {
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('blog_translations')
     .select(
@@ -1171,7 +1303,14 @@ export async function getPublicBlogPosts(locale: string, limit = 3): Promise<Pub
 }
 
 export async function getHomeReviews(limit = 8): Promise<HomeReviewItem[]> {
-  const supabase = await createClient();
+  return unstable_cache(() => fetchHomeReviews(limit), ['home-reviews', String(limit)], {
+    revalidate: 300,
+    tags: ['reviews']
+  })();
+}
+
+async function fetchHomeReviews(limit = 8): Promise<HomeReviewItem[]> {
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('reviews')
     .select('id, author_name, author_location, rating, source, body, review_date, avatar_url')

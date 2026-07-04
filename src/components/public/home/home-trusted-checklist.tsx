@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { TextPlugin } from 'gsap/TextPlugin';
 
 import { Icons } from '@/components/icons';
+import { loadGsapRuntime } from '@/lib/gsap/load-runtime';
 
 /**
  * Trust points that type themselves in one sentence at a time (GSAP TextPlugin),
@@ -26,8 +25,6 @@ export function TrustedChecklist({
     const root = rootRef.current;
     if (!root) return;
 
-    gsap.registerPlugin(TextPlugin);
-
     const ticks = Array.from(root.querySelectorAll<SVGElement>('[data-tick]'));
     const texts = Array.from(root.querySelectorAll<HTMLElement>('[data-type]'));
 
@@ -37,48 +34,60 @@ export function TrustedChecklist({
       return;
     }
 
-    let timeline: gsap.core.Timeline | undefined;
-    const ctx = gsap.context(() => {
-      gsap.set(ticks, { autoAlpha: 0, scale: 0.4, transformOrigin: 'center' });
-    }, root);
+    let killed = false;
+    let cleanup: (() => void) | undefined;
 
-    const play = () =>
-      ctx.add(() => {
-        timeline = gsap.timeline();
-        items.forEach((sentence, i) => {
-          timeline!
-            .to(
-              ticks[i],
-              { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(2.2)' },
-              i === 0 ? 0 : '+=0.25'
-            )
-            .to(
-              texts[i],
-              {
-                duration: Math.min(1.6, Math.max(0.5, sentence.length * 0.022)),
-                text: { value: sentence, delimiter: '' },
-                ease: 'none'
-              },
-              '<0.05'
-            );
+    void loadGsapRuntime().then(({ gsap }) => {
+      if (killed || !rootRef.current) return;
+
+      let timeline: ReturnType<typeof gsap.timeline> | undefined;
+      const ctx = gsap.context(() => {
+        gsap.set(ticks, { autoAlpha: 0, scale: 0.4, transformOrigin: 'center' });
+      }, root);
+
+      const play = () =>
+        ctx.add(() => {
+          timeline = gsap.timeline();
+          items.forEach((sentence, i) => {
+            timeline!
+              .to(
+                ticks[i],
+                { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(2.2)' },
+                i === 0 ? 0 : '+=0.25'
+              )
+              .to(
+                texts[i],
+                {
+                  duration: Math.min(1.6, Math.max(0.5, sentence.length * 0.022)),
+                  text: { value: sentence, delimiter: '' },
+                  ease: 'none'
+                },
+                '<0.05'
+              );
+          });
         });
-      });
 
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          play();
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.25 }
-    );
-    observer.observe(root);
+      const observer = new IntersectionObserver(
+        (entries, obs) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            play();
+            obs.disconnect();
+          }
+        },
+        { threshold: 0.25 }
+      );
+      observer.observe(root);
+
+      cleanup = () => {
+        observer.disconnect();
+        timeline?.kill();
+        ctx.revert();
+      };
+    });
 
     return () => {
-      observer.disconnect();
-      timeline?.kill();
-      ctx.revert();
+      killed = true;
+      cleanup?.();
     };
   }, [items]);
 

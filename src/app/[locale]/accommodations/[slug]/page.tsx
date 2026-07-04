@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { AccommodationDetailShell } from '@/components/public/accommodations/accommodation-detail-shell';
-import { getPublishedAccommodationBySlug } from '@/features/accommodations/public/service';
+import {
+  getPublishedAccommodationBySlug,
+  getRelatedAccommodationsInRegion
+} from '@/features/accommodations/public/service';
 import { absoluteUrl, buildAlternates } from '@/lib/seo';
 
 type AccommodationPageProps = {
@@ -53,5 +56,17 @@ export default async function AccommodationDetailPage(props: AccommodationPagePr
 
   if (!accommodation) notFound();
 
-  return <AccommodationDetailShell accommodation={accommodation} locale={locale} />;
+  const relatedAccommodations = await getRelatedAccommodationsInRegion(locale, {
+    country: accommodation.country,
+    excludeId: accommodation.id,
+    region: accommodation.region
+  });
+
+  return (
+    <AccommodationDetailShell
+      accommodation={accommodation}
+      locale={locale}
+      relatedAccommodations={relatedAccommodations}
+    />
+  );
 }

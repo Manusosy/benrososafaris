@@ -193,7 +193,7 @@ export function BlogArticlesList() {
     emptyTrashMutation.isPending;
 
   return (
-    <div className='space-y-3'>
+    <div className='min-w-0 max-w-full space-y-3'>
       {/* Status tabs + search */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <nav className='flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
@@ -322,7 +322,7 @@ export function BlogArticlesList() {
       </div>
 
       {/* Table */}
-      <div className='overflow-hidden rounded-md border'>
+      <div className='min-w-0 max-w-full overflow-x-auto rounded-md border'>
         <Table>
           <TableHeader>
             <TableRow>

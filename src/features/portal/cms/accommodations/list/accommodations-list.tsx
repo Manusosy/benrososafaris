@@ -208,7 +208,7 @@ export function AccommodationsList() {
     emptyTrashMutation.isPending;
 
   return (
-    <div className='min-h-full space-y-3 bg-white'>
+    <div className='min-h-full min-w-0 max-w-full space-y-3 bg-white'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <nav className='flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
           {STATUS_TABS.map((tab, index) => {
@@ -400,7 +400,7 @@ export function AccommodationsList() {
           onTrash={(id) => trashMutation.mutate([id])}
         />
       ) : (
-        <div className='overflow-hidden rounded-md border'>
+        <div className='min-w-0 max-w-full overflow-x-auto rounded-md border'>
           <Table>
             <TableHeader>
               <TableRow>

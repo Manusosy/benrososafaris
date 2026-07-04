@@ -1,9 +1,13 @@
 import { Icons } from '@/components/icons';
 import { AccommodationGallery } from '@/components/public/accommodations/accommodation-gallery';
 import { DestinationInquiryPanel } from '@/components/public/destinations/destination-inquiry-panel';
+import { FaqSection } from '@/components/public/faq-section';
 import { TrustedChecklist } from '@/components/public/home/home-trusted-checklist';
 import { localePath } from '@/lib/public/locale-path';
 import type { PublicDestinationDetail } from '@/lib/public/types';
+
+const SECTION_HEADING =
+  'benroso-heading font-display text-2xl leading-tight tracking-tight text-[var(--benroso-heading)]';
 
 type DestinationDetailShellProps = {
   destination: PublicDestinationDetail;
@@ -92,9 +96,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
 
               {destination.descriptionHtml ? (
                 <section className='mt-10 scroll-mt-36' id='why-go'>
-                  <h2 className='benroso-heading font-display text-2xl'>
-                    About {destination.name}
-                  </h2>
+                  <h2 className={SECTION_HEADING}>About {destination.name}</h2>
                   <div
                     className='benroso-legal-prose mt-4'
                     dangerouslySetInnerHTML={{ __html: destination.descriptionHtml }}
@@ -104,7 +106,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
 
               {destination.bestTime ? (
                 <section className='mt-10 scroll-mt-36' id='when-to-go'>
-                  <h2 className='benroso-heading font-display text-2xl'>Best time to visit</h2>
+                  <h2 className={SECTION_HEADING}>Best time to visit</h2>
                   <p className='benroso-body mt-4 inline-flex items-center gap-2 text-[15px] leading-7'>
                     <Icons.calendar className='size-5 shrink-0 text-[var(--benroso-primary)]' />
                     {destination.bestTime}
@@ -114,12 +116,10 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
 
               {destination.wildlife.length ? (
                 <section className='mt-10 scroll-mt-36' id='where-to-go'>
-                  <h2 className='benroso-heading font-display text-2xl'>
-                    Key {destination.name} Highlights
-                  </h2>
+                  <h2 className={SECTION_HEADING}>Key {destination.name} Highlights</h2>
                   {/* Light whiteboard-style panel; highlights flow in two columns. */}
                   <div
-                    className='mt-4 rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-6 md:p-8'
+                    className='benroso-contact-credentials-box mt-4 !p-6 md:!p-8'
                     style={{
                       backgroundImage:
                         'radial-gradient(rgba(60,81,66,0.06) 1.5px, transparent 1.6px)',
@@ -134,6 +134,21 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
                 </section>
               ) : null}
 
+              {destination.faqs.length ? (
+                <div
+                  className='mt-10 border-t border-[var(--benroso-line)] pt-10'
+                  id='destination-faqs'
+                >
+                  <FaqSection
+                    embedded
+                    faqs={destination.faqs}
+                    headingClassName={SECTION_HEADING}
+                    headingId='destination-faq-heading'
+                    title={`FAQs About ${destination.name}`}
+                  />
+                </div>
+              ) : null}
+
               <div className='mt-10'>
                 <a
                   className='inline-flex items-center gap-2 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
@@ -146,7 +161,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
             </div>
 
             <aside className='hidden lg:block'>
-              <div className='sticky top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)] space-y-4'>
+              <div className='benroso-contact-sidebar-inner sticky top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)] space-y-8'>
                 <DestinationInquiryPanel
                   country={destination.country}
                   destinationName={destination.name}
@@ -154,7 +169,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
                   locale={locale}
                 />
                 {facts.length ? (
-                  <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm'>
+                  <div className='benroso-contact-credentials-box'>
                     <h2 className='benroso-heading font-display text-lg'>Quick facts</h2>
                     <dl className='mt-4 space-y-3'>
                       {facts.map((fact) => (

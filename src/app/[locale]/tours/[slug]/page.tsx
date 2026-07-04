@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { TourDetailShell } from '@/components/public/tour-detail-shell';
-import { getPublicTourDetail } from '@/lib/public/site-data';
+import { getPublicTourDetail, getSimilarToursForTour } from '@/lib/public/site-data';
 import { buildTouristTripJsonLd } from '@/lib/seo';
 
 type TourPageProps = {
@@ -16,6 +16,9 @@ export default async function TourDetailPage({ params }: TourPageProps) {
   const tour = await getPublicTourDetail(locale, slug);
 
   if (!tour) notFound();
+
+  const similarTours = await getSimilarToursForTour(locale, tour.id);
+  const primaryDestination = tour.destinationLabels?.[0] ?? null;
 
   const jsonLd = buildTouristTripJsonLd(
     {
@@ -35,7 +38,12 @@ export default async function TourDetailPage({ params }: TourPageProps) {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TourDetailShell locale={locale} tour={tour} />
+      <TourDetailShell
+        locale={locale}
+        primaryDestination={primaryDestination}
+        similarTours={similarTours}
+        tour={tour}
+      />
     </>
   );
 }

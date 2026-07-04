@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,6 +14,10 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { TableCell, TableRow } from '@/components/ui/table';
+import {
+  BENROSO_OPERATING_COUNTRIES,
+  type BenrosoCountryId
+} from '@/features/experiences/public/country-map-copy';
 import { CMS_SURFACE } from '../../shared/surface';
 import type { ExperienceListItem, ExperienceQuickEditInput } from './types';
 
@@ -36,16 +41,25 @@ function toLocalInput(iso: string | null): string {
 
 /**
  * Inline Quick Edit, mirroring WordPress: edit the title, slug, status, publish
- * date/time, and category without leaving the list. Replaces the row while open.
+ * date/time, category, and operating countries without leaving the list.
  */
 export function QuickEditRow({ item, columnCount, isSaving, onCancel, onSave }: QuickEditRowProps) {
   const [title, setTitle] = React.useState(item.title);
   const [slug, setSlug] = React.useState(item.slug);
   const [category, setCategory] = React.useState(item.category ?? '');
+  const [countries, setCountries] = React.useState<BenrosoCountryId[]>(item.countries);
   const [status, setStatus] = React.useState<'published' | 'draft'>(
     item.status === 'published' ? 'published' : 'draft'
   );
   const [publishedAt, setPublishedAt] = React.useState(toLocalInput(item.publishedAt));
+
+  function toggleCountry(countryId: BenrosoCountryId) {
+    setCountries((current) =>
+      current.includes(countryId)
+        ? current.filter((id) => id !== countryId)
+        : [...current, countryId]
+    );
+  }
 
   function handleSave() {
     const isoPublished = publishedAt ? new Date(publishedAt).toISOString() : '';
@@ -54,6 +68,7 @@ export function QuickEditRow({ item, columnCount, isSaving, onCancel, onSave }: 
       title,
       slug,
       category,
+      countries,
       status,
       publishedAt: isoPublished
     });
@@ -116,6 +131,37 @@ export function QuickEditRow({ item, columnCount, isSaving, onCancel, onSave }: 
               </Select>
             </div>
           </div>
+
+          <div className='grid gap-2'>
+            <Label>Operating countries</Label>
+            <p className='text-muted-foreground text-xs'>
+              Select every country where this experience is offered.
+            </p>
+            <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+              {BENROSO_OPERATING_COUNTRIES.map((country) => {
+                const checked = countries.includes(country.id);
+
+                return (
+                  <label
+                    className='flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5'
+                    htmlFor={`qe-country-${item.id}-${country.id}`}
+                    key={country.id}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      id={`qe-country-${item.id}-${country.id}`}
+                      onCheckedChange={() => toggleCountry(country.id)}
+                    />
+                    <span className='text-sm'>
+                      {country.name}
+                      <span className='text-muted-foreground ml-1.5 text-xs'>({country.code})</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
           <div className='flex items-center gap-2'>
             <Button type='button' size='sm' isLoading={isSaving} onClick={handleSave}>
               Update

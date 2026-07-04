@@ -2,29 +2,54 @@ import { TourCard } from '@/components/public/cards/content-cards';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { localePath } from '@/lib/public/locale-path';
 import type { PublicTour } from '@/lib/public/types';
+import { cn } from '@/lib/utils';
 
 type DestinationTripsSectionProps = {
   destinationName: string;
+  description?: string;
+  eyebrow?: string;
+  id?: string;
   locale: string;
+  title?: string;
   tours: PublicTour[];
+  variant?: 'featured' | 'plain';
 };
 
 export function DestinationTripsSection({
   destinationName,
+  description,
+  eyebrow = 'Safari Tours',
+  id = 'tours-safaris',
   locale,
-  tours
+  title,
+  tours,
+  variant = 'featured'
 }: DestinationTripsSectionProps) {
+  const heading = title ?? `Safaris to ${destinationName}`;
+  const body =
+    description ??
+    `Hand-crafted itineraries that include ${destinationName}. Each one can be tailored to your dates, pace, and budget.`;
+
   return (
-    <section className='benroso-section scroll-mt-36 bg-[var(--benroso-ivory)]' id='tours-safaris'>
-      <div className='benroso-container'>
-        <p className='benroso-eyebrow'>Safari Tours</p>
+    <section
+      className={cn(
+        'scroll-mt-36',
+        variant === 'plain'
+          ? 'border-t border-[var(--benroso-line)] bg-white'
+          : 'benroso-section bg-[var(--benroso-ivory)]'
+      )}
+      id={id}
+    >
+      <div
+        className={cn(
+          variant === 'plain' ? 'benroso-container py-10 md:py-12' : 'benroso-container'
+        )}
+      >
+        <p className='benroso-eyebrow'>{eyebrow}</p>
         <h2 className='benroso-heading mt-3 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] leading-tight'>
-          Safaris to {destinationName}
+          {heading}
         </h2>
-        <p className='benroso-body mt-3 max-w-2xl text-base leading-8'>
-          Hand-crafted itineraries that include {destinationName}. Each one can be tailored to your
-          dates, pace, and budget.
-        </p>
+        <p className='benroso-body mt-3 max-w-2xl text-base leading-8'>{body}</p>
 
         {tours.length ? (
           <div className='mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3'>

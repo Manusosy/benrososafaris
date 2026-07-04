@@ -5,6 +5,18 @@ import { withSentryConfig } from '@sentry/nextjs';
 const baseConfig: NextConfig = {
   devIndicators: false,
   output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
+  experimental: {
+    optimizePackageImports: [
+      '@tabler/icons-react',
+      '@radix-ui/react-icons',
+      'gsap',
+      'recharts',
+      'date-fns',
+      'framer-motion',
+      '@tanstack/react-table',
+      'lucide-react'
+    ]
+  },
   images: {
     remotePatterns: [
       {

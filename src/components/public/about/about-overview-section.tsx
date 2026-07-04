@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Icons } from '@/components/icons';
+import { ExperienceAfricaMap } from '@/components/public/experiences/experience-africa-map';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { SectionHeader } from '@/components/public/ui/section-header';
 import { localePath } from '@/lib/public/locale-path';
@@ -186,6 +187,8 @@ export function AboutOverviewSection({
           </div>
         </div>
       </section>
+
+      <ExperienceAfricaMap />
 
       {/* Services */}
       <section className='benroso-section bg-white'>

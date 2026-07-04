@@ -50,6 +50,7 @@ export async function saveExperience(input: {
 
   const basePayload = {
     category: values.category || null,
+    countries: values.countries,
     menu_group: values.menuGroup,
     highlights: values.highlights,
     package_pricing: values.packagePricing,
@@ -131,6 +132,9 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
     .maybeSingle();
 
   const highlights = Array.isArray(base.highlights) ? (base.highlights as string[]) : [];
+  const countries = Array.isArray(base.countries)
+    ? (base.countries as ExperienceFormValues['countries'])
+    : [];
   const packagePricing = Array.isArray(base.package_pricing)
     ? (base.package_pricing as ExperienceFormValues['packagePricing'])
     : [];
@@ -143,6 +147,7 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
     id: base.id,
     status: base.status,
     category: base.category ?? '',
+    countries,
     menuGroup:
       base.menu_group === 'wildlife_safari' || base.menu_group === 'top_experiences'
         ? base.menu_group

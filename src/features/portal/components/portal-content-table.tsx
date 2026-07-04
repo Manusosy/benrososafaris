@@ -50,7 +50,7 @@ export function PortalContentTable({
   editBasePath
 }: PortalContentTableProps) {
   return (
-    <div className='bg-card overflow-hidden rounded-[5px] border shadow-xs'>
+    <div className='overflow-x-auto rounded-[5px] border shadow-xs'>
       <Table>
         <TableHeader>
           <TableRow className='bg-muted/30 hover:bg-muted/30'>

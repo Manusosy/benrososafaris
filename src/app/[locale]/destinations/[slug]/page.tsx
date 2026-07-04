@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 
 import { DestinationDetailShell } from '@/components/public/destinations/destination-detail-shell';
 import { DestinationTripsSection } from '@/components/public/destinations/destination-trips-section';
-import { FaqSection } from '@/components/public/faq-section';
 import { ParkScrollTabs, type ParkTab } from '@/components/public/national-parks/park-scroll-tabs';
 import { RouteAccommodationsSection } from '@/components/public/tours/route-accommodations-section';
 import {
@@ -117,10 +116,10 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
     destination.descriptionHtml ? { id: 'why-go', label: 'Why Go' } : null,
     destination.wildlife.length ? { id: 'where-to-go', label: 'Where To Go' } : null,
     destination.bestTime ? { id: 'when-to-go', label: 'When To Go' } : null,
-    { id: 'tours-safaris', label: 'Tours & Safaris' },
+    destination.faqs.length ? { id: 'destination-faqs', label: 'FAQs' } : null,
     accommodations.length ? { id: 'accommodation', label: 'Accommodation' } : null,
     tours.length ? { id: 'costs', label: 'Costs' } : null,
-    { id: 'travel-info', label: 'Travel Info' }
+    { id: 'tours-safaris', label: 'Tours & Safaris' }
   ].filter((tab): tab is ParkTab => tab !== null);
 
   return (
@@ -137,7 +136,6 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
       ) : null}
       <ParkScrollTabs tabs={tabs} />
       <DestinationDetailShell destination={destination} locale={locale} />
-      <DestinationTripsSection destinationName={destination.name} locale={locale} tours={tours} />
       {accommodations.length ? (
         <section className='benroso-section scroll-mt-36 bg-white' id='accommodation'>
           <div className='benroso-container'>
@@ -153,22 +151,7 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
       {tours.length ? (
         <DestinationCostsSection destinationName={destination.name} tours={tours} />
       ) : null}
-      <section className='benroso-section scroll-mt-36 bg-white' id='travel-info'>
-        <div className='benroso-container'>
-          <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-6 md:p-8'>
-            <p className='benroso-eyebrow'>Travel Info</p>
-            <h2 className='benroso-heading mt-3 font-display text-2xl'>Visa & Planning Notes</h2>
-            <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
-              Visa, entry, and seasonal planning guidance can be handled by the Benroso team during
-              enquiry. Destination-specific travel notes can be added to the CMS as this section
-              grows.
-            </p>
-          </div>
-        </div>
-      </section>
-      {destination.faqs.length ? (
-        <FaqSection faqs={destination.faqs} headingId='destination-faq-heading' />
-      ) : null}
+      <DestinationTripsSection destinationName={destination.name} locale={locale} tours={tours} />
     </>
   );
 }
@@ -192,7 +175,7 @@ function DestinationCostsSection({
   return (
     <section className='benroso-section scroll-mt-36 bg-[var(--benroso-ivory)]' id='costs'>
       <div className='benroso-container'>
-        <div className='grid gap-8 rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 md:grid-cols-[1fr_280px] md:p-8'>
+        <div className='benroso-contact-credentials-box grid gap-8 !p-6 md:grid-cols-[1fr_280px] md:!p-8'>
           <div>
             <p className='benroso-eyebrow'>Costs</p>
             <h2 className='benroso-heading mt-3 font-display text-2xl'>

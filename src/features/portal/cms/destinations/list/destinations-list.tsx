@@ -192,7 +192,7 @@ export function DestinationsList() {
     emptyTrashMutation.isPending;
 
   return (
-    <div className='space-y-3'>
+    <div className='min-w-0 max-w-full space-y-3'>
       {/* Status tabs + search */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <nav className='flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
@@ -321,7 +321,7 @@ export function DestinationsList() {
       </div>
 
       {/* Table */}
-      <div className='overflow-hidden rounded-md border'>
+      <div className='overflow-x-auto rounded-md border'>
         <Table>
           <TableHeader>
             <TableRow>
@@ -335,8 +335,8 @@ export function DestinationsList() {
               <TableHead>Destination</TableHead>
               <TableHead className='w-32'>Status</TableHead>
               <TableHead className='w-28'>Country</TableHead>
-              <TableHead>Region</TableHead>
-              <TableHead>Slug</TableHead>
+              <TableHead className='max-w-[10rem]'>Region</TableHead>
+              <TableHead className='max-w-[12rem]'>Slug</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -522,8 +522,12 @@ function DestinationRow({
         <StatusPill status={item.status} />
       </TableCell>
       <TableCell className='text-sm'>{item.country || '—'}</TableCell>
-      <TableCell className='text-sm'>{item.region || '—'}</TableCell>
-      <TableCell className='text-muted-foreground text-sm'>{item.slug}</TableCell>
+      <TableCell className='max-w-[10rem] truncate text-sm' title={item.region ?? undefined}>
+        {item.region || '—'}
+      </TableCell>
+      <TableCell className='text-muted-foreground max-w-[12rem] truncate text-sm' title={item.slug}>
+        {item.slug}
+      </TableCell>
     </TableRow>
   );
 }

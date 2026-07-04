@@ -291,7 +291,7 @@ export function DestinationInquiryPanel(props: DestinationInquiryPanelProps) {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm'>
+      <div className='benroso-contact-credentials-box'>
         <p className='text-xs font-semibold uppercase tracking-wide text-[var(--benroso-muted)]'>
           Plan your trip
         </p>
@@ -303,8 +303,6 @@ export function DestinationInquiryPanel(props: DestinationInquiryPanelProps) {
           itinerary for this destination.
         </p>
         <div className='mt-6'>
-          {/* Same animated fill as the homepage "Discover Our Story" button (section 2):
-              a lime layer wipes in from the left on hover, white text stays. */}
           <button
             aria-expanded={showForm}
             className='benroso-fill-hover inline-flex w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-primary)] bg-[var(--benroso-primary)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition-colors duration-200'
@@ -320,10 +318,7 @@ export function DestinationInquiryPanel(props: DestinationInquiryPanelProps) {
       </div>
 
       {showForm ? (
-        <div
-          className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm'
-          ref={formRef}
-        >
+        <div className='benroso-contact-credentials-box' ref={formRef}>
           <h2 className='benroso-heading font-display text-lg'>Start your enquiry</h2>
           <p className='mt-1 text-sm text-[var(--benroso-muted)]'>
             Enquiring about{' '}

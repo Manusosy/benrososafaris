@@ -8,12 +8,14 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppForm } from '@/components/ui/tanstack-form';
 import { useFormStepper } from '@/hooks/use-stepper';
 import { slugify } from '@/lib/utils';
+import { BENROSO_OPERATING_COUNTRIES } from '@/features/experiences/public/country-map-copy';
 import { getMediaByIds } from '../media/api/client';
 import { mediaKeys } from '../media/api/queries';
 import { MediaGalleryField } from '../media/components/media-picker';
@@ -475,6 +477,46 @@ export function ExperienceWizard({
                     Use the client-facing style: Honeymoon, Fly-in, Group Joining, Beach Extension,
                     Mountain Hiking, Conservation, or another package theme.
                   </p>
+                </div>
+              )}
+            </form.AppField>
+            <form.AppField name='countries'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label>Operating countries</Label>
+                  <p className='text-muted-foreground text-xs'>
+                    Select every country where this experience is offered. An experience can span
+                    multiple destinations.
+                  </p>
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {BENROSO_OPERATING_COUNTRIES.map((country) => {
+                      const checked = field.state.value.includes(country.id);
+
+                      return (
+                        <label
+                          className='flex cursor-pointer items-center gap-3 rounded-md border px-3 py-3'
+                          htmlFor={`experience-country-${country.id}`}
+                          key={country.id}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            id={`experience-country-${country.id}`}
+                            onCheckedChange={(value) => {
+                              if (value === true) {
+                                field.handleChange([...field.state.value, country.id]);
+                                return;
+                              }
+
+                              field.handleChange(
+                                field.state.value.filter((id) => id !== country.id)
+                              );
+                            }}
+                          />
+                          <span className='text-sm'>{country.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </form.AppField>

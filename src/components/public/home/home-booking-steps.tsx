@@ -1,16 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
+import { useEffect, useRef } from 'react';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { SectionHeader } from '@/components/public/ui/section-header';
+import { loadGsapRuntime } from '@/lib/gsap/load-runtime';
 import { localePath } from '@/lib/public/locale-path';
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const STEPS = [
   {
@@ -38,12 +34,19 @@ const STEPS = [
 export function HomeBookingSteps({ locale }: { locale: string }) {
   const sectionRef = useRef<HTMLElement>(null);
 
-  useGSAP(
-    () => {
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduced || !sectionRef.current) return;
+  useEffect(() => {
+    const scope = sectionRef.current;
+    if (!scope) return;
 
-      const scope = sectionRef.current;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+
+    let killed = false;
+    let cleanup: (() => void) | undefined;
+
+    void loadGsapRuntime().then(({ gsap }) => {
+      if (killed || !sectionRef.current) return;
+
       const line = scope.querySelector('[data-booking-line]');
       const nodes = scope.querySelectorAll('[data-booking-node]');
       const cards = scope.querySelectorAll('[data-booking-card]');
@@ -67,9 +70,18 @@ export function HomeBookingSteps({ locale }: { locale: string }) {
         { y: 0, opacity: 1, duration: 0.45, ease: 'power2.out', stagger: 0.18 },
         '<'
       );
-    },
-    { scope: sectionRef }
-  );
+
+      cleanup = () => {
+        timeline.scrollTrigger?.kill();
+        timeline.kill();
+      };
+    });
+
+    return () => {
+      killed = true;
+      cleanup?.();
+    };
+  }, []);
 
   return (
     <section className='benroso-section bg-[var(--benroso-ivory)]' ref={sectionRef}>
@@ -80,7 +92,6 @@ export function HomeBookingSteps({ locale }: { locale: string }) {
         />
 
         <div className='relative mt-14'>
-          {/* Connector line (desktop) */}
           <span
             aria-hidden
             className='absolute left-0 right-0 top-7 hidden h-0.5 origin-left bg-[var(--benroso-gold)] lg:block'

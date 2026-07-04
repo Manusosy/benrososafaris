@@ -1,13 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
+import { useEffect, useRef } from 'react';
 
+import { loadGsapRuntime } from '@/lib/gsap/load-runtime';
 import { cn } from '@/lib/utils';
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 type ScrollRevealProps = {
   children: React.ReactNode;
@@ -28,10 +24,18 @@ export function ScrollReveal({
 }: ScrollRevealProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduced || !containerRef.current) return;
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+
+    let killed = false;
+    let cleanup: (() => void) | undefined;
+
+    void loadGsapRuntime().then(({ gsap }) => {
+      if (killed || !containerRef.current) return;
 
       const targets = stagger
         ? containerRef.current.querySelectorAll('[data-reveal-item]')
@@ -40,7 +44,7 @@ export function ScrollReveal({
       const offset =
         from === 'left' ? { x: -32, y: 0 } : from === 'right' ? { x: 32, y: 0 } : { x: 0, y: 36 };
 
-      gsap.from(targets, {
+      const tween = gsap.from(targets, {
         opacity: 0,
         x: offset.x,
         y: offset.y,
@@ -54,9 +58,18 @@ export function ScrollReveal({
           once: true
         }
       });
-    },
-    { scope: containerRef }
-  );
+
+      cleanup = () => {
+        tween.scrollTrigger?.kill();
+        tween.kill();
+      };
+    });
+
+    return () => {
+      killed = true;
+      cleanup?.();
+    };
+  }, [stagger, from, delay]);
 
   return (
     <div className={cn(className)} ref={containerRef}>

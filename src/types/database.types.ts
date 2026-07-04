@@ -652,6 +652,7 @@ export type Database = {
       experiences: {
         Row: {
           category: string | null;
+          countries: string[];
           created_at: string;
           deleted_at: string | null;
           gallery: Json;
@@ -665,6 +666,7 @@ export type Database = {
         };
         Insert: {
           category?: string | null;
+          countries?: string[];
           created_at?: string;
           deleted_at?: string | null;
           gallery?: Json;
@@ -678,6 +680,7 @@ export type Database = {
         };
         Update: {
           category?: string | null;
+          countries?: string[];
           created_at?: string;
           deleted_at?: string | null;
           gallery?: Json;

@@ -8,12 +8,16 @@ import { useGSAP } from '@gsap/react';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import {
+  formatExperienceCountryNames,
+  type BenrosoCountryId
+} from '@/features/experiences/public/country-map-copy';
 import { localePath } from '@/lib/public/locale-path';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 type ExperienceDetailHeroProps = {
-  category: string | null;
+  countries: BenrosoCountryId[];
   imageAlt: string | null;
   imageUrl: string | null;
   locale: string;
@@ -22,7 +26,7 @@ type ExperienceDetailHeroProps = {
 };
 
 export function ExperienceDetailHero({
-  category,
+  countries,
   imageAlt,
   imageUrl,
   locale,
@@ -64,6 +68,8 @@ export function ExperienceDetailHero({
     { scope: sectionRef }
   );
 
+  const countryLabel = countries.length ? formatExperienceCountryNames(countries) : null;
+
   return (
     <section className='relative min-h-[min(78vh,720px)] overflow-hidden' ref={sectionRef}>
       <div className='absolute inset-0' ref={imageRef}>
@@ -100,8 +106,11 @@ export function ExperienceDetailHero({
           </nav>
 
           <div className='mx-auto max-w-4xl text-center' ref={contentRef}>
-            {category ? (
-              <p className='text-xs font-bold uppercase tracking-[0.2em] text-white'>{category}</p>
+            {countryLabel ? (
+              <p className='inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white'>
+                <Icons.mapPin className='size-3.5 shrink-0 text-[var(--benroso-gold)]' />
+                {countryLabel}
+              </p>
             ) : null}
             <h1 className='mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.06] text-white'>
               {title}

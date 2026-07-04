@@ -1,6 +1,14 @@
 'use client';
 
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import dynamic from 'next/dynamic';
+
+const ReactQueryDevtools = dynamic(
+  () =>
+    import('@tanstack/react-query-devtools').then((module) => ({
+      default: module.ReactQueryDevtools
+    })),
+  { ssr: false }
+);
 
 export function DashboardDevtools() {
   if (process.env.NODE_ENV !== 'development') return null;

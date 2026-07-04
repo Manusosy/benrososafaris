@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { localePath } from '@/lib/public/locale-path';
 
+import { BENROSO_OPERATING_COUNTRIES, type BenrosoCountryId } from './country-map-copy';
 import type {
   PublicExperience,
   PublicExperienceDetail,
@@ -17,6 +18,7 @@ type ExperienceTranslationRow = {
   experience:
     | {
         category: string | null;
+        countries: string[] | null;
         deleted_at: string | null;
         gallery: string[] | null;
         highlights: string[] | null;
@@ -27,6 +29,7 @@ type ExperienceTranslationRow = {
       }
     | Array<{
         category: string | null;
+        countries: string[] | null;
         deleted_at: string | null;
         gallery: string[] | null;
         highlights: string[] | null;
@@ -121,6 +124,17 @@ function mediaAlt(
   fallback: string
 ) {
   return unwrapRelation(asset)?.alt ?? fallback;
+}
+
+function parseCountries(value: unknown): BenrosoCountryId[] {
+  if (!Array.isArray(value)) return [];
+
+  const allowed = new Set(BENROSO_OPERATING_COUNTRIES.map((country) => country.id));
+
+  return value.filter(
+    (item): item is BenrosoCountryId =>
+      typeof item === 'string' && allowed.has(item as BenrosoCountryId)
+  );
 }
 
 function parseStringArray(value: unknown): string[] {
@@ -286,6 +300,7 @@ function mapExperienceRow(
 
   return {
     category: experience.category,
+    countries: parseCountries(experience.countries),
     href: localePath(locale, `/experiences/${row.slug}`),
     id: experience.id,
     imageAlt: cover.imageAlt,
@@ -303,7 +318,13 @@ function normalizeMenuGroup(
   return value === 'wildlife_safari' ? 'wildlife_safari' : 'top_experiences';
 }
 
-async function fetchPublishedTranslationRows(locale: string, category?: string) {
+async function fetchPublishedTranslationRows(
+  locale: string,
+  filters?: {
+    countries?: BenrosoCountryId[];
+    menuGroups?: PublicExperienceMenuItem['menuGroup'][];
+  }
+) {
   const supabase = await createClient();
 
   let query = supabase
@@ -317,7 +338,7 @@ async function fetchPublishedTranslationRows(locale: string, category?: string) 
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, menu_group, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, countries, menu_group, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -328,22 +349,38 @@ async function fetchPublishedTranslationRows(locale: string, category?: string) 
     .not('content', 'is', null)
     .order('title');
 
-  if (category) {
-    query = query.eq('experience.category', category);
+  const { data } = await query;
+  let rows = (data ?? []) as ExperienceTranslationRow[];
+
+  if (filters?.countries?.length) {
+    rows = rows.filter((row) => {
+      const experience = unwrapRelation(row.experience);
+      const countries = parseCountries(experience?.countries);
+      return filters.countries!.some((country) => countries.includes(country));
+    });
   }
 
-  const { data } = await query;
-  return (data ?? []) as ExperienceTranslationRow[];
+  if (filters?.menuGroups?.length) {
+    rows = rows.filter((row) => {
+      const experience = unwrapRelation(row.experience);
+      const menuGroup = normalizeMenuGroup(experience?.menu_group);
+      return filters.menuGroups!.includes(menuGroup);
+    });
+  }
+
+  return rows;
 }
 
 export async function listPublishedExperiences({
-  category,
-  locale
+  countries,
+  locale,
+  menuGroups
 }: {
-  category?: string;
+  countries?: BenrosoCountryId[];
   locale: string;
+  menuGroups?: PublicExperienceMenuItem['menuGroup'][];
 }): Promise<PublicExperience[]> {
-  const rows = await fetchPublishedTranslationRows(locale, category);
+  const rows = await fetchPublishedTranslationRows(locale, { countries, menuGroups });
   const galleryIds = rows.flatMap((row) => {
     const experience = unwrapRelation(row.experience);
     return parseStringArray(experience?.gallery);
@@ -410,6 +447,19 @@ export async function listExperienceMenuItems(locale: string): Promise<PublicExp
     );
 }
 
+export async function getExperienceCountries(locale: string): Promise<BenrosoCountryId[]> {
+  const experiences = await listPublishedExperiences({ locale });
+  const countries = new Set<BenrosoCountryId>();
+
+  for (const experience of experiences) {
+    for (const country of experience.countries) {
+      countries.add(country);
+    }
+  }
+
+  return BENROSO_OPERATING_COUNTRIES.map((country) => country.id).filter((id) => countries.has(id));
+}
+
 export async function getExperienceCategories(locale: string): Promise<string[]> {
   const experiences = await listPublishedExperiences({ locale });
   const categories = new Set<string>();
@@ -438,7 +488,7 @@ export async function getPublishedExperienceBySlug(
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, menu_group, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, countries, menu_group, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -468,6 +518,7 @@ export async function getPublishedExperienceBySlug(
   return {
     category: experience.category,
     contentHtml: parseContentHtml(row.content),
+    countries: parseCountries(experience.countries),
     experienceId: experience.id,
     faqs: parseFaqs(row.faqs),
     gallery,

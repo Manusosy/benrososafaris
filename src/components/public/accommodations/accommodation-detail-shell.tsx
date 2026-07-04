@@ -10,13 +10,17 @@ import {
   formatAvailabilityLabel,
   formatComfortLevelLabel
 } from '@/features/accommodations/public/constants';
-import type { PublicAccommodationDetail } from '@/features/accommodations/public/types';
+import type {
+  PublicAccommodation,
+  PublicAccommodationDetail
+} from '@/features/accommodations/public/types';
 import { localePath } from '@/lib/public/locale-path';
 import { cn } from '@/lib/utils';
 
 type AccommodationDetailShellProps = {
   accommodation: PublicAccommodationDetail;
   locale: string;
+  relatedAccommodations?: PublicAccommodation[];
 };
 
 function formatNightPrice(price?: number | null) {
@@ -35,7 +39,11 @@ function availabilityBadgeClass(availability: PublicAccommodationDetail['availab
   return 'border border-[var(--benroso-line)] bg-white text-[var(--benroso-ink)]';
 }
 
-export function AccommodationDetailShell({ accommodation, locale }: AccommodationDetailShellProps) {
+export function AccommodationDetailShell({
+  accommodation,
+  locale,
+  relatedAccommodations = []
+}: AccommodationDetailShellProps) {
   const price = formatNightPrice(accommodation.pricePerNight);
   const availabilityLabel = formatAvailabilityLabel(accommodation.availability);
   const comfortLabel = formatComfortLevelLabel(accommodation.comfortLevel);
@@ -44,6 +52,8 @@ export function AccommodationDetailShell({ accommodation, locale }: Accommodatio
     accommodation.country,
     accommodation.mapQuery
   );
+  const relatedAreaLabel =
+    accommodation.region || accommodation.country || accommodation.locationLabel;
 
   return (
     <main className='bg-[var(--benroso-ivory)]'>
@@ -159,6 +169,26 @@ export function AccommodationDetailShell({ accommodation, locale }: Accommodatio
           </div>
         </div>
       </section>
+
+      {relatedAccommodations.length ? (
+        <section className='border-t border-[var(--benroso-line)]'>
+          <div className='benroso-container py-10 md:py-12'>
+            <p className='benroso-eyebrow'>More Places To Stay</p>
+            <h2 className='benroso-heading mt-3 font-display text-[clamp(1.75rem,3.5vw,2.25rem)] leading-tight'>
+              More accommodations in {relatedAreaLabel}
+            </h2>
+            <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
+              Other lodges and camps in the same area, so you can compare comfort, location, and
+              availability before you enquire.
+            </p>
+            <div className='mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+              {relatedAccommodations.map((item) => (
+                <AccommodationCard item={item} key={item.id} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

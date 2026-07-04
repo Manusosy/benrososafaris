@@ -245,6 +245,28 @@ export async function listPublishedAccommodations(
     );
 }
 
+export async function getRelatedAccommodationsInRegion(
+  locale: string,
+  options: {
+    country?: string | null;
+    excludeId: string;
+    limit?: number;
+    region?: string | null;
+  }
+): Promise<PublicAccommodation[]> {
+  const { country, excludeId, limit = 6, region } = options;
+  const filters: AccommodationListFilters = { locale };
+
+  if (region) {
+    filters.regions = [region];
+  } else if (country) {
+    filters.countries = [country];
+  }
+
+  const items = await listPublishedAccommodations(filters);
+  return items.filter((item) => item.id !== excludeId).slice(0, limit);
+}
+
 export async function getPublishedAccommodationBySlug(
   locale: string,
   slug: string
