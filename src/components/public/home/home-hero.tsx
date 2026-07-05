@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { localePath } from '@/lib/public/locale-path';
 import { youtubeVideoId } from '@/lib/public/page-heroes';
 import type { HeroSlide, PageHero } from '@/lib/public/types';
@@ -170,20 +171,20 @@ export function HomeHero({
               {heading}
             </h1>
             <p className='mt-6 max-w-2xl text-lg leading-8 text-white/90'>{subheading}</p>
-            <div className='mt-8 flex flex-wrap gap-4'>
+            <BenrosoButtonGroup className='mt-8'>
               <BenrosoButton
                 className='border-[var(--benroso-lime)] bg-[var(--benroso-lime)] text-white [--benroso-fill:var(--benroso-primary)]'
                 href={primaryCtaHref}
                 variant='accent'
               >
-                <Icons.compass className='h-4 w-4' />
+                <Icons.compass className='h-4 w-4 shrink-0' />
                 {primaryCtaLabel}
               </BenrosoButton>
               <BenrosoButton href={toursHref} variant='gold-outline'>
                 View Safari Tours
-                <Icons.arrowRight className='h-4 w-4' />
+                <Icons.arrowRight className='h-4 w-4 shrink-0' />
               </BenrosoButton>
-            </div>
+            </BenrosoButtonGroup>
           </div>
         </div>
       </div>

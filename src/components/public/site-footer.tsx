@@ -107,18 +107,16 @@ export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterPr
 
       {/* Copyright + legal */}
       <div className='border-t border-white/10 bg-[#263528]'>
-        <div className='benroso-container flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between'>
-          <p className='text-xs leading-5 text-white/55'>
+        <div className='benroso-container flex flex-col items-center gap-4 py-5 text-center'>
+          <p className='max-w-2xl text-xs leading-5 text-white/55'>
             © {new Date().getFullYear()} {siteSettings.companyName}. All rights reserved.
             {siteSettings.postalAddress ? (
-              <span className='mt-1 block md:mt-0 md:inline md:before:mx-2 md:before:text-white/30 md:before:content-["|"]'>
-                {siteSettings.postalAddress}
-              </span>
+              <span className='mt-1 block'>{siteSettings.postalAddress}</span>
             ) : null}
           </p>
           {policyColumn ? (
             <nav aria-label='Legal policies'>
-              <ul className='flex flex-wrap gap-x-4 gap-y-2'>
+              <ul className='flex flex-wrap items-center justify-center gap-x-4 gap-y-2'>
                 {policyColumn.links.map((link) => (
                   <li key={link.href}>
                     <Link

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { FaqSection } from '@/components/public/faq-section';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { getFleetVehicleBySlug } from '@/lib/public/fleet';
 import { localePath } from '@/lib/public/locale-path';
@@ -216,22 +217,18 @@ export default async function FleetVehicleDetailPage({ params }: FleetVehiclePag
               Share your route, dates, group size, and comfort expectations. Our team will confirm
               the best vehicle match for the safari.
             </p>
-            <div className='mt-6 space-y-3'>
-              <BenrosoButton
-                className='w-full'
-                href={localePath(locale, '/contact')}
-                variant='gold'
-              >
+            <BenrosoButtonGroup className='mt-6'>
+              <BenrosoButton href={localePath(locale, '/contact')} variant='gold'>
                 Enquire Now
               </BenrosoButton>
               <BenrosoButton
-                className='w-full border-white/35'
+                className='border-white/35'
                 href={localePath(locale, '/tours')}
                 variant='gold-outline'
               >
                 View Safari Tours
               </BenrosoButton>
-            </div>
+            </BenrosoButtonGroup>
           </aside>
         </div>
       </section>

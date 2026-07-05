@@ -580,11 +580,11 @@ export function TourInquiryPanel({
         <p className='mt-4 text-sm leading-6 text-[var(--benroso-muted)]'>
           Request the exact quote for your dates, comfort level, and number of travelers.
         </p>
-        <div className='mt-5 space-y-3'>
+        <div className='mt-5 benroso-dual-actions'>
           <button
             aria-expanded={showForm}
             className={cn(
-              'inline-flex w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors',
+              'inline-flex items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors',
               showForm
                 ? 'border border-[var(--benroso-primary)] bg-[var(--benroso-primary)] text-white'
                 : 'border border-[var(--benroso-lime)] bg-[var(--benroso-lime)] text-[var(--benroso-primary-dark)] hover:border-[var(--benroso-lime-hover)] hover:bg-[var(--benroso-lime-hover)]'
@@ -598,7 +598,7 @@ export function TourInquiryPanel({
             />
           </button>
           <a
-            className='inline-flex w-full items-center justify-center rounded-[var(--benroso-button-radius)] border border-[var(--benroso-line)] px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary)] transition hover:bg-[var(--benroso-ivory)]'
+            className='inline-flex items-center justify-center rounded-[var(--benroso-button-radius)] border border-[var(--benroso-line)] px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary)] transition hover:bg-[var(--benroso-ivory)]'
             href='#price-seasons'
           >
             View Cost Tables

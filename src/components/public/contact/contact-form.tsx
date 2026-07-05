@@ -283,12 +283,16 @@ export function ContactForm({ locale, sidebar, sourcePath }: ContactFormProps) {
       <div className='benroso-contact-primary'>
         <div className='benroso-contact-tabs'>
           <div className='border-b border-[var(--benroso-line)] pb-1'>
-            <div aria-label='Enquiry type' className='flex flex-wrap gap-2' role='tablist'>
+            <div
+              aria-label='Enquiry type'
+              className='flex flex-nowrap gap-1.5 sm:gap-2'
+              role='tablist'
+            >
               {ENQUIRY_TABS.map((tab) => (
                 <button
                   aria-selected={activeType === tab.id}
                   className={cn(
-                    'rounded-[var(--benroso-button-radius)] px-4 py-2.5 text-sm font-medium transition-colors',
+                    'min-w-0 flex-1 rounded-[var(--benroso-button-radius)] px-2 py-2 text-center text-[11px] font-medium leading-tight transition-colors sm:px-4 sm:py-2.5 sm:text-sm sm:leading-normal',
                     activeType === tab.id
                       ? 'bg-[#3C5142] text-white'
                       : 'border border-[var(--benroso-line)] bg-white text-[var(--benroso-muted)] hover:border-[var(--benroso-primary)]/30 hover:text-[var(--benroso-heading)]'

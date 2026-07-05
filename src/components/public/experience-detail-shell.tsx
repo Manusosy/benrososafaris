@@ -11,6 +11,7 @@ import { ExperienceTripsExplorer } from '@/components/public/experiences/experie
 import { SectionAnchorNav } from '@/components/public/section-anchor-nav';
 import { SectionHeader } from '@/components/public/ui/section-header';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { localePath } from '@/lib/public/locale-path';
 import { buildExperienceGuideHeading } from '@/features/experiences/public/guide-heading';
 import type {
@@ -240,12 +241,12 @@ export function ExperienceDetailShell({
                 Tell us your month, group size, and comfort level. We will match the right package
                 table with a route that makes sense.
               </p>
-              <div className='mt-7 flex flex-wrap justify-center gap-4'>
+              <BenrosoButtonGroup align='center' className='mt-7'>
                 <BenrosoButton href={localePath(locale, '/contact')}>Plan My Safari</BenrosoButton>
                 <BenrosoButton href={localePath(locale, '/experiences')} variant='accent-outline'>
                   All Experiences
                 </BenrosoButton>
-              </div>
+              </BenrosoButtonGroup>
             </div>
           </div>
         </ExperienceScrollReveal>

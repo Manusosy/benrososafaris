@@ -146,7 +146,7 @@ export function NationalParkCard({
         ) : null}
 
         {item.bestTimeSummary ? (
-          <p className='mt-4 flex gap-2 rounded-[var(--benroso-radius)] bg-[var(--benroso-ivory)] px-3 py-2 text-sm leading-6 text-[var(--benroso-ink)]'>
+          <p className='mt-3 flex gap-2 text-sm leading-6 text-[var(--benroso-muted)]'>
             <Icons.calendar className='mt-0.5 size-4 shrink-0 text-[var(--benroso-gold)]' />
             <span>{item.bestTimeSummary}</span>
           </p>
@@ -173,23 +173,12 @@ export function NationalParkCard({
           </div>
         ) : null}
 
-        <div
-          className={cn(
-            'mt-auto border-t border-[var(--benroso-line)] pt-4',
-            isList ? 'flex flex-wrap gap-3' : 'grid grid-cols-2 gap-2'
-          )}
-        >
-          <BenrosoButton
-            className={cn(!isList && 'w-full justify-center px-2')}
-            href={href}
-            size='sm'
-            variant='accent-outline'
-          >
+        <div className='benroso-dual-actions mt-auto border-t border-[var(--benroso-line)] pt-4'>
+          <BenrosoButton href={href} size='sm' variant='accent-outline'>
             Explore Park
             <Icons.arrowRight className='h-3.5 w-3.5' />
           </BenrosoButton>
           <BenrosoButton
-            className={cn(!isList && 'w-full justify-center px-2')}
             href={toursHref}
             size='sm'
             variant={item.tourCount ? 'accent' : 'accent-outline'}

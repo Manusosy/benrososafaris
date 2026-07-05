@@ -1,6 +1,7 @@
 import { Icons } from '@/components/icons';
 import { TrustedChecklist } from '@/components/public/home/home-trusted-checklist';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { FLEET_FEATURE_ITEMS } from '@/lib/public/fleet-content';
 import { localePath } from '@/lib/public/locale-path';
 
@@ -41,20 +42,16 @@ export function FleetFeatures({ locale }: FleetFeaturesProps) {
                 <p className='benroso-body mt-3 text-sm leading-7 text-[var(--benroso-muted)]'>
                   Share your dates and travel style. We will match the right vehicle and guide.
                 </p>
-                <div className='mt-6 flex flex-col gap-3'>
-                  <BenrosoButton className='group w-full' href={contactHref} variant='primary'>
-                    <Icons.mail className='h-4 w-4 transition-transform duration-300 group-hover:scale-110' />
+                <BenrosoButtonGroup className='mt-6'>
+                  <BenrosoButton className='group' href={contactHref} variant='primary'>
+                    <Icons.mail className='h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110' />
                     Plan My Safari
                   </BenrosoButton>
-                  <BenrosoButton
-                    className='group w-full'
-                    href={guidesHref}
-                    variant='accent-outline'
-                  >
-                    <Icons.teams className='h-4 w-4 transition-transform duration-300 group-hover:scale-110' />
+                  <BenrosoButton className='group' href={guidesHref} variant='accent-outline'>
+                    <Icons.teams className='h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110' />
                     Meet Our Guides
                   </BenrosoButton>
-                </div>
+                </BenrosoButtonGroup>
               </div>
             </aside>
           </div>

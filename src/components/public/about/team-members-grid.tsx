@@ -36,7 +36,7 @@ export function TeamMemberDetailDialog({
       <DialogContent
         className={cn(
           PUBLIC_LIGHT_DIALOG,
-          'team-member-dialog max-h-[min(90vh,620px)] w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-[1.75rem] border border-[var(--benroso-line)] p-0 shadow-2xl sm:max-w-4xl',
+          'team-member-dialog max-h-[90vh] w-[calc(100%-2rem)] gap-0 overflow-y-auto rounded-md border border-[var(--benroso-line)] p-0 shadow-2xl sm:max-w-4xl md:overflow-hidden',
           '[&>button]:z-20 [&>button]:text-[var(--benroso-primary-dark)]'
         )}
       >
@@ -45,9 +45,9 @@ export function TeamMemberDetailDialog({
         </DialogTitle>
 
         {member ? (
-          <div className='grid max-h-[min(90vh,620px)] overflow-hidden md:grid-cols-[minmax(260px,300px)_1fr]'>
+          <div className='grid md:max-h-[min(90vh,620px)] md:grid-cols-[minmax(260px,300px)_1fr] md:overflow-hidden'>
             <aside className='relative shrink-0 bg-[var(--benroso-ivory)] px-5 pb-6 pt-7 md:px-6 md:pt-8'>
-              <div className='pointer-events-none absolute inset-x-0 top-0 h-14 rounded-t-[1.75rem] bg-gradient-to-b from-[var(--benroso-primary-dark)]/8 to-transparent' />
+              <div className='pointer-events-none absolute inset-x-0 top-0 h-14 rounded-t-md bg-gradient-to-b from-[var(--benroso-primary-dark)]/8 to-transparent' />
 
               <div className='relative mx-auto w-full max-w-[200px]'>
                 <div className='relative aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-[var(--benroso-radius)] bg-white shadow-[0_16px_40px_rgba(47,64,52,0.14)] ring-1 ring-[var(--benroso-line)]'>
@@ -101,7 +101,7 @@ export function TeamMemberDetailDialog({
               </div>
             </aside>
 
-            <section className='flex min-h-0 flex-col bg-white md:border-l md:border-[var(--benroso-line)]'>
+            <section className='flex min-w-0 flex-col bg-white md:min-h-0 md:border-l md:border-[var(--benroso-line)]'>
               <div className='shrink-0 border-b border-[var(--benroso-line)] px-5 py-5 md:px-7'>
                 <p className='text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--benroso-accent)]'>
                   Profile
@@ -120,7 +120,7 @@ export function TeamMemberDetailDialog({
                 ) : null}
               </div>
 
-              <div className='benroso-body min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-7'>
+              <div className='benroso-body px-5 py-5 md:min-h-0 md:flex-1 md:overflow-y-auto md:px-7'>
                 <p className='text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--benroso-muted)]'>
                   Bio
                 </p>

@@ -57,14 +57,16 @@ export function NationalParksResults({ locale, parks }: NationalParksResultsProp
   return (
     <>
       <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <p className='benroso-eyebrow'>Safari Parks</p>
-          <p className='mt-2 text-sm font-medium text-[var(--benroso-muted)]'>{countLabel}</p>
+        <div className='min-w-0 flex-1'>
+          <div className='flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1'>
+            <h2 className='benroso-heading font-display text-2xl'>National Parks & Reserves</h2>
+            <span className='text-sm text-[var(--benroso-muted)]'>{countLabel}</span>
+          </div>
           <p className='mt-1 text-xs text-[var(--benroso-muted)]'>
             Select up to two parks to compare wildlife, seasonality, and safari availability.
           </p>
         </div>
-        <NationalParkViewToggle />
+        <NationalParkViewToggle className='shrink-0' />
       </div>
 
       {compareParks.length === MAX_COMPARE ? (

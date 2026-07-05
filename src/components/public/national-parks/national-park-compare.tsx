@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { localePath } from '@/lib/public/locale-path';
 import type { ParkListItem } from '@/lib/public/national-parks';
 import { formatTourPrice } from '@/lib/public/tour-format';
@@ -77,7 +78,7 @@ function CompareColumn({ locale, park }: { locale: string; park: ParkListItem })
         <CompareRow label='Established' value={formatEstablished(park.establishedYear)} />
         <CompareRow label='Safaris' value={formatSafariStats(park)} />
       </div>
-      <div className='mt-5 flex flex-wrap gap-3'>
+      <BenrosoButtonGroup className='mt-5'>
         <BenrosoButton
           href={localePath(locale, `/national-parks/${park.slug}`)}
           size='sm'
@@ -92,7 +93,7 @@ function CompareColumn({ locale, park }: { locale: string; park: ParkListItem })
         >
           View Safaris
         </BenrosoButton>
-      </div>
+      </BenrosoButtonGroup>
     </div>
   );
 }

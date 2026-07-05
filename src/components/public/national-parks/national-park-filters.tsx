@@ -103,7 +103,7 @@ export function NationalParkFilters({ active, facets, locale }: NationalParkFilt
   return (
     <div className='space-y-5'>
       <div>
-        <p className='benroso-eyebrow text-[var(--benroso-primary)]'>Filter Parks</p>
+        <h2 className='benroso-heading font-display text-xl'>Filter Parks</h2>
         {!hasFacetValues ? (
           <p className='mt-2 text-sm leading-6 text-[var(--benroso-muted)]'>
             Published park filters will appear here as park guides are added.

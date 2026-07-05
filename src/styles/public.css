@@ -83,6 +83,63 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   contain-intrinsic-size: auto 500px;
 }
 
+.public-site .benroso-dual-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.public-site .benroso-dual-actions--center {
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-dual-actions {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+.public-site .benroso-dual-actions > a,
+.public-site .benroso-dual-actions > button {
+  min-width: 0;
+  flex: 1 1 0;
+  justify-content: center;
+  padding-inline: 0.625rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  min-height: 2.25rem;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-dual-actions > a,
+  .public-site .benroso-dual-actions > button {
+    flex: 0 1 auto;
+    padding-inline: 1.5rem;
+    font-size: 0.875rem;
+    letter-spacing: 0.08em;
+    min-height: 2.75rem;
+  }
+}
+
+.public-site .benroso-dual-actions > a svg,
+.public-site .benroso-dual-actions > button svg {
+  flex-shrink: 0;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-dual-actions > a svg,
+  .public-site .benroso-dual-actions > button svg {
+    height: 1rem;
+    width: 1rem;
+  }
+}
+
 .public-site .benroso-eyebrow {
   color: var(--benroso-gold);
   font-size: 0.75rem;

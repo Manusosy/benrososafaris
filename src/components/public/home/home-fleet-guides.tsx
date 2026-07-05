@@ -4,6 +4,7 @@ import Image from 'next/image';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { ScrollReveal } from '@/components/public/ui/scroll-reveal';
 import { TrustedChecklist } from '@/components/public/home/home-trusted-checklist';
 import { Slider } from '@/components/public/ui/slider';
@@ -52,13 +53,13 @@ export function HomeFleetGuides({ locale }: { locale: string }) {
               halfway through the trip, and no strangers turning up on day three.
             </p>
             <TrustedChecklist items={FLEET_HIGHLIGHTS} />
-            <div className='mt-8 flex flex-wrap gap-4'>
+            <BenrosoButtonGroup className='mt-8'>
               <BenrosoButton
                 className='group'
                 href={localePath(locale, '/our-fleet')}
                 variant='primary'
               >
-                <Icons.fleet className='h-4 w-4 transition-transform duration-500 ease-out group-hover:-translate-y-0.5 group-hover:scale-110' />
+                <Icons.fleet className='h-4 w-4 shrink-0 transition-transform duration-500 ease-out group-hover:-translate-y-0.5 group-hover:scale-110' />
                 View Our Fleet
               </BenrosoButton>
               <BenrosoButton
@@ -66,11 +67,11 @@ export function HomeFleetGuides({ locale }: { locale: string }) {
                 href={localePath(locale, '/about#team')}
                 variant='accent-outline'
               >
-                <Icons.teams className='h-4 w-4 transition-transform duration-500 ease-out group-hover:scale-110' />
+                <Icons.teams className='h-4 w-4 shrink-0 transition-transform duration-500 ease-out group-hover:scale-110' />
                 Meet Our Guides
-                <Icons.arrowRight className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
+                <Icons.arrowRight className='h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1' />
               </BenrosoButton>
-            </div>
+            </BenrosoButtonGroup>
           </ScrollReveal>
 
           <ScrollReveal className='relative' from='right'>

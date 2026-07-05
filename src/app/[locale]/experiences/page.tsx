@@ -5,6 +5,7 @@ import { ExperienceListingIntro } from '@/components/public/experiences/experien
 import { ExperiencesListingSection } from '@/components/public/experiences/experiences-listing-section';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import {
   buildExperienceListingIntro,
@@ -93,14 +94,14 @@ export default async function ExperiencesPage({ params, searchParams }: Experien
         title='Safari Experiences'
         titleTone='white'
       >
-        <div className='mt-8 flex flex-wrap justify-center gap-4'>
+        <BenrosoButtonGroup align='center' className='mt-8'>
           <BenrosoButton href={localePath(locale, '/contact')} variant='gold'>
             Help Me Plan
           </BenrosoButton>
           <BenrosoButton href='#experiences-list' variant='gold-outline'>
             View Experiences
           </BenrosoButton>
-        </div>
+        </BenrosoButtonGroup>
       </PublicPageHero>
       <div className='bg-white'>
         <ExperienceListingIntro intro={intro} />

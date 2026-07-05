@@ -248,72 +248,81 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
 
         {mobileOpen ? (
           <div className='border-t border-white/10 bg-[var(--benroso-primary)] lg:hidden'>
-            <div className='benroso-container max-h-[min(70vh,520px)] overflow-y-auto py-4'>
-              <a
-                aria-label='Help me plan my safari on WhatsApp'
-                className='group benroso-fill-hover mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-lime)] bg-transparent px-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--benroso-lime)] transition-colors hover:text-[var(--benroso-primary-dark)]'
-                href={whatsappHref}
-                onClick={() => setMobileOpen(false)}
-                rel='noopener noreferrer'
-                target='_blank'
-              >
-                <span>Help Me Plan</span>
-                <Icons.whatsapp aria-hidden className='h-5 w-5 shrink-0' />
-              </a>
+            <div className='benroso-container flex max-h-[min(calc(100dvh-var(--benroso-header-h)),560px)] flex-col'>
+              <div className='flex-1 overflow-y-auto overscroll-contain py-3'>
+                <nav aria-label='Mobile primary'>
+                  {navOnlyItems.map((item) => {
+                    const expanded = openGroup === item.label;
+                    const hasChildren = hasNavChildren(item);
+                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-              {navOnlyItems.map((item) => {
-                const expanded = openGroup === item.label;
-                const hasChildren = hasNavChildren(item);
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-                return (
-                  <div className='border-b border-white/10 py-1' key={item.label}>
-                    <div className='flex items-center justify-between gap-3'>
-                      <Link
-                        className={cn(
-                          'flex-1 py-3 text-[15px] font-normal uppercase tracking-normal transition-colors',
-                          isActive
-                            ? 'text-[var(--benroso-lime)]'
-                            : 'text-white hover:text-[var(--benroso-lime)]'
-                        )}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                      {hasChildren ? (
-                        <button
-                          aria-expanded={expanded}
-                          aria-label={`Toggle ${item.label}`}
-                          className='inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--benroso-button-radius)] text-white hover:text-white'
-                          onClick={() => setOpenGroup(expanded ? null : item.label)}
-                          type='button'
-                        >
-                          <Icons.chevronDown
-                            className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')}
-                          />
-                        </button>
-                      ) : null}
-                    </div>
-                    {hasChildren && expanded ? (
-                      <div className='space-y-3 pb-3 pl-3'>
-                        {item.variant === 'mega' && destinationsMenu ? (
-                          <DestinationsMobileMenu
-                            menu={destinationsMenu}
-                            onNavigate={() => setMobileOpen(false)}
-                            viewAllHref={item.href}
-                          />
-                        ) : item.sections?.length ? (
-                          item.sections.map((section) => (
-                            <div key={`mobile-${item.label}-${section.label}`}>
-                              <p className='pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--benroso-lime)]'>
-                                {section.label}
-                              </p>
+                    return (
+                      <div className='border-b border-white/10 last:border-b-0' key={item.label}>
+                        <div className='flex items-center justify-between gap-3'>
+                          <Link
+                            className={cn(
+                              'flex-1 py-3.5 text-[15px] font-normal uppercase tracking-normal transition-colors',
+                              isActive
+                                ? 'text-[var(--benroso-lime)]'
+                                : 'text-white hover:text-[var(--benroso-lime)]'
+                            )}
+                            href={item.href}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                          {hasChildren ? (
+                            <button
+                              aria-expanded={expanded}
+                              aria-label={`Toggle ${item.label}`}
+                              className='inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--benroso-button-radius)] border border-white/15 text-white transition-colors hover:border-white/30 hover:text-white'
+                              onClick={() => setOpenGroup(expanded ? null : item.label)}
+                              type='button'
+                            >
+                              <Icons.chevronDown
+                                className={cn(
+                                  'h-4 w-4 transition-transform',
+                                  expanded && 'rotate-180'
+                                )}
+                              />
+                            </button>
+                          ) : null}
+                        </div>
+                        {hasChildren && expanded ? (
+                          <div className='space-y-3 pb-3 pl-3'>
+                            {item.variant === 'mega' && destinationsMenu ? (
+                              <DestinationsMobileMenu
+                                menu={destinationsMenu}
+                                onNavigate={() => setMobileOpen(false)}
+                                viewAllHref={item.href}
+                              />
+                            ) : item.sections?.length ? (
+                              item.sections.map((section) => (
+                                <div key={`mobile-${item.label}-${section.label}`}>
+                                  <p className='pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--benroso-lime)]'>
+                                    {section.label}
+                                  </p>
+                                  <ul className='space-y-0.5'>
+                                    {section.items.map((child) => (
+                                      <li key={`mobile-${child.href}`}>
+                                        <Link
+                                          className='block py-2 text-sm text-white/85 transition-colors hover:text-white'
+                                          href={child.href}
+                                          onClick={() => setMobileOpen(false)}
+                                        >
+                                          {child.label}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))
+                            ) : (
                               <ul className='space-y-0.5'>
-                                {section.items.map((child) => (
+                                {(item.items ?? []).map((child) => (
                                   <li key={`mobile-${child.href}`}>
                                     <Link
-                                      className='block py-2 text-sm text-white/85 transition-colors hover:text-white'
+                                      className='block py-2.5 text-sm text-white/85 transition-colors hover:text-white'
                                       href={child.href}
                                       onClick={() => setMobileOpen(false)}
                                     >
@@ -322,43 +331,49 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                                   </li>
                                 ))}
                               </ul>
-                            </div>
-                          ))
-                        ) : (
-                          <ul className='space-y-0.5'>
-                            {(item.items ?? []).map((child) => (
-                              <li key={`mobile-${child.href}`}>
-                                <Link
-                                  className='block py-2.5 text-sm text-white/85 transition-colors hover:text-white'
-                                  href={child.href}
-                                  onClick={() => setMobileOpen(false)}
-                                >
-                                  {child.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                            )}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </nav>
+              </div>
 
-              <div className='mt-4 space-y-2 border-t border-white/10 pt-4 text-sm text-white/85'>
+              <div className='shrink-0 space-y-3 border-t border-white/10 bg-[var(--benroso-primary-dark)]/40 py-4'>
+                <div className='space-y-2.5 text-sm text-white/85'>
+                  <a
+                    className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
+                    href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
+                  >
+                    <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
+                    {siteSettings.phoneSecondary}
+                  </a>
+                  <a
+                    className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
+                    href={`tel:${phoneHref(siteSettings.phonePrimary)}`}
+                  >
+                    <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
+                    {siteSettings.phonePrimary}
+                  </a>
+                  <a
+                    className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
+                    href={`mailto:${siteSettings.email}`}
+                  >
+                    <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
+                    <span className='truncate'>{siteSettings.email}</span>
+                  </a>
+                </div>
                 <a
-                  className='flex items-center gap-2 hover:text-white'
-                  href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
+                  aria-label='Help me plan my safari on WhatsApp'
+                  className='group benroso-fill-hover flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-lime)] bg-transparent px-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--benroso-lime)] transition-colors hover:text-[var(--benroso-primary-dark)]'
+                  href={whatsappHref}
+                  onClick={() => setMobileOpen(false)}
+                  rel='noopener noreferrer'
+                  target='_blank'
                 >
-                  <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
-                  {siteSettings.phoneSecondary}
-                </a>
-                <a
-                  className='flex items-center gap-2 hover:text-white'
-                  href={`mailto:${siteSettings.email}`}
-                >
-                  <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
-                  {siteSettings.email}
+                  <span>Help Me Plan</span>
+                  <Icons.whatsapp aria-hidden className='h-5 w-5 shrink-0' />
                 </a>
               </div>
             </div>

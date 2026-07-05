@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { TourPricingTable } from '@/components/public/tours/tour-pricing-table';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
@@ -120,16 +121,16 @@ export default async function SafariPackageDetailPage({ params }: SafariPackageD
                 Request the exact quote for your dates, preferred comfort level, and number of
                 travelers.
               </p>
-              <div className='mt-5 space-y-3'>
-                <BenrosoButton className='w-full' href={localePath(locale, '/contact')}>
+              <BenrosoButtonGroup className='mt-5'>
+                <BenrosoButton href={localePath(locale, '/contact')}>
                   Enquire About Package
                 </BenrosoButton>
                 {linkedTour ? (
-                  <BenrosoButton className='w-full' href={linkedTour.href} variant='accent-outline'>
+                  <BenrosoButton href={linkedTour.href} variant='accent-outline'>
                     View Full Trip
                   </BenrosoButton>
                 ) : null}
-              </div>
+              </BenrosoButtonGroup>
             </aside>
           </div>
         </div>

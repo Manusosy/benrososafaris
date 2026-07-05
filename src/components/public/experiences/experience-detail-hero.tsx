@@ -8,6 +8,7 @@ import { useGSAP } from '@gsap/react';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import {
   formatExperienceCountryNames,
   type BenrosoCountryId
@@ -118,7 +119,7 @@ export function ExperienceDetailHero({
             {summary ? (
               <p className='mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/88'>{summary}</p>
             ) : null}
-            <div className='mt-8 flex flex-wrap justify-center gap-4'>
+            <BenrosoButtonGroup align='center' className='mt-8'>
               <BenrosoButton className='group' href={localePath(locale, '/contact')}>
                 Let&apos;s Start Planning
                 <Icons.arrowRight className='h-4 w-4 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100' />
@@ -131,7 +132,7 @@ export function ExperienceDetailHero({
                 View Tours
                 <Icons.arrowRight className='h-4 w-4 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100' />
               </BenrosoButton>
-            </div>
+            </BenrosoButtonGroup>
           </div>
         </div>
       </div>

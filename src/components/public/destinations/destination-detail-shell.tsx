@@ -9,6 +9,33 @@ import type { PublicDestinationDetail } from '@/lib/public/types';
 const SECTION_HEADING =
   'benroso-heading font-display text-2xl leading-tight tracking-tight text-[var(--benroso-heading)]';
 
+type DestinationQuickFactsProps = {
+  facts: Array<{ label: string; value: string | null }>;
+};
+
+function DestinationQuickFacts({ facts }: DestinationQuickFactsProps) {
+  if (!facts.length) return null;
+
+  return (
+    <div className='benroso-contact-credentials-box'>
+      <h2 className='benroso-heading font-display text-lg'>Quick facts</h2>
+      <dl className='mt-4 space-y-3'>
+        {facts.map((fact) => (
+          <div
+            className='flex items-start justify-between gap-3 border-b border-[var(--benroso-line)] pb-3 last:border-b-0 last:pb-0'
+            key={fact.label}
+          >
+            <dt className='text-sm text-[var(--benroso-muted)]'>{fact.label}</dt>
+            <dd className='text-right text-sm font-semibold text-[var(--benroso-ink)]'>
+              {fact.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 type DestinationDetailShellProps = {
   destination: PublicDestinationDetail;
   locale: string;
@@ -51,7 +78,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
           </nav>
 
           <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
-            <div>
+            <div className='min-w-0'>
               <AccommodationGallery images={galleryImages} title={destination.name} />
 
               <div className='mt-6 flex flex-wrap gap-2'>
@@ -79,26 +106,16 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
               ) : null}
 
               {destination.summary ? (
-                <p className='mt-5 text-lg leading-8 text-[var(--benroso-muted)]'>
+                <p className='mt-5 text-base leading-8 text-[var(--benroso-muted)] sm:text-lg'>
                   {destination.summary}
                 </p>
               ) : null}
-
-              {/* Inquiry panel inline on mobile, sidebar on desktop. */}
-              <div className='mt-10 lg:hidden'>
-                <DestinationInquiryPanel
-                  country={destination.country}
-                  destinationName={destination.name}
-                  destinationSlug={destination.slug}
-                  locale={locale}
-                />
-              </div>
 
               {destination.descriptionHtml ? (
                 <section className='mt-10 scroll-mt-36' id='why-go'>
                   <h2 className={SECTION_HEADING}>About {destination.name}</h2>
                   <div
-                    className='benroso-legal-prose mt-4'
+                    className='benroso-legal-prose mt-4 max-w-full break-words [&_img]:max-w-full [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto'
                     dangerouslySetInnerHTML={{ __html: destination.descriptionHtml }}
                   />
                 </section>
@@ -148,46 +165,29 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
                   />
                 </div>
               ) : null}
-
-              <div className='mt-10'>
-                <a
-                  className='inline-flex items-center gap-2 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
-                  href={localePath(locale, '/destinations')}
-                >
-                  <Icons.chevronLeft className='size-4' />
-                  Back to all destinations
-                </a>
-              </div>
             </div>
 
-            <aside className='hidden lg:block'>
-              <div className='benroso-contact-sidebar-inner sticky top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)] space-y-8'>
+            <aside className='min-w-0'>
+              <div className='space-y-8 lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]'>
                 <DestinationInquiryPanel
                   country={destination.country}
                   destinationName={destination.name}
                   destinationSlug={destination.slug}
                   locale={locale}
                 />
-                {facts.length ? (
-                  <div className='benroso-contact-credentials-box'>
-                    <h2 className='benroso-heading font-display text-lg'>Quick facts</h2>
-                    <dl className='mt-4 space-y-3'>
-                      {facts.map((fact) => (
-                        <div
-                          className='flex items-start justify-between gap-3 border-b border-[var(--benroso-line)] pb-3 last:border-b-0 last:pb-0'
-                          key={fact.label}
-                        >
-                          <dt className='text-sm text-[var(--benroso-muted)]'>{fact.label}</dt>
-                          <dd className='text-right text-sm font-semibold text-[var(--benroso-ink)]'>
-                            {fact.value}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                ) : null}
+                <DestinationQuickFacts facts={facts} />
               </div>
             </aside>
+          </div>
+
+          <div className='mt-10'>
+            <a
+              className='inline-flex items-center gap-2 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+              href={localePath(locale, '/destinations')}
+            >
+              <Icons.chevronLeft className='size-4' />
+              Back to all destinations
+            </a>
           </div>
         </div>
       </section>
