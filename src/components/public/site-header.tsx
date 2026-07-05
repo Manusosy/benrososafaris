@@ -249,7 +249,7 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
         {mobileOpen ? (
           <div className='border-t border-white/10 bg-[var(--benroso-primary)] lg:hidden'>
             <div className='benroso-container flex max-h-[min(calc(100dvh-var(--benroso-header-h)),560px)] flex-col'>
-              <div className='flex-1 overflow-y-auto overscroll-contain py-3'>
+              <div className='flex-1 overflow-y-auto overscroll-contain bg-[var(--benroso-primary)] py-3'>
                 <nav aria-label='Mobile primary'>
                   {navOnlyItems.map((item) => {
                     const expanded = openGroup === item.label;
@@ -340,22 +340,26 @@ export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }:
                 </nav>
               </div>
 
-              <div className='shrink-0 space-y-3 border-t border-white/10 bg-[var(--benroso-primary-dark)]/40 py-4'>
-                <div className='space-y-2.5 text-sm text-white/85'>
-                  <a
-                    className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
-                    href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
-                  >
+              <div className='shrink-0 space-y-3 border-t border-white/10 bg-[var(--benroso-primary-dark)] py-4'>
+                <div className='space-y-2.5 text-sm leading-6 text-white/85'>
+                  <div className='flex min-h-10 items-center gap-2.5 px-1'>
                     <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
-                    {siteSettings.phoneSecondary}
-                  </a>
-                  <a
-                    className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
-                    href={`tel:${phoneHref(siteSettings.phonePrimary)}`}
-                  >
-                    <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
-                    {siteSettings.phonePrimary}
-                  </a>
+                    <span className='text-white/90'>
+                      <a
+                        className='hover:text-white'
+                        href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
+                      >
+                        {siteSettings.phoneSecondary}
+                      </a>
+                      <span className='px-1 text-white/50'>/</span>
+                      <a
+                        className='hover:text-white'
+                        href={`tel:${phoneHref(siteSettings.phonePrimary)}`}
+                      >
+                        {siteSettings.phonePrimary}
+                      </a>
+                    </span>
+                  </div>
                   <a
                     className='flex min-h-10 items-center gap-2.5 rounded-[var(--benroso-button-radius)] px-1 transition-colors hover:text-white'
                     href={`mailto:${siteSettings.email}`}
