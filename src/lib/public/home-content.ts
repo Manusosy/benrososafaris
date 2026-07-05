@@ -88,6 +88,33 @@ export const HOME_SHOWCASE_ITEMS: HomeShowcaseItem[] = [
   }
 ];
 
+/** Maps homepage showcase slide ids to published experience slugs. */
+const SHOWCASE_EXPERIENCE_SLUGS: Record<string, string> = {
+  'balloon-safari': 'hot-air-baloon-safaris',
+  'big-five': 'big-5-safaris',
+  'classic-game-drive': '4x4-safari-tours',
+  'cultural-maasai': 'maasai-cultural-encounters',
+  'great-migration': 'great-migration-safaris',
+  'rhino-conservation': 'conservation-safaris'
+};
+
+export function resolveShowcaseItemHrefs(
+  items: HomeShowcaseItem[],
+  experiences: { slug: string }[]
+): HomeShowcaseItem[] {
+  const publishedSlugs = new Set(experiences.map((experience) => experience.slug));
+
+  return items.map((item) => {
+    const slug = SHOWCASE_EXPERIENCE_SLUGS[item.id];
+    if (!slug || !publishedSlugs.has(slug)) return item;
+
+    return {
+      ...item,
+      href: `/experiences/${slug}`
+    };
+  });
+}
+
 export type HomeFaq = {
   question: string;
   answer: string;
@@ -134,60 +161,10 @@ export type HomeArticle = {
   excerpt: string;
   author: string;
   date: string;
-  imageUrl: string;
+  imageUrl: string | null;
   imageAlt: string;
   href: string;
 };
-
-/** Blog fallbacks for the homepage articles section until CMS posts are published. */
-export const HOME_ARTICLES_FALLBACK: HomeArticle[] = [
-  {
-    id: 'article-migration',
-    category: 'Wildlife',
-    title: 'Witnessing the Great Migration: A Month-by-Month Guide',
-    excerpt:
-      'When and where to catch the wildebeest river crossings, and how to position yourself for the best viewing across the Mara and Serengeti.',
-    author: 'Benroso Safaris',
-    date: 'Guide',
-    imageUrl: '/assets/great%20migration%20of%20wildebeasts%20in%20across%20mara%20river.jpg',
-    imageAlt: 'Wildebeest crossing the Mara River during the Great Migration',
-    href: '/blog'
-  },
-  {
-    id: 'article-balloon',
-    category: 'Experiences',
-    title: 'A Hot Air Balloon Safari Over the Maasai Mara',
-    excerpt: 'What to expect from a sunrise flight and champagne bush breakfast.',
-    author: 'Benroso Safaris',
-    date: 'Guide',
-    imageUrl: '/assets/Masai-Mara-Hot-Air-Balloon-Safari-with-Champagne-Breakfast.jpg',
-    imageAlt: 'Hot air balloon safari over the Maasai Mara at sunrise',
-    href: '/blog'
-  },
-  {
-    id: 'article-amboseli',
-    category: 'Destinations',
-    title: 'Amboseli: Elephants Beneath Kilimanjaro',
-    excerpt: 'Why Amboseli belongs on every first-time safari itinerary.',
-    author: 'Benroso Safaris',
-    date: 'Guide',
-    imageUrl: '/assets/Elephant-in-Amboseli-National-Park-2.jpeg',
-    imageAlt: 'Elephants in Amboseli National Park with Mount Kilimanjaro behind',
-    href: '/blog'
-  },
-  {
-    id: 'article-conservation',
-    category: 'Conservation',
-    title: 'Rhino Tracking on Foot: Travel That Protects',
-    excerpt: 'How a guided conservation safari supports rhino protection in Kenya.',
-    author: 'Benroso Safaris',
-    date: 'Guide',
-    imageUrl:
-      '/assets/The-Ultimate-Guided-Rhino-Tracking-on-Foot-in-Kenya-Conservation-Safari-A-Journey-to-Save-the-Giants.jpg',
-    imageAlt: 'Guided rhino tracking on foot in Kenya',
-    href: '/blog'
-  }
-];
 
 export type HomeExperienceCategory = {
   id: string;
@@ -197,6 +174,70 @@ export type HomeExperienceCategory = {
   imageAlt: string;
   href: string;
 };
+
+/** Published experience slugs ordered by typical safari search demand (highest first). */
+export const HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS = [
+  'great-migration-safaris',
+  'big-5-safaris',
+  'gorilla-trekking-safaris',
+  'luxury-safaris',
+  'family-safaris',
+  'safari-beach-holidays',
+  'hot-air-baloon-safaris',
+  'honeymoon-safaris',
+  '4x4-safari-tours',
+  'photography-safaris',
+  'fly-in-safaris',
+  'maasai-cultural-encounters',
+  'conservation-safaris',
+  'tailor-made-safaris',
+  'mountain-climbing',
+  'bird-watching-safaris',
+  'night-game-drives',
+  'excursions'
+] as const;
+
+/** Fallback grid ids aligned with the same popularity order as published slugs. */
+const HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS = [
+  'migration',
+  'big-five',
+  'gorilla',
+  'luxury',
+  'family',
+  'beach',
+  'honeymoon',
+  'photography',
+  'walking',
+  'fly-in'
+] as const;
+
+export function sortExperiencesBySearchPopularity<T extends { slug: string }>(
+  experiences: T[]
+): T[] {
+  const rank = new Map(HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.map((slug, index) => [slug, index]));
+
+  return [...experiences].sort((a, b) => {
+    const aRank = rank.get(a.slug) ?? HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.length;
+    const bRank = rank.get(b.slug) ?? HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.length;
+
+    if (aRank !== bRank) return aRank - bRank;
+    return a.slug.localeCompare(b.slug);
+  });
+}
+
+export function sortExperienceCategoriesBySearchPopularity(
+  categories: HomeExperienceCategory[]
+): HomeExperienceCategory[] {
+  const rank = new Map(HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.map((id, index) => [id, index]));
+
+  return [...categories].sort((a, b) => {
+    const aRank = rank.get(a.id) ?? HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.length;
+    const bRank = rank.get(b.id) ?? HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.length;
+
+    if (aRank !== bRank) return aRank - bRank;
+    return a.title.localeCompare(b.title);
+  });
+}
 
 /**
  * Experience categories for the grid section, modelled on the kinds of safaris

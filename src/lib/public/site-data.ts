@@ -1248,7 +1248,7 @@ export async function getPublicPackageDetail(
 export async function getPublicBlogPosts(locale: string, limit = 3): Promise<PublicBlogPost[]> {
   return unstable_cache(
     () => fetchPublicBlogPosts(locale, limit),
-    ['public-blog-posts', locale, String(limit)],
+    ['public-blog-posts-v2', locale, String(limit)],
     {
       revalidate: 300,
       tags: ['blog-posts']
@@ -1276,30 +1276,30 @@ async function fetchPublicBlogPosts(locale: string, limit = 3): Promise<PublicBl
     `
     )
     .eq('locale', locale)
-    .eq('post.status', 'published')
-    .is('post.deleted_at', null)
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
-    .limit(limit);
+    .limit(limit * 3);
 
-  return (data ?? []).flatMap((row) => {
-    const post = unwrapRelation(row.post);
-    if (!post) return [];
+  return (data ?? [])
+    .flatMap((row) => {
+      const post = unwrapRelation(row.post);
+      if (!post || post.status !== 'published' || post.deleted_at) return [];
 
-    return [
-      {
-        category: unwrapRelation(post.primary_category)?.name ?? null,
-        excerpt: row.excerpt,
-        href: localePath(locale, `/blog/${row.slug}`),
-        id: post.id,
-        imageAlt: mediaAlt(row.og_image, row.title),
-        imageUrl: mediaUrl(row.og_image),
-        publishedAt: row.published_at,
-        slug: row.slug,
-        title: row.title
-      }
-    ];
-  });
+      return [
+        {
+          category: unwrapRelation(post.primary_category)?.name ?? null,
+          excerpt: row.excerpt,
+          href: localePath(locale, `/blog/${row.slug}`),
+          id: post.id,
+          imageAlt: mediaAlt(row.og_image, row.title),
+          imageUrl: mediaUrl(row.og_image),
+          publishedAt: row.published_at,
+          slug: row.slug,
+          title: row.title
+        }
+      ];
+    })
+    .slice(0, limit);
 }
 
 export async function getHomeReviews(limit = 8): Promise<HomeReviewItem[]> {

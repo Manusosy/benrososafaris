@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 import { localePath } from '@/lib/public/locale-path';
 import { slugify } from '@/lib/utils';
 import type { PublicBlogPost } from './types';
@@ -59,7 +59,7 @@ export async function getArticleNeighbors(
   publishedAt: string | null
 ): Promise<{ previous: ArticleNeighbor; next: ArticleNeighbor }> {
   if (!publishedAt) return { previous: null, next: null };
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   async function neighbor(direction: 'previous' | 'next'): Promise<ArticleNeighbor> {
     const base = supabase
@@ -97,15 +97,109 @@ export async function getArticleNeighbors(
   return { previous, next };
 }
 
-/** Published articles in the same primary category, excluding the current post. */
+function mapTranslationRow(
+  locale: string,
+  row: {
+    excerpt: string | null;
+    published_at: string | null;
+    slug: string;
+    title: string;
+    og_image?:
+      | { alt: string | null; url: string | null }
+      | { alt: string | null; url: string | null }[]
+      | null;
+    post:
+      | {
+          id: string;
+          published_at?: string | null;
+          primary_category?: { name: string } | { name: string }[] | null;
+        }
+      | {
+          id: string;
+          published_at?: string | null;
+          primary_category?: { name: string } | { name: string }[] | null;
+        }[]
+      | null;
+  }
+): PublicBlogPost | null {
+  const post = unwrap(row.post);
+  if (!post) return null;
+
+  return {
+    category: unwrap(post.primary_category)?.name ?? null,
+    excerpt: row.excerpt,
+    href: localePath(locale, `/blog/${row.slug}`),
+    id: post.id,
+    imageAlt: unwrap(row.og_image)?.alt ?? row.title,
+    imageUrl: unwrap(row.og_image)?.url ?? null,
+    publishedAt: row.published_at ?? post.published_at ?? null,
+    slug: row.slug,
+    title: row.title
+  };
+}
+
+async function resolvePostCategoryId(
+  postId: string,
+  primaryCategoryId: string | null
+): Promise<string | null> {
+  if (primaryCategoryId) return primaryCategoryId;
+
+  const supabase = createEnquiryPublicClient();
+  const { data } = await supabase
+    .from('blog_post_categories')
+    .select('category_id')
+    .eq('post_id', postId)
+    .limit(1)
+    .maybeSingle();
+
+  return data?.category_id ?? null;
+}
+
+/** Published articles in the same category, excluding the current post. */
 export async function getRelatedArticles(
   locale: string,
   postId: string,
   categoryId: string | null,
   limit = 3
 ): Promise<PublicBlogPost[]> {
-  if (!categoryId) return [];
-  const supabase = await createClient();
+  const resolvedCategoryId = await resolvePostCategoryId(postId, categoryId);
+  if (!resolvedCategoryId) return [];
+
+  const supabase = createEnquiryPublicClient();
+
+  const [{ data: primaryRows }, { data: joinRows }] = await Promise.all([
+    supabase
+      .from('blog_posts')
+      .select('id, published_at')
+      .eq('status', 'published')
+      .is('deleted_at', null)
+      .eq('primary_category_id', resolvedCategoryId)
+      .neq('id', postId),
+    supabase
+      .from('blog_post_categories')
+      .select('post_id, post:blog_posts!inner(id, published_at, status, deleted_at)')
+      .eq('category_id', resolvedCategoryId)
+      .neq('post_id', postId)
+  ]);
+
+  const candidates = new Map<string, string>();
+
+  for (const row of primaryRows ?? []) {
+    candidates.set(row.id, row.published_at ?? '');
+  }
+
+  for (const row of joinRows ?? []) {
+    const post = unwrap(row.post);
+    if (!post || post.status !== 'published' || post.deleted_at) continue;
+    candidates.set(post.id, post.published_at ?? '');
+  }
+
+  const sortedIds = [...candidates.entries()]
+    .sort(([, left], [, right]) => right.localeCompare(left))
+    .slice(0, limit)
+    .map(([id]) => id);
+
+  if (!sortedIds.length) return [];
 
   const { data } = await supabase
     .from('blog_translations')
@@ -117,39 +211,24 @@ export async function getRelatedArticles(
       published_at,
       post:blog_posts!inner(
         id,
-        status,
-        deleted_at,
-        primary_category_id,
+        published_at,
         primary_category:blog_categories!blog_posts_primary_category_id_fkey(name)
       ),
       og_image:media_assets!blog_translations_og_image_id_fkey(url, alt)
     `
     )
     .eq('locale', locale)
-    .eq('post.status', 'published')
-    .is('post.deleted_at', null)
-    .eq('post.primary_category_id', categoryId)
-    .not('published_at', 'is', null)
-    .order('published_at', { ascending: false })
-    .limit(limit + 1);
+    .in('post_id', sortedIds);
 
-  return (data ?? [])
-    .flatMap((row) => {
-      const post = unwrap(row.post);
-      if (!post || post.id === postId) return [];
-      return [
-        {
-          category: unwrap(post.primary_category)?.name ?? null,
-          excerpt: row.excerpt,
-          href: localePath(locale, `/blog/${row.slug}`),
-          id: post.id,
-          imageAlt: unwrap(row.og_image)?.alt ?? row.title,
-          imageUrl: unwrap(row.og_image)?.url ?? null,
-          publishedAt: row.published_at,
-          slug: row.slug,
-          title: row.title
-        }
-      ];
-    })
-    .slice(0, limit);
+  const byPostId = new Map(
+    (data ?? [])
+      .map((row) => mapTranslationRow(locale, row))
+      .filter((post): post is PublicBlogPost => post !== null)
+      .map((post) => [post.id, post] as const)
+  );
+
+  return sortedIds.flatMap((id) => {
+    const post = byPostId.get(id);
+    return post ? [post] : [];
+  });
 }

@@ -8,7 +8,7 @@ import { useGSAP } from '@gsap/react';
 
 import { Icons } from '@/components/icons';
 import { localePath } from '@/lib/public/locale-path';
-import { HOME_SHOWCASE_ITEMS, type HomeShowcaseItem } from '@/lib/public/home-content';
+import type { HomeShowcaseItem } from '@/lib/public/home-content';
 import { cn } from '@/lib/utils';
 
 gsap.registerPlugin(useGSAP);
@@ -16,14 +16,11 @@ gsap.registerPlugin(useGSAP);
 const AUTOPLAY_MS = 6000;
 
 type ExperienceShowcaseProps = {
+  items: HomeShowcaseItem[];
   locale: string;
-  items?: HomeShowcaseItem[];
 };
 
-export function ExperienceShowcase({
-  locale,
-  items = HOME_SHOWCASE_ITEMS
-}: ExperienceShowcaseProps) {
+export function ExperienceShowcase({ items, locale }: ExperienceShowcaseProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);

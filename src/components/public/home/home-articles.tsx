@@ -6,14 +6,14 @@ import { ContourBackground } from '@/components/public/contour-background';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { ScrollReveal } from '@/components/public/ui/scroll-reveal';
 import { SectionHeader } from '@/components/public/ui/section-header';
-import { HOME_ARTICLES_FALLBACK, type HomeArticle } from '@/lib/public/home-content';
+import type { HomeArticle } from '@/lib/public/home-content';
 import { localePath } from '@/lib/public/locale-path';
 import type { PublicBlogPost } from '@/lib/public/types';
 
 function formatDate(value: string | null) {
-  if (!value) return 'Guide';
+  if (!value) return '';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Guide';
+  if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat('en-US', {
     day: 'numeric',
     month: 'short',
@@ -21,25 +21,17 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
-function toArticles(posts: PublicBlogPost[], locale: string): HomeArticle[] {
-  if (!posts.length) {
-    return HOME_ARTICLES_FALLBACK.map((article) => ({
-      ...article,
-      href: localePath(locale, article.href)
-    }));
-  }
-
-  return posts.map((post, index) => ({
-    id: post.id,
-    category: 'Safari Journal',
-    title: post.title,
-    excerpt: post.excerpt ?? '',
+function toArticles(posts: PublicBlogPost[]): HomeArticle[] {
+  return posts.map((post) => ({
     author: 'Benroso Safaris',
+    category: post.category ?? 'Safari Journal',
     date: formatDate(post.publishedAt),
-    imageUrl:
-      post.imageUrl ?? HOME_ARTICLES_FALLBACK[index % HOME_ARTICLES_FALLBACK.length].imageUrl,
+    excerpt: post.excerpt ?? '',
+    href: post.href,
+    id: post.id,
     imageAlt: post.imageAlt ?? post.title,
-    href: post.href
+    imageUrl: post.imageUrl,
+    title: post.title
   }));
 }
 
@@ -50,19 +42,27 @@ function ArticleCard({ article }: { article: HomeArticle }) {
       data-reveal-item
     >
       <Link className='relative block aspect-[16/10] overflow-hidden' href={article.href}>
-        <Image
-          alt={article.imageAlt}
-          className='object-cover transition-transform duration-500 group-hover:scale-105'
-          fill
-          sizes='(max-width:768px) 100vw, 33vw'
-          src={article.imageUrl}
-        />
+        {article.imageUrl ? (
+          <Image
+            alt={article.imageAlt}
+            className='object-cover transition-transform duration-500 group-hover:scale-105'
+            fill
+            sizes='(max-width:768px) 100vw, 33vw'
+            src={article.imageUrl}
+          />
+        ) : (
+          <span aria-hidden className='absolute inset-0 bg-[var(--benroso-primary-light)]' />
+        )}
       </Link>
       <div className='flex flex-1 flex-col p-6'>
         <div className='flex items-center gap-2.5 text-xs uppercase tracking-wide'>
           <span className='font-bold text-[var(--benroso-lime)]'>{article.category}</span>
-          <span className='h-1 w-1 rounded-full bg-[var(--benroso-line)]' />
-          <span className='text-[var(--benroso-muted)]'>{article.date}</span>
+          {article.date ? (
+            <>
+              <span className='h-1 w-1 rounded-full bg-[var(--benroso-line)]' />
+              <span className='text-[var(--benroso-muted)]'>{article.date}</span>
+            </>
+          ) : null}
         </div>
         <h3 className='benroso-heading mt-3 font-display text-xl leading-snug'>
           <Link
@@ -90,7 +90,7 @@ function ArticleCard({ article }: { article: HomeArticle }) {
 }
 
 export function HomeArticles({ locale, posts = [] }: { locale: string; posts?: PublicBlogPost[] }) {
-  const articles = toArticles(posts, locale).slice(0, 3);
+  const articles = toArticles(posts).slice(0, 3);
   if (!articles.length) return null;
 
   return (

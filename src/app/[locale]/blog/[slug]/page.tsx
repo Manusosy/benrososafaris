@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { ArticleShare } from '@/components/public/blog/article-share';
 import { ArticleToc } from '@/components/public/blog/article-toc';
+import { RelatedArticles } from '@/components/public/blog/related-articles';
 import { ContactHero } from '@/components/public/contact/contact-hero';
 import { FaqSection } from '@/components/public/faq-section';
 import { buildToc, getArticleNeighbors, getRelatedArticles } from '@/lib/public/blog';
@@ -304,61 +305,10 @@ export default async function BlogPostPage(props: BlogPageProps) {
               ) : null}
             </article>
           </div>
+
+          <RelatedArticles category={category} posts={related} />
         </div>
       </main>
-
-      {related.length ? (
-        <section className='benroso-section border-t border-[var(--benroso-line)] bg-[var(--benroso-ivory)]'>
-          <div className='benroso-container'>
-            <p className='benroso-eyebrow'>Keep reading</p>
-            <h2 className='benroso-heading mt-3 font-display text-[clamp(1.5rem,3vw,2.25rem)]'>
-              Related articles{category ? ` in ${category}` : ''}
-            </h2>
-            <div className='mt-8 grid gap-6 md:grid-cols-3'>
-              {related.map((article) => (
-                <Link
-                  className='group flex h-full flex-col overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white shadow-sm transition-shadow hover:shadow-md'
-                  href={article.href}
-                  key={article.id}
-                >
-                  <div className='relative aspect-[16/9] overflow-hidden bg-[var(--benroso-primary)]'>
-                    {article.imageUrl ? (
-                      <Image
-                        alt={article.imageAlt || article.title}
-                        className='object-cover transition-transform duration-500 group-hover:scale-105'
-                        fill
-                        sizes='(max-width:768px) 100vw, 33vw'
-                        src={article.imageUrl}
-                      />
-                    ) : (
-                      <div className='absolute inset-0 bg-gradient-to-br from-[var(--benroso-primary)] to-[var(--benroso-primary-dark)]' />
-                    )}
-                  </div>
-                  <div className='flex flex-1 flex-col p-5'>
-                    {article.category ? (
-                      <span className='text-xs font-semibold uppercase tracking-wide text-[var(--benroso-primary)]'>
-                        {article.category}
-                      </span>
-                    ) : null}
-                    <h3 className='benroso-heading mt-2 font-display text-xl leading-snug group-hover:text-[var(--benroso-primary)]'>
-                      {article.title}
-                    </h3>
-                    {article.excerpt ? (
-                      <p className='benroso-body mt-2 line-clamp-2 flex-1 text-sm leading-6'>
-                        {article.excerpt}
-                      </p>
-                    ) : null}
-                    <span className='mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)]'>
-                      Read article
-                      <Icons.arrowRight className='size-4 transition-transform group-hover:translate-x-1' />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
 
       {faqs.length ? <FaqSection faqs={faqs} headingId='blog-faq-heading' /> : null}
     </>

@@ -3,7 +3,12 @@ import { Suspense } from 'react';
 
 import { HomeHero } from '@/components/public/home/home-hero';
 import { FaqSection } from '@/components/public/faq-section';
-import { HOME_FAQS } from '@/lib/public/home-content';
+import { listPublishedExperiences } from '@/features/experiences/public/service';
+import {
+  HOME_FAQS,
+  HOME_SHOWCASE_ITEMS,
+  resolveShowcaseItemHrefs
+} from '@/lib/public/home-content';
 import {
   getHeroSlides,
   getHomeReviews,
@@ -111,23 +116,27 @@ export const revalidate = 300;
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
-  const [siteSettings, tours, blogPosts, heroSlides, homeHero, reviews] = await Promise.all([
-    getPublicSiteSettings(),
-    getPublicTours(locale),
-    getPublicBlogPosts(locale, 4),
-    getHeroSlides(),
-    getPageHero('home'),
-    getHomeReviews(8)
-  ]);
+  const [siteSettings, tours, blogPosts, heroSlides, homeHero, reviews, experiences] =
+    await Promise.all([
+      getPublicSiteSettings(),
+      getPublicTours(locale),
+      getPublicBlogPosts(locale, 3),
+      getHeroSlides(),
+      getPageHero('home'),
+      getHomeReviews(8),
+      listPublishedExperiences({ locale })
+    ]);
+
+  const showcaseItems = resolveShowcaseItemHrefs(HOME_SHOWCASE_ITEMS, experiences);
 
   return (
     <>
       <HomeHero hero={homeHero} locale={locale} slides={heroSlides} />
       <Suspense fallback={null}>
         <HomeWhyChooseUs locale={locale} />
-        <ExperienceShowcase locale={locale} />
+        <ExperienceShowcase items={showcaseItems} locale={locale} />
         <HomeDestinationsMap />
-        <HomeExperiencesGrid locale={locale} />
+        <HomeExperiencesGrid experiences={experiences} locale={locale} />
         <HomeFeaturedTours locale={locale} tours={tours} />
         <HomeBookingSteps locale={locale} />
         <HomeFleetGuides locale={locale} />
