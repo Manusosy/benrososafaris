@@ -1723,6 +1723,7 @@ export type Database = {
       };
       tours: {
         Row: {
+          countries: string[];
           created_at: string;
           days: number | null;
           end_location: string | null;
@@ -1742,6 +1743,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          countries?: string[];
           created_at?: string;
           days?: number | null;
           end_location?: string | null;
@@ -1761,6 +1763,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          countries?: string[];
           created_at?: string;
           days?: number | null;
           end_location?: string | null;

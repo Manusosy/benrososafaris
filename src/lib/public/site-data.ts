@@ -13,6 +13,11 @@ import {
   parseExperiencePackagePricing,
   parsePricingTableKeys
 } from '@/lib/pricing/experience-to-tour-pricing';
+import {
+  formatTourSafariMarketLabel,
+  parseTourSafariMarkets,
+  type TourSafariMarketId
+} from '@/features/experiences/public/tour-markets';
 import { localePath } from './locale-path';
 import { activeHeroSlides, normalizeHeroSlides } from './hero-slides';
 import { normalizePageHero, type PageHeroKey } from './page-heroes';
@@ -541,6 +546,7 @@ type TourTranslationListRow = {
         days: number | null;
         nights: number | null;
         price_from: number | null;
+        countries?: string[] | null;
         start_location?: string | null;
         end_location?: string | null;
         important_notice?: string | null;
@@ -556,6 +562,7 @@ type TourTranslationListRow = {
         days: number | null;
         nights: number | null;
         price_from: number | null;
+        countries?: string[] | null;
         start_location?: string | null;
         end_location?: string | null;
         important_notice?: string | null;
@@ -888,10 +895,15 @@ function mapTourListRows(
     const cover = galleryIds[0] ? mediaById?.get(galleryIds[0]) : null;
     const pricingTiers = pricingByTourId.get(tour.id) ?? [];
     const bounds = pricingBounds(pricingTiers, tour.price_from);
+    const countryIds = parseTourSafariMarkets(tour.countries);
+    const countryLabels = countryIds.length
+      ? countryIds.map(formatTourSafariMarketLabel)
+      : (relationLabels.countries.get(tour.id) ?? []);
 
     return [
       {
-        countryLabels: relationLabels.countries.get(tour.id) ?? [],
+        countryIds,
+        countryLabels,
         days: tour.days,
         destinationLabels: relationLabels.destinations.get(tour.id) ?? [],
         excerpt: row.excerpt,
@@ -921,14 +933,20 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
   const tierFilters = filters.pricingTier ?? [];
 
   if (filters.country) {
-    const countryLabel = tourCountryLabelFromSlug(filters.country);
-    if (
-      countryLabel &&
-      !tour.countryLabels?.some(
-        (label) => normalizeFilterValue(label) === normalizeFilterValue(countryLabel)
-      )
-    ) {
-      return false;
+    const slug = filters.country as TourSafariMarketId;
+    const tourCountries = tour.countryIds ?? [];
+    if (tourCountries.length) {
+      if (!tourCountries.includes(slug)) return false;
+    } else {
+      const countryLabel = tourCountryLabelFromSlug(filters.country);
+      if (
+        countryLabel &&
+        !tour.countryLabels?.some(
+          (label) => normalizeFilterValue(label) === normalizeFilterValue(countryLabel)
+        )
+      ) {
+        return false;
+      }
     }
   }
 
@@ -1025,6 +1043,7 @@ async function fetchPublishedTourRows(
         days,
         nights,
         price_from,
+        countries,
         start_location,
         end_location,
         important_notice,
@@ -1191,6 +1210,7 @@ export async function getPublicTourDetail(
         days,
         nights,
         price_from,
+        countries,
         start_location,
         end_location,
         important_notice,
@@ -1226,6 +1246,7 @@ export async function getPublicTourDetail(
         days,
         nights,
         price_from,
+        countries,
         start_location,
         end_location,
         important_notice,

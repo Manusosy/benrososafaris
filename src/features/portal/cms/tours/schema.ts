@@ -1,6 +1,10 @@
 import * as z from 'zod';
 
+import { TOUR_SAFARI_MARKET_IDS } from '@/features/experiences/public/tour-markets';
+
 import { SEO_LIMITS } from '../seo/analyze';
+
+export const tourSafariMarketIdSchema = z.enum(TOUR_SAFARI_MARKET_IDS);
 
 const faqItemSchema = z.object({
   answer: z.string(),
@@ -91,6 +95,8 @@ export const tourFormSchema = z.object({
   pricingExperienceId: z.string(),
   pricingTableKeys: z.array(experiencePricingTableKeySchema).max(3),
   gallery: z.array(z.string()),
+  /** Safari markets — same country ids as experiences, plus east-africa for multi-country trips. */
+  countries: z.array(tourSafariMarketIdSchema).min(1, 'Select at least one safari market'),
   // Relations
   parkIds: z.array(z.string()),
   destinationIds: z.array(z.string()),
@@ -124,6 +130,7 @@ export const tourStepSchemas = [
   }),
   tourFormSchema.pick({ itineraryDays: true, routeLegs: true }),
   tourFormSchema.pick({
+    countries: true,
     parkIds: true,
     destinationIds: true,
     experienceIds: true,
@@ -165,7 +172,7 @@ export const tourWizardSteps = [
   { title: 'Itinerary Map', description: 'Day-by-day route used by the public trip map.' },
   {
     title: 'Parks & Links',
-    description: 'Parks, destinations, experiences, route lodges, and inclusions.'
+    description: 'Safari markets, parks, destinations, experiences, lodges, and inclusions.'
   },
   { title: 'Gallery', description: 'Choose the images shown on this tour.' },
   { title: 'Story', description: 'Overview, notices, and traveler FAQs.' },
@@ -194,6 +201,7 @@ export const emptyTourValues: TourFormValues = {
   pricingExperienceId: '',
   pricingTableKeys: [],
   gallery: [],
+  countries: ['kenya'],
   parkIds: [],
   destinationIds: [],
   experienceIds: [],

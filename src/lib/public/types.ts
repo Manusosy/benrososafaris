@@ -1,3 +1,5 @@
+import type { TourSafariMarketId } from '@/features/experiences/public/tour-markets';
+
 export type PublicNavItem = {
   href: string;
   items?: PublicNavItem[];
@@ -140,6 +142,7 @@ export type PublicExperienceMenuItem = {
 };
 
 export type PublicTour = {
+  countryIds?: TourSafariMarketId[];
   countryLabels?: string[];
   days: number | null;
   destinationLabels?: string[];

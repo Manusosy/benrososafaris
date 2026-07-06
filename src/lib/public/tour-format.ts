@@ -1,4 +1,10 @@
 import type { PublicTourPricingTier } from './types';
+import {
+  TOUR_EAST_AFRICA_MARKET_ID,
+  TOUR_SAFARI_MARKET_IDS,
+  tourMarketCatalogLabel,
+  type TourSafariMarketId
+} from '@/features/experiences/public/tour-markets';
 
 export const TOUR_COMFORT_TIERS: Array<{
   value: PublicTourPricingTier['tier'];
@@ -35,17 +41,27 @@ export function formatTourDuration(days?: number | null, nights?: number | null)
   return 'Safari';
 }
 
-export const TOUR_CATALOG_COUNTRIES = [
-  { country: 'Kenya', slug: 'kenya', flag: '🇰🇪' },
-  { country: 'Tanzania', slug: 'tanzania', flag: '🇹🇿' },
-  { country: 'Uganda', slug: 'uganda', flag: '🇺🇬' },
-  { country: 'Rwanda', slug: 'rwanda', flag: '🇷🇼' },
-  { country: 'South Africa', slug: 'south-africa', flag: '🇿🇦' }
-] as const;
+export const TOUR_CATALOG_COUNTRIES = TOUR_SAFARI_MARKET_IDS.map((slug) => ({
+  country: tourMarketCatalogLabel(slug),
+  slug,
+  flag: slug === TOUR_EAST_AFRICA_MARKET_ID ? '🌍' : ''
+}));
+
+export function tourCountrySlugFromLabel(label: string): TourSafariMarketId | null {
+  const normalized = label.trim().toLowerCase();
+  const match = TOUR_CATALOG_COUNTRIES.find(
+    (item) =>
+      item.country.toLowerCase() === normalized ||
+      item.slug === normalized ||
+      item.country.toLowerCase().replace(/\s+safaris$/i, '') === normalized
+  );
+  return (match?.slug as TourSafariMarketId | undefined) ?? null;
+}
+
+export function tourCountryLabelFromSlug(slug: string): string | null {
+  if (!TOUR_SAFARI_MARKET_IDS.includes(slug as TourSafariMarketId)) return null;
+  return tourMarketCatalogLabel(slug as TourSafariMarketId);
+}
 
 export const TOUR_CATALOG_DURATION_BOUNDS = { min: 1, max: 14 } as const;
 export const TOUR_CATALOG_PRICE_BOUNDS = { min: 200, max: 10000 } as const;
-
-export function tourCountryLabelFromSlug(slug: string): string | null {
-  return TOUR_CATALOG_COUNTRIES.find((item) => item.slug === slug)?.country ?? null;
-}

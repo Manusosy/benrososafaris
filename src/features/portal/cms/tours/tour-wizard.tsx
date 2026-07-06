@@ -7,6 +7,7 @@ import { revalidateLogic, useStore } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +27,13 @@ import { HighlightsInput } from '../shared/highlights-input';
 import { MultiCombobox } from '../shared/multi-combobox';
 import { htmlToText, RichTextEditor } from '../shared/rich-text-editor';
 import { WizardShell, type WizardPendingAction } from '../shared/wizard-shell';
+import {
+  formatTourSafariMarketSummary,
+  TOUR_SAFARI_MARKETS,
+  tourMarketsFromExperienceCountries,
+  type TourSafariMarketId
+} from '@/features/experiences/public/tour-markets';
+import type { BenrosoCountryId } from '@/features/experiences/public/country-map-copy';
 import { ExperiencePricingSelector } from './experience-pricing-selector';
 import {
   emptyTourValues,
@@ -47,6 +55,7 @@ interface TourWizardProps {
     experiences: RelationOption[];
     accommodations: RelationOption[];
     fleet: RelationOption[];
+    experienceCountries: Record<string, BenrosoCountryId[]>;
   };
 }
 
@@ -280,6 +289,23 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
 
   const values = useStore(form.store, (state) => state.values);
 
+  const linkedExperienceCountries = React.useMemo(() => {
+    const countryIds = values.experienceIds.flatMap(
+      (experienceId) => options.experienceCountries[experienceId] ?? []
+    );
+    return [...new Set(countryIds)];
+  }, [options.experienceCountries, values.experienceIds]);
+
+  const suggestedMarkets = React.useMemo(
+    () => tourMarketsFromExperienceCountries(linkedExperienceCountries),
+    [linkedExperienceCountries]
+  );
+
+  React.useEffect(() => {
+    if (values.countries.length || !suggestedMarkets.length) return;
+    form.setFieldValue('countries', suggestedMarkets);
+  }, [form, suggestedMarkets, values.countries.length]);
+
   const { data: galleryAssets = [] } = useQuery({
     queryKey: [...mediaKeys.all, 'byIds', values.gallery],
     queryFn: () => getMediaByIds(values.gallery),
@@ -463,6 +489,64 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
 
         {currentStep === 3 ? (
           <div className='grid gap-5'>
+            <form.AppField name='countries'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label>Safari markets</Label>
+                  <p className='text-muted-foreground text-xs'>
+                    Uses the same operating country ids as experiences. Pick one country or East
+                    Africa for Kenya–Tanzania combinations and similar multi-country routes.
+                  </p>
+                  {suggestedMarkets.length ? (
+                    <div className='flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-xs text-muted-foreground'>
+                      <span>
+                        Linked experiences cover: {formatTourSafariMarketSummary(suggestedMarkets)}
+                      </span>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        onClick={() => field.handleChange(suggestedMarkets)}
+                      >
+                        Apply from experiences
+                      </Button>
+                    </div>
+                  ) : null}
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {TOUR_SAFARI_MARKETS.map((market) => {
+                      const checked = field.state.value.includes(market.id);
+
+                      return (
+                        <label
+                          className='flex cursor-pointer items-center gap-3 rounded-md border px-3 py-3'
+                          htmlFor={`tour-market-${market.id}`}
+                          key={market.id}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            id={`tour-market-${market.id}`}
+                            onCheckedChange={(value) => {
+                              if (value === true) {
+                                field.handleChange([
+                                  ...field.state.value,
+                                  market.id
+                                ] as TourSafariMarketId[]);
+                                return;
+                              }
+
+                              field.handleChange(
+                                field.state.value.filter((id) => id !== market.id)
+                              );
+                            }}
+                          />
+                          <span className='text-sm'>{market.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </form.AppField>
             <RoutePreview destinations={options.destinations} values={values} />
             <div className='grid gap-2'>
               <Label htmlFor='tour-parks'>National parks</Label>
@@ -761,6 +845,10 @@ function ReviewSummary({
       value: values.itineraryDays.length ? `${values.itineraryDays.length} day(s)` : ''
     },
     { label: 'National parks', value: countLabels(values.parkIds, options.parks) },
+    {
+      label: 'Safari markets',
+      value: values.countries.length ? formatTourSafariMarketSummary(values.countries) : ''
+    },
     { label: 'Destinations', value: countLabels(values.destinationIds, options.destinations) },
     { label: 'Experiences', value: countLabels(values.experienceIds, options.experiences) },
     {

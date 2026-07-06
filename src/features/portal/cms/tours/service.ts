@@ -6,6 +6,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import {
+  BENROSO_OPERATING_COUNTRIES,
+  type BenrosoCountryId
+} from '@/features/experiences/public/country-map-copy';
+import { parseTourSafariMarkets } from '@/features/experiences/public/tour-markets';
 import { revalidateTourPublicPaths } from '@/features/portal/cms/tours/revalidate-public-paths';
 import {
   formatExperienceKeyLabel,
@@ -30,6 +35,17 @@ export interface TourRecord extends TourFormValues {
 export interface RelationOption {
   value: string;
   label: string;
+}
+
+function parseExperienceCountries(value: unknown): BenrosoCountryId[] {
+  if (!Array.isArray(value)) return [];
+
+  const allowed = new Set(BENROSO_OPERATING_COUNTRIES.map((country) => country.id));
+
+  return value.filter(
+    (item): item is BenrosoCountryId =>
+      typeof item === 'string' && allowed.has(item as BenrosoCountryId)
+  );
 }
 
 export type ExperiencePricingTableOption = {
@@ -164,6 +180,7 @@ export async function saveTour(input: {
     inclusions: values.inclusions,
     exclusions: values.exclusions,
     gallery: values.gallery,
+    countries: values.countries,
     pricing_experience_id: usesExperiencePricing ? values.pricingExperienceId : null,
     pricing_table_keys: usesExperiencePricing ? values.pricingTableKeys : [],
     status: input.status,
@@ -374,6 +391,7 @@ export async function getTour(id: string): Promise<TourRecord | null> {
     pricingTiers: pricing,
     pricingExperienceId: (base.pricing_experience_id as string | null) ?? '',
     pricingTableKeys: parsePricingTableKeys(base.pricing_table_keys),
+    countries: parseTourSafariMarkets(base.countries),
     gallery: Array.isArray(base.gallery) ? (base.gallery as string[]) : [],
     parkIds,
     destinationIds,
@@ -418,16 +436,27 @@ export async function getTourRelationOptions(): Promise<{
   experiences: RelationOption[];
   accommodations: RelationOption[];
   fleet: RelationOption[];
+  experienceCountries: Record<string, BenrosoCountryId[]>;
 }> {
   const supabase = await genericClient();
-  const [parks, destinations, experiences, accommodations, fleet] = await Promise.all([
-    moduleOptions(supabase, 'national_park_translations', 'park_id', 'name'),
-    moduleOptions(supabase, 'destination_translations', 'destination_id', 'name'),
-    moduleOptions(supabase, 'experience_translations', 'experience_id', 'title'),
-    moduleOptions(supabase, 'accommodation_translations', 'accommodation_id', 'name'),
-    moduleOptions(supabase, 'fleet_vehicle_translations', 'vehicle_id', 'title')
-  ]);
-  return { parks, destinations, experiences, accommodations, fleet };
+  const [parks, destinations, experiences, accommodations, fleet, experienceRows] =
+    await Promise.all([
+      moduleOptions(supabase, 'national_park_translations', 'park_id', 'name'),
+      moduleOptions(supabase, 'destination_translations', 'destination_id', 'name'),
+      moduleOptions(supabase, 'experience_translations', 'experience_id', 'title'),
+      moduleOptions(supabase, 'accommodation_translations', 'accommodation_id', 'name'),
+      moduleOptions(supabase, 'fleet_vehicle_translations', 'vehicle_id', 'title'),
+      supabase.from('experiences').select('id, countries').is('deleted_at', null)
+    ]);
+
+  const experienceCountries = Object.fromEntries(
+    (experienceRows.data ?? []).map((row) => [
+      row.id as string,
+      parseExperienceCountries(row.countries)
+    ])
+  );
+
+  return { parks, destinations, experiences, accommodations, fleet, experienceCountries };
 }
 
 export async function getExperiencePricingTablesForWizard(
