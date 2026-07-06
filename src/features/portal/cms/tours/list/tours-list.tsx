@@ -85,6 +85,8 @@ export function ToursList() {
   const pageSize = data?.pageSize ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const isTrashView = status === 'trash';
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
 
   const resetKey = `${status}|${search}|${month}|${page}`;
   const [selected, setSelected] = React.useState<string[]>([]);
@@ -99,6 +101,11 @@ export function ToursList() {
   React.useEffect(() => {
     setSearchInput(search);
   }, [search]);
+  React.useEffect(() => {
+    if (page > totalPages) {
+      void setParams({ paged: totalPages });
+    }
+  }, [page, totalPages, setParams]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: toursListKeys.all });
 
@@ -295,7 +302,11 @@ export function ToursList() {
           ) : null}
         </div>
 
-        <p className='text-muted-foreground text-sm'>{total} items</p>
+        <p className='text-muted-foreground text-sm'>
+          {total === 0
+            ? '0 items'
+            : `Showing ${rangeStart}–${rangeEnd} of ${total} ${total === 1 ? 'tour' : 'tours'}`}
+        </p>
       </div>
 
       <div className='overflow-x-auto rounded-md border'>
@@ -364,7 +375,7 @@ export function ToursList() {
         </Table>
       </div>
 
-      {totalPages > 1 ? (
+      {total > pageSize ? (
         <div className='flex items-center justify-end gap-2'>
           <span className='text-muted-foreground text-sm'>
             Page {page} of {totalPages}

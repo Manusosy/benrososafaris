@@ -10,7 +10,7 @@ export const BENROSO_CONTACT_DEFAULTS = {
 } as const;
 
 /** Google Maps embed query for the contact page map. */
-export const BENROSO_MAP_QUERY = 'Benuki Safaris, Langata road, Muiri Ln, Nairobi';
+export const BENROSO_MAP_QUERY = `${BENROSO_CONTACT_DEFAULTS.companyName}, ${BENROSO_CONTACT_DEFAULTS.addressShort}`;
 
 export const BENROSO_BRAND_COLORS = {
   primary: '#3C5142',

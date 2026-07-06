@@ -125,7 +125,8 @@ export async function listTours(params: TourListParams): Promise<TourListResult>
 
   query = query.order('updated_at', { ascending: false }).range(from, to);
 
-  const { data, count } = await query;
+  const { data, count, error } = await query;
+  if (error) throw new Error(error.message);
 
   type Row = {
     id: string;
@@ -141,24 +142,26 @@ export async function listTours(params: TourListParams): Promise<TourListResult>
     }> | null;
   };
 
-  const items: TourListItem[] = ((data as Row[] | null) ?? []).map((row) => {
-    const translation =
-      row.tour_translations?.find((entry) => entry.locale === 'en') ??
-      row.tour_translations?.[0] ??
-      null;
+  const items: TourListItem[] = ((data as Row[] | null) ?? [])
+    .slice(0, TOURS_PAGE_SIZE)
+    .map((row) => {
+      const translation =
+        row.tour_translations?.find((entry) => entry.locale === 'en') ??
+        row.tour_translations?.[0] ??
+        null;
 
-    return {
-      id: row.id,
-      title: translation?.title ?? 'Untitled draft',
-      slug: translation?.slug ?? '',
-      status: displayStatus(row.status),
-      days: row.days,
-      nights: row.nights,
-      publishedAt: translation?.published_at ?? null,
-      updatedAt: row.updated_at,
-      trashed: row.status === 'archived'
-    };
-  });
+      return {
+        id: row.id,
+        title: translation?.title ?? 'Untitled draft',
+        slug: translation?.slug ?? '',
+        status: displayStatus(row.status),
+        days: row.days,
+        nights: row.nights,
+        publishedAt: translation?.published_at ?? null,
+        updatedAt: row.updated_at,
+        trashed: row.status === 'archived'
+      };
+    });
 
   const [counts, months] = await Promise.all([getStatusCounts(), getMonthOptions()]);
 
