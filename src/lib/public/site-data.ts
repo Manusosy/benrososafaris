@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 
 import { BENROSO_CONTACT_DEFAULTS } from '@/config/benroso';
+import { DEFAULT_LOCALE } from '@/lib/i18n';
 import { listPublishedAccommodations } from '@/features/accommodations/public/service';
 import type { PublicAccommodation } from '@/features/accommodations/public/types';
 import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
@@ -49,6 +50,22 @@ function parseStringArray(value: unknown): string[] {
 
 function createGenericClient(): SupabaseClient {
   return createEnquiryPublicClient() as unknown as SupabaseClient;
+}
+
+/** Use English content when the active locale has no published translations yet. */
+async function resolvePublishedContentLocale<T>(
+  locale: string,
+  fetchRows: (resolvedLocale: string) => Promise<T[]>
+): Promise<{ contentLocale: string; rows: T[] }> {
+  const rows = await fetchRows(locale);
+  if (rows.length || locale === DEFAULT_LOCALE) {
+    return { contentLocale: locale, rows };
+  }
+
+  return {
+    contentLocale: DEFAULT_LOCALE,
+    rows: await fetchRows(DEFAULT_LOCALE)
+  };
 }
 
 function parseRichTextHtml(value: unknown): string | null {
@@ -857,7 +874,7 @@ function pricingBounds(
 }
 
 function mapTourListRows(
-  locale: string,
+  linkLocale: string,
   rows: TourTranslationListRow[],
   pricingByTourId: Map<string, PublicTourPricingTier[]>,
   relationLabels: Awaited<ReturnType<typeof getTourRelationLabelMaps>>,
@@ -879,7 +896,7 @@ function mapTourListRows(
         destinationLabels: relationLabels.destinations.get(tour.id) ?? [],
         excerpt: row.excerpt,
         experienceLabels: relationLabels.experiences.get(tour.id) ?? [],
-        href: localePath(locale, `/tours/${row.slug}`),
+        href: localePath(linkLocale, `/tours/${row.slug}`),
         id: tour.id,
         imageAlt: cover?.alt ?? mediaAlt(row.og_image, row.title),
         imageUrl: cover?.url ?? mediaUrl(row.og_image),
@@ -1033,7 +1050,11 @@ async function fetchPublishedTourRows(
   return (data ?? []) as TourTranslationListRow[];
 }
 
-async function buildToursFromRows(locale: string, rows: TourTranslationListRow[]) {
+async function buildToursFromRows(
+  locale: string,
+  rows: TourTranslationListRow[],
+  linkLocale = locale
+) {
   const tourIds = rows.flatMap((row) => {
     const tour = unwrapRelation(row.tour);
     return tour?.id ? [tour.id] : [];
@@ -1045,15 +1066,17 @@ async function buildToursFromRows(locale: string, rows: TourTranslationListRow[]
     resolveMediaByIds(galleryIds)
   ]);
 
-  return mapTourListRows(locale, rows, pricingByTourId, relationLabels, mediaById);
+  return mapTourListRows(linkLocale, rows, pricingByTourId, relationLabels, mediaById);
 }
 
 export async function getPublicTourCatalog(
   locale: string,
   filters: PublicTourCatalogFilters = {}
 ): Promise<{ facets: PublicTourCatalogFacets; tours: PublicTour[] }> {
-  const rows = await fetchPublishedTourRows(locale);
-  const allTours = await buildToursFromRows(locale, rows);
+  const { contentLocale, rows } = await resolvePublishedContentLocale(locale, (resolvedLocale) =>
+    fetchPublishedTourRows(resolvedLocale)
+  );
+  const allTours = await buildToursFromRows(locale, rows, contentLocale);
   const facets = buildTourCatalogFacets(allTours);
 
   const tours = allTours
@@ -1066,7 +1089,7 @@ export async function getPublicTourCatalog(
 export async function getPublicTours(locale: string, limit = 6): Promise<PublicTour[]> {
   return unstable_cache(
     () => fetchPublicTours(locale, limit),
-    ['public-tours', locale, String(limit)],
+    ['public-tours-v2', locale, String(limit)],
     {
       revalidate: 300,
       tags: ['tours']
@@ -1075,8 +1098,10 @@ export async function getPublicTours(locale: string, limit = 6): Promise<PublicT
 }
 
 async function fetchPublicTours(locale: string, limit = 6): Promise<PublicTour[]> {
-  const rows = (await fetchPublishedTourRows(locale)).slice(0, limit);
-  return buildToursFromRows(locale, rows);
+  const { contentLocale, rows } = await resolvePublishedContentLocale(locale, (resolvedLocale) =>
+    fetchPublishedTourRows(resolvedLocale)
+  );
+  return buildToursFromRows(locale, rows.slice(0, limit), contentLocale);
 }
 
 export async function getPublicToursByIds(
@@ -1084,7 +1109,10 @@ export async function getPublicToursByIds(
   tourIds: string[]
 ): Promise<PublicTour[]> {
   if (!tourIds.length) return [];
-  return buildToursFromRows(locale, await fetchPublishedTourRows(locale, tourIds));
+  const { contentLocale, rows } = await resolvePublishedContentLocale(locale, (resolvedLocale) =>
+    fetchPublishedTourRows(resolvedLocale, tourIds)
+  );
+  return buildToursFromRows(locale, rows, contentLocale);
 }
 
 async function getRouteAccommodations(
@@ -1147,7 +1175,8 @@ export async function getPublicTourDetail(
   slug: string
 ): Promise<PublicTourDetail | null> {
   const supabase = createGenericClient();
-  const { data } = await supabase
+  let contentLocale = locale;
+  let { data } = await supabase
     .from('tour_translations')
     .select(
       `
@@ -1180,9 +1209,45 @@ export async function getPublicTourDetail(
     .not('published_at', 'is', null)
     .maybeSingle<TourTranslationListRow>();
 
+  if (!data && locale !== DEFAULT_LOCALE) {
+    contentLocale = DEFAULT_LOCALE;
+    ({ data } = await supabase
+      .from('tour_translations')
+      .select(
+        `
+      slug,
+      title,
+      excerpt,
+      overview,
+      faqs,
+      tour:tours!inner(
+        id,
+        status,
+        days,
+        nights,
+        price_from,
+        start_location,
+        end_location,
+        important_notice,
+        itinerary_days,
+        route_waypoints,
+        inclusions,
+        exclusions,
+        gallery
+      ),
+      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
+    `
+      )
+      .eq('locale', DEFAULT_LOCALE)
+      .eq('slug', slug)
+      .eq('tour.status', 'published')
+      .not('published_at', 'is', null)
+      .maybeSingle<TourTranslationListRow>());
+  }
+
   if (!data) return null;
 
-  const [summary] = await buildToursFromRows(locale, [data]);
+  const [summary] = await buildToursFromRows(locale, [data], contentLocale);
   const tour = unwrapRelation(data.tour);
   if (!summary || !tour) return null;
 
@@ -1265,7 +1330,7 @@ async function fetchPublishedPackageRows(
 }
 
 function mapPackageRows(
-  locale: string,
+  linkLocale: string,
   rows: PackageTranslationRow[],
   toursById: Map<string, PublicTour>
 ): PublicPackage[] {
@@ -1286,7 +1351,7 @@ function mapPackageRows(
         comfortTier: base.comfort_tier,
         excerpt: row.excerpt ?? tour?.excerpt ?? null,
         group: base.package_group,
-        href: localePath(locale, `/safari-packages/${row.slug}`),
+        href: localePath(linkLocale, `/safari-packages/${row.slug}`),
         id: base.id,
         imageAlt: mediaAlt(row.og_image, row.title) ?? tour?.imageAlt ?? row.title,
         imageUrl: mediaUrl(row.og_image) ?? tour?.imageUrl ?? null,
@@ -1300,35 +1365,43 @@ function mapPackageRows(
 }
 
 export async function getPublicPackages(locale: string, limit = 24): Promise<PublicPackage[]> {
-  const rows = (await fetchPublishedPackageRows(locale)).slice(0, limit);
+  const { contentLocale, rows } = await resolvePublishedContentLocale(locale, (resolvedLocale) =>
+    fetchPublishedPackageRows(resolvedLocale)
+  );
+  const limitedRows = rows.slice(0, limit);
   const tourIds = [
     ...new Set(
-      rows
+      limitedRows
         .map((row) => unwrapRelation(row.package)?.tour_id)
         .filter((id): id is string => typeof id === 'string')
     )
   ];
   const tours = await getPublicToursByIds(locale, tourIds);
   const toursById = new Map(tours.map((tour) => [tour.id, tour]));
-  return mapPackageRows(locale, rows, toursById);
+  return mapPackageRows(contentLocale, limitedRows, toursById);
 }
 
 export async function getPublicPackageDetail(
   locale: string,
   slug: string
 ): Promise<PublicPackageDetail | null> {
-  const [row] = await fetchPublishedPackageRows(locale, slug);
+  let contentLocale = locale;
+  let [row] = await fetchPublishedPackageRows(locale, slug);
+  if (!row && locale !== DEFAULT_LOCALE) {
+    contentLocale = DEFAULT_LOCALE;
+    [row] = await fetchPublishedPackageRows(DEFAULT_LOCALE, slug);
+  }
   if (!row) return null;
 
   const base = unwrapRelation(row.package);
   const linkedTour = base?.tour_id
     ? await getPublicTourDetail(
-        locale,
-        (await getPublicToursByIds(locale, [base.tour_id]))[0]?.slug ?? ''
+        contentLocale,
+        (await getPublicToursByIds(contentLocale, [base.tour_id]))[0]?.slug ?? ''
       )
     : null;
   const toursById = new Map(linkedTour ? [[linkedTour.id, linkedTour as PublicTour]] : []);
-  const [summary] = mapPackageRows(locale, [row], toursById);
+  const [summary] = mapPackageRows(contentLocale, [row], toursById);
   if (!summary) return null;
 
   const pricingTier =

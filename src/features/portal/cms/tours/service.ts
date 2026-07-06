@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { revalidateTourPublicPaths } from '@/features/portal/cms/tours/revalidate-public-paths';
 import {
   formatExperienceKeyLabel,
   levelHasFilledPrices,
@@ -250,6 +251,7 @@ export async function saveTour(input: {
   }
 
   revalidatePath('/portal/tours');
+  revalidateTourPublicPaths();
   return { id: tourId };
 }
 
@@ -597,4 +599,5 @@ export async function deleteTour(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 
   revalidatePath('/portal/tours');
+  revalidateTourPublicPaths();
 }

@@ -14,6 +14,7 @@ import {
   getHomeReviews,
   getPageHero,
   getPublicBlogPosts,
+  getPublicPackages,
   getPublicSiteSettings,
   getPublicTours
 } from '@/lib/public/site-data';
@@ -116,10 +117,11 @@ export const revalidate = 300;
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
-  const [siteSettings, tours, blogPosts, heroSlides, homeHero, reviews, experiences] =
+  const [siteSettings, tours, packages, blogPosts, heroSlides, homeHero, reviews, experiences] =
     await Promise.all([
       getPublicSiteSettings(),
       getPublicTours(locale),
+      getPublicPackages(locale, 6),
       getPublicBlogPosts(locale, 3),
       getHeroSlides(),
       getPageHero('home'),
@@ -137,7 +139,7 @@ export default async function HomePage({ params }: HomePageProps) {
         <ExperienceShowcase items={showcaseItems} locale={locale} />
         <HomeDestinationsMap />
         <HomeExperiencesGrid experiences={experiences} locale={locale} />
-        <HomeFeaturedTours locale={locale} tours={tours} />
+        <HomeFeaturedTours locale={locale} packages={packages} tours={tours} />
         <HomeBookingSteps locale={locale} />
         <HomeFleetGuides locale={locale} />
         <HomeGoogleReviews reviews={reviews} />

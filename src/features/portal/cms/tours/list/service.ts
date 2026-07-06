@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePortalSession } from '@/lib/auth/portal';
-import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
+import { revalidateTourPublicPaths } from '@/features/portal/cms/tours/revalidate-public-paths';
 import {
   TOURS_PAGE_SIZE,
   type TourListItem,
@@ -23,13 +23,6 @@ async function assertCanWrite() {
   const session = await requirePortalSession();
   if (!WRITE_ROLES.has(session.role)) {
     throw new Error('You do not have permission to manage tours.');
-  }
-}
-
-function revalidateTourPublicPaths() {
-  for (const locale of SUPPORTED_LOCALES) {
-    revalidatePath(`/${locale}`);
-    revalidatePath(`/${locale}/tours`);
   }
 }
 
