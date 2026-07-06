@@ -94,6 +94,7 @@ export async function generateMetadata(props: BlogPageProps): Promise<Metadata> 
     .eq('locale', locale)
     .eq('slug', slug)
     .eq('post.status', 'published')
+    .not('published_at', 'is', null)
     .single<BlogTranslation>();
 
   if (!post) notFound();
@@ -148,6 +149,7 @@ export default async function BlogPostPage(props: BlogPageProps) {
     .eq('locale', locale)
     .eq('slug', slug)
     .eq('post.status', 'published')
+    .not('published_at', 'is', null)
     .single<BlogArticle>();
 
   if (!post) notFound();

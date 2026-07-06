@@ -1,7 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 
+import { autoTranslateBlogPost } from '@/lib/i18n/auto-translate-blog';
+import { isAutoTranslateEnabled } from '@/lib/i18n/auto-translate-config';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 
 import { requirePortalSession } from '@/lib/auth/portal';
@@ -138,9 +141,40 @@ export async function saveArticle(input: {
   // Keep the main publish timestamp on the base row in sync for ordering.
   await supabase.from('blog_posts').update({ published_at: publishedAt }).eq('id', postId);
 
+  if (input.status === 'draft') {
+    await supabase
+      .from('blog_translations')
+      .update({ published_at: null, updated_at: now })
+      .eq('post_id', postId)
+      .neq('locale', 'en');
+  }
+
   revalidatePath('/portal/blog');
   if (input.status === 'published') {
     notifyPublishedContent({ pathPrefix: 'blog', slug: values.slug });
+
+    if (isAutoTranslateEnabled()) {
+      after(async () => {
+        try {
+          await autoTranslateBlogPost({
+            postId,
+            slug: values.slug,
+            title: values.title,
+            excerpt: values.excerpt || null,
+            contentHtml: values.content || '',
+            seoTitle: values.seoTitle || values.title,
+            seoDescription: values.seoDescription || null,
+            focusKeyword: values.focusKeyword || null,
+            keywords: values.keywords,
+            featuredImageCaption: values.featuredImageCaption || null,
+            ogImageId: values.featuredImage || null,
+            publishedAt
+          });
+        } catch (error) {
+          console.error('[auto-translate] blog post failed', error);
+        }
+      });
+    }
   }
   return { id: postId };
 }

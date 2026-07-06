@@ -425,14 +425,15 @@ export async function listExperienceMenuItems(locale: string): Promise<PublicExp
   )
     .flatMap((row) => {
       const label = row.label.trim();
-      if (!label) return [];
+      const slug = row.slug?.trim();
+      if (!label || !slug) return [];
       const key = label.toLowerCase();
       if (seen.has(key)) return [];
       seen.add(key);
 
       return [
         {
-          href: localePath(locale, `/experiences?category=${encodeURIComponent(label)}`),
+          href: localePath(locale, `/experiences/${slug}`),
           id: row.experience_id,
           label,
           menuGroup: normalizeMenuGroup(row.menu_group),
