@@ -24,7 +24,7 @@ export interface SendCampaignResult {
 }
 
 function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.co.ke').replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.com').replace(/\/$/, '');
 }
 
 function unsubscribeUrl(token: string): string {

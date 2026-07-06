@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 
 export function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.co.ke').replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.com').replace(/\/$/, '');
 }
 
 export function getPortalHost() {
