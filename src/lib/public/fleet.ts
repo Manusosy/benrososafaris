@@ -68,9 +68,14 @@ const FLEET_GALLERY_FALLBACK: PublicDestinationMedia[] = [
     alt: 'Benroso Safaris four by four with pop up roof near a lion on the plains'
   },
   {
+    id: 'benroso-4x4-safaris-fleet',
+    url: '/assets/benroso-4x4-safaris-fleet.png',
+    alt: 'Benroso Safaris 4x4 fleet at a scenic East African viewpoint'
+  },
+  {
     id: 'benroso-fleet-mara-gate',
     url: '/assets/benroso-fleet-mara-gate.png',
-    alt: 'Benroso Safaris vehicle at the Masai Mara National Reserve gate'
+    alt: 'Benroso Safaris vehicle at Lake Naivasha Sopa Resort'
   },
   {
     id: 'benroso-fleet-branded',
@@ -80,7 +85,7 @@ const FLEET_GALLERY_FALLBACK: PublicDestinationMedia[] = [
   {
     id: 'benroso-fleet-guests',
     url: '/assets/benroso-fleet-guests.png',
-    alt: 'Guests boarding a Benroso Safaris private safari vehicle'
+    alt: 'Safari guests with Benroso Safaris private safari vehicles'
   }
 ];
 
