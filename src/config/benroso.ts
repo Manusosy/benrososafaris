@@ -26,6 +26,8 @@ export const BENROSO_LOGO_PATH = '/assets/benroso-logo.jpg';
 export const BENROSO_LOGO_WIDTH = 514;
 export const BENROSO_LOGO_HEIGHT = 150;
 
+export const BENROSO_FAVICON_PATH = '/assets/benroso-favicon.png';
+
 export const BENROSO_PORTAL_AUTH_IMAGE = {
   src: '/assets/Elephant-in-Amboseli-National-Park-2.jpeg',
   alt: 'Elephants walking across Amboseli National Park with Mount Kilimanjaro in the background'

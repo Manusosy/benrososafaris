@@ -4,6 +4,7 @@ import { fontVariables } from '@/components/themes/font.config';
 import { DEFAULT_THEME, THEMES } from '@/components/themes/theme.config';
 import { MetaThemeColorSync } from '@/components/themes/meta-theme-color-sync';
 import ThemeProvider from '@/components/themes/theme-provider';
+import { BENROSO_FAVICON_PATH } from '@/config/benroso';
 import { cn } from '@/lib/utils';
 import { getPublicSiteSettings } from '@/lib/public/site-data';
 import { getTheme } from '@teispace/next-themes/server';
@@ -24,7 +25,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
-    icons: settings.faviconUrl ? { icon: settings.faviconUrl } : undefined,
+    icons: {
+      icon: settings.faviconUrl ?? BENROSO_FAVICON_PATH,
+      apple: settings.faviconUrl ?? BENROSO_FAVICON_PATH
+    },
     openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
     verification:
       analytics.googleSiteVerification || analytics.bingSiteVerification

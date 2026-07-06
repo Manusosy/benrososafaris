@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BENROSO_FAVICON_PATH } from '@/config/benroso';
 import type { Tables } from '@/types/database.types';
 
 /** Optional free-text that stores null when blank. */
@@ -91,7 +92,7 @@ export function settingsFromRow(row: Tables<'site_settings'> | null): SettingsFo
       companyName: row?.company_name ?? 'Benroso Safaris Ltd',
       tagline: row?.tagline ?? '',
       logoUrl: row?.logo_url ?? '',
-      faviconUrl: row?.favicon_url ?? '',
+      faviconUrl: row?.favicon_url ?? BENROSO_FAVICON_PATH,
       ogDefaultImageUrl: row?.og_default_image_url ?? '',
       themeColor: row?.theme_color ?? ''
     },
