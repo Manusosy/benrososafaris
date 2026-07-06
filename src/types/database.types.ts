@@ -1734,6 +1734,8 @@ export type Database = {
           itinerary_days: Json;
           nights: number | null;
           price_from: number | null;
+          pricing_experience_id: string | null;
+          pricing_table_keys: Json;
           route_waypoints: Json;
           start_location: string | null;
           status: string;
@@ -1751,6 +1753,8 @@ export type Database = {
           itinerary_days?: Json;
           nights?: number | null;
           price_from?: number | null;
+          pricing_experience_id?: string | null;
+          pricing_table_keys?: Json;
           route_waypoints?: Json;
           start_location?: string | null;
           status?: string;
@@ -1768,12 +1772,22 @@ export type Database = {
           itinerary_days?: Json;
           nights?: number | null;
           price_from?: number | null;
+          pricing_experience_id?: string | null;
+          pricing_table_keys?: Json;
           route_waypoints?: Json;
           start_location?: string | null;
           status?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'tours_pricing_experience_id_fkey';
+            columns: ['pricing_experience_id'];
+            isOneToOne: false;
+            referencedRelation: 'experiences';
+            referencedColumns: ['id'];
+          }
+        ];
       };
     };
     Views: {

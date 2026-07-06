@@ -7,6 +7,11 @@ import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import {
+  mapExperienceLevelsToTourTiers,
+  parseExperiencePackagePricing,
+  parsePricingTableKeys
+} from '@/lib/pricing/experience-to-tour-pricing';
 import { localePath } from './locale-path';
 import { activeHeroSlides, normalizeHeroSlides } from './hero-slides';
 import { normalizePageHero, type PageHeroKey } from './page-heroes';
@@ -678,16 +683,17 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
   return { countries, destinations, experiences, parks, parkSlugs };
 }
 
-async function getTourPricingMap(tourIds: string[]) {
-  const uniqueIds = [...new Set(tourIds.filter(Boolean))];
+async function getLegacyTourPricingMap(
+  supabase: ReturnType<typeof createEnquiryPublicClient>,
+  tourIds: string[]
+) {
   const pricingByTourId = new Map<string, PublicTourPricingTier[]>();
-  if (!uniqueIds.length) return pricingByTourId;
+  if (!tourIds.length) return pricingByTourId;
 
-  const supabase = createEnquiryPublicClient();
   const { data: tierRows } = await supabase
     .from('tour_pricing_tiers')
     .select('id, tour_id, tier, label, blurb, notes, currency, position')
-    .in('tour_id', uniqueIds)
+    .in('tour_id', tourIds)
     .order('position', { ascending: true });
 
   const tiers = (tierRows ?? []) as Array<{
@@ -765,6 +771,73 @@ async function getTourPricingMap(tourIds: string[]) {
         seasons: seasonsByTierId.get(tier.id) ?? []
       }
     ]);
+  }
+
+  return pricingByTourId;
+}
+
+async function getTourPricingMap(tourIds: string[]) {
+  const uniqueIds = [...new Set(tourIds.filter(Boolean))];
+  const pricingByTourId = new Map<string, PublicTourPricingTier[]>();
+  if (!uniqueIds.length) return pricingByTourId;
+
+  const supabase = createEnquiryPublicClient();
+
+  const { data: tourRows } = await supabase
+    .from('tours')
+    .select('id, pricing_experience_id, pricing_table_keys')
+    .in('id', uniqueIds);
+
+  const experienceLinked: Array<{
+    id: string;
+    pricing_experience_id: string;
+    pricing_table_keys: unknown;
+  }> = [];
+  const legacyTourIds: string[] = [];
+
+  for (const row of tourRows ?? []) {
+    const experienceId = row.pricing_experience_id as string | null;
+    const keys = parsePricingTableKeys(row.pricing_table_keys);
+    if (experienceId && keys.length) {
+      experienceLinked.push({
+        id: row.id as string,
+        pricing_experience_id: experienceId,
+        pricing_table_keys: keys
+      });
+    } else {
+      legacyTourIds.push(row.id as string);
+    }
+  }
+
+  if (experienceLinked.length) {
+    const experienceIds = [...new Set(experienceLinked.map((row) => row.pricing_experience_id))];
+    const { data: experienceRows } = await supabase
+      .from('experiences')
+      .select('id, package_pricing')
+      .in('id', experienceIds);
+
+    const pricingByExperienceId = new Map(
+      (experienceRows ?? []).map((row) => [
+        row.id as string,
+        parseExperiencePackagePricing(row.package_pricing)
+      ])
+    );
+
+    for (const tour of experienceLinked) {
+      const levels = pricingByExperienceId.get(tour.pricing_experience_id) ?? [];
+      const keys = parsePricingTableKeys(tour.pricing_table_keys);
+      pricingByTourId.set(
+        tour.id,
+        mapExperienceLevelsToTourTiers(levels, keys, tour.pricing_experience_id)
+      );
+    }
+  }
+
+  if (legacyTourIds.length) {
+    const legacyPricing = await getLegacyTourPricingMap(supabase, legacyTourIds);
+    for (const [tourId, tiers] of legacyPricing) {
+      pricingByTourId.set(tourId, tiers);
+    }
   }
 
   return pricingByTourId;

@@ -6,6 +6,17 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import {
+  formatExperienceKeyLabel,
+  levelHasFilledPrices,
+  mapExperienceKeyToTourTier,
+  mapExperienceLevelsToTourTiers,
+  minPriceFromTourTiers,
+  parseExperiencePackagePricing,
+  parsePricingTableKeys,
+  type ExperiencePricingTableKey
+} from '@/lib/pricing/experience-to-tour-pricing';
+import type { PublicTourPricingTier } from '@/lib/public/types';
 import { tourFormSchema, type PricingTier, type TourFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -19,6 +30,24 @@ export interface RelationOption {
   value: string;
   label: string;
 }
+
+export type ExperiencePricingTableOption = {
+  key: ExperiencePricingTableKey;
+  label: string;
+  blurb: string;
+  currency: string;
+  tourTier: PublicTourPricingTier['tier'];
+  seasonCount: number;
+  priceFrom: number | null;
+};
+
+export type TourPricingPreview = {
+  hasPricing: boolean;
+  priceFrom: number | null;
+  source: 'experience' | 'legacy' | 'none';
+  tierLabel: string | null;
+  warning: string | null;
+};
 
 const WRITE_ROLES = new Set(['owner', 'admin', 'editor']);
 
@@ -119,6 +148,9 @@ export async function saveTour(input: {
   const supabase = await genericClient();
   const now = new Date().toISOString();
 
+  const usesExperiencePricing =
+    values.pricingExperienceId.trim().length > 0 && values.pricingTableKeys.length > 0;
+
   const basePayload = {
     days: toNumberOrNull(values.days),
     nights: toNumberOrNull(values.nights),
@@ -131,6 +163,8 @@ export async function saveTour(input: {
     inclusions: values.inclusions,
     exclusions: values.exclusions,
     gallery: values.gallery,
+    pricing_experience_id: usesExperiencePricing ? values.pricingExperienceId : null,
+    pricing_table_keys: usesExperiencePricing ? values.pricingTableKeys : [],
     status: input.status,
     updated_at: now
   };
@@ -193,13 +227,13 @@ export async function saveTour(input: {
     tourId,
     values.destinationIds
   );
-  await replaceRelation(
-    supabase,
-    'tour_experiences',
-    'experience_id',
-    tourId,
-    values.experienceIds
-  );
+  const experienceIds = [
+    ...new Set([
+      ...values.experienceIds,
+      ...(usesExperiencePricing && values.pricingExperienceId ? [values.pricingExperienceId] : [])
+    ])
+  ];
+  await replaceRelation(supabase, 'tour_experiences', 'experience_id', tourId, experienceIds);
   await replaceRelation(
     supabase,
     'tour_accommodations',
@@ -208,7 +242,12 @@ export async function saveTour(input: {
     values.accommodationIds
   );
   await replaceRelation(supabase, 'tour_fleet', 'vehicle_id', tourId, values.fleetIds);
-  await replacePricing(supabase, tourId, values.pricingTiers);
+
+  if (usesExperiencePricing) {
+    await supabase.from('tour_pricing_tiers').delete().eq('tour_id', tourId);
+  } else {
+    await replacePricing(supabase, tourId, values.pricingTiers);
+  }
 
   revalidatePath('/portal/tours');
   return { id: tourId };
@@ -331,6 +370,8 @@ export async function getTour(id: string): Promise<TourRecord | null> {
     inclusions: Array.isArray(base.inclusions) ? (base.inclusions as string[]) : [],
     exclusions: Array.isArray(base.exclusions) ? (base.exclusions as string[]) : [],
     pricingTiers: pricing,
+    pricingExperienceId: (base.pricing_experience_id as string | null) ?? '',
+    pricingTableKeys: parsePricingTableKeys(base.pricing_table_keys),
     gallery: Array.isArray(base.gallery) ? (base.gallery as string[]) : [],
     parkIds,
     destinationIds,
@@ -385,6 +426,166 @@ export async function getTourRelationOptions(): Promise<{
     moduleOptions(supabase, 'fleet_vehicle_translations', 'vehicle_id', 'title')
   ]);
   return { parks, destinations, experiences, accommodations, fleet };
+}
+
+export async function getExperiencePricingTablesForWizard(
+  experienceId: string
+): Promise<ExperiencePricingTableOption[]> {
+  await requirePortalSession();
+  if (!experienceId) return [];
+
+  const supabase = await genericClient();
+  const { data, error } = await supabase
+    .from('experiences')
+    .select('package_pricing')
+    .eq('id', experienceId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  return parseExperiencePackagePricing(data?.package_pricing)
+    .filter(levelHasFilledPrices)
+    .map((level) => ({
+      key: level.key,
+      label: level.label || formatExperienceKeyLabel(level.key),
+      blurb: level.blurb,
+      currency: level.currency,
+      tourTier: mapExperienceKeyToTourTier(level.key),
+      seasonCount: level.seasons.length,
+      priceFrom: minPriceFromTourTiers(
+        mapExperienceLevelsToTourTiers([level], [level.key], experienceId)
+      )
+    }));
+}
+
+export async function getExperiencePricingPreview(
+  experienceId: string,
+  keys: ExperiencePricingTableKey[]
+): Promise<PublicTourPricingTier[]> {
+  await requirePortalSession();
+  if (!experienceId || !keys.length) return [];
+
+  const supabase = await genericClient();
+  const { data, error } = await supabase
+    .from('experiences')
+    .select('package_pricing')
+    .eq('id', experienceId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  const levels = parseExperiencePackagePricing(data?.package_pricing);
+  return mapExperienceLevelsToTourTiers(levels, keys, experienceId);
+}
+
+async function resolveTourPricingForPreview(
+  supabase: SupabaseClient,
+  tourId: string
+): Promise<PublicTourPricingTier[]> {
+  const { data: tour } = await supabase
+    .from('tours')
+    .select('pricing_experience_id, pricing_table_keys')
+    .eq('id', tourId)
+    .maybeSingle();
+
+  if (!tour) return [];
+
+  const experienceId = tour.pricing_experience_id as string | null;
+  const keys = parsePricingTableKeys(tour.pricing_table_keys);
+
+  if (experienceId && keys.length) {
+    const { data: experience } = await supabase
+      .from('experiences')
+      .select('package_pricing')
+      .eq('id', experienceId)
+      .maybeSingle();
+
+    const levels = parseExperiencePackagePricing(experience?.package_pricing);
+    return mapExperienceLevelsToTourTiers(levels, keys, experienceId);
+  }
+
+  return legacyPricingTiersToPublic(await pricingTiers(supabase, tourId), tourId);
+}
+
+function legacyPricingTiersToPublic(tiers: PricingTier[], tourId: string): PublicTourPricingTier[] {
+  return tiers.map((tier, index) => ({
+    id: `legacy-${tourId}-${tier.tier}-${index}`,
+    tier: tier.tier,
+    label: tier.label || tier.tier.replace('_', ' '),
+    blurb: tier.blurb || null,
+    notes: tier.notes || null,
+    currency: tier.currency || 'USD',
+    seasons: tier.seasons.map((season, seasonIndex) => ({
+      id: `legacy-${tourId}-${tier.tier}-season-${seasonIndex}`,
+      label: season.label,
+      dateStart: season.dateStart || null,
+      dateEnd: season.dateEnd || null,
+      cells: season.cells.flatMap((cell) => {
+        const price = toNumberOrNull(cell.price);
+        return price != null && cell.groupBand.trim() ? [{ groupBand: cell.groupBand, price }] : [];
+      })
+    }))
+  }));
+}
+
+export async function previewTourPricingForPackage(input: {
+  tourId: string;
+  comfortTier: PublicTourPricingTier['tier'];
+}): Promise<TourPricingPreview> {
+  await requirePortalSession();
+  if (!input.tourId) {
+    return {
+      hasPricing: false,
+      priceFrom: null,
+      source: 'none',
+      tierLabel: null,
+      warning: 'Select a source trip route first.'
+    };
+  }
+
+  const supabase = await genericClient();
+  const { data: tour } = await supabase
+    .from('tours')
+    .select('pricing_experience_id, pricing_table_keys, price_from')
+    .eq('id', input.tourId)
+    .maybeSingle();
+
+  if (!tour) {
+    return {
+      hasPricing: false,
+      priceFrom: null,
+      source: 'none',
+      tierLabel: null,
+      warning: 'Trip route not found.'
+    };
+  }
+
+  const tiers = await resolveTourPricingForPreview(supabase, input.tourId);
+  const matchedTier = tiers.find((tier) => tier.tier === input.comfortTier) ?? null;
+  const source =
+    tour.pricing_experience_id && parsePricingTableKeys(tour.pricing_table_keys).length
+      ? 'experience'
+      : tiers.length
+        ? 'legacy'
+        : 'none';
+
+  if (!matchedTier) {
+    return {
+      hasPricing: false,
+      priceFrom: tour.price_from != null ? Number(tour.price_from) : null,
+      source,
+      tierLabel: null,
+      warning: `No ${input.comfortTier.replace('_', ' ')} pricing table linked to this trip.`
+    };
+  }
+
+  return {
+    hasPricing: true,
+    priceFrom: minPriceFromTourTiers([matchedTier]),
+    source,
+    tierLabel: matchedTier.label,
+    warning: null
+  };
 }
 
 export async function deleteTour(id: string): Promise<void> {

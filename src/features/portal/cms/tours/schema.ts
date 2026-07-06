@@ -47,6 +47,17 @@ export type PricingCell = z.infer<typeof pricingCellSchema>;
 export type PricingSeason = z.infer<typeof pricingSeasonSchema>;
 export type PricingTier = z.infer<typeof pricingTierSchema>;
 
+export const experiencePricingTableKeySchema = z.enum([
+  'economy',
+  'budget',
+  'mid_range',
+  'luxury',
+  'high_end',
+  'custom'
+]);
+
+export type ExperiencePricingTableKey = z.infer<typeof experiencePricingTableKeySchema>;
+
 /**
  * Tour wizard form contract.
  *
@@ -77,6 +88,8 @@ export const tourFormSchema = z.object({
   inclusions: z.array(z.string()),
   exclusions: z.array(z.string()),
   pricingTiers: z.array(pricingTierSchema),
+  pricingExperienceId: z.string(),
+  pricingTableKeys: z.array(experiencePricingTableKeySchema).max(3),
   gallery: z.array(z.string()),
   // Relations
   parkIds: z.array(z.string()),
@@ -121,7 +134,23 @@ export const tourStepSchemas = [
   }),
   tourFormSchema.pick({ gallery: true }),
   tourFormSchema.pick({ overview: true, importantNotice: true, faqs: true }),
-  tourFormSchema.pick({ pricingTiers: true }),
+  tourFormSchema
+    .pick({
+      pricingExperienceId: true,
+      pricingTableKeys: true,
+      pricingTiers: true
+    })
+    .refine(
+      (data) => {
+        if (data.pricingExperienceId && data.pricingTableKeys.length) return true;
+        return data.pricingTiers.some((tier) =>
+          tier.seasons.some((season) =>
+            season.cells.some((cell) => cell.groupBand.trim() && cell.price.trim())
+          )
+        );
+      },
+      { message: 'Select at least one experience pricing table or enter legacy pricing' }
+    ),
   tourFormSchema.pick({
     seoTitle: true,
     seoDescription: true,
@@ -140,7 +169,7 @@ export const tourWizardSteps = [
   },
   { title: 'Gallery', description: 'Choose the images shown on this tour.' },
   { title: 'Story', description: 'Overview, notices, and traveler FAQs.' },
-  { title: 'Pricing', description: 'Comfort tiers, seasons, and group-size price bands.' },
+  { title: 'Pricing', description: 'Pick pricing tables from a linked experience (updates live).' },
   { title: 'SEO', description: 'Search appearance, keywords, and readiness score.' },
   { title: 'Review', description: 'Confirm everything, then save or publish.' }
 ];
@@ -162,6 +191,8 @@ export const emptyTourValues: TourFormValues = {
   inclusions: [],
   exclusions: [],
   pricingTiers: [],
+  pricingExperienceId: '',
+  pricingTableKeys: [],
   gallery: [],
   parkIds: [],
   destinationIds: [],

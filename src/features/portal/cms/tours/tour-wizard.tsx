@@ -26,13 +26,13 @@ import { HighlightsInput } from '../shared/highlights-input';
 import { MultiCombobox } from '../shared/multi-combobox';
 import { htmlToText, RichTextEditor } from '../shared/rich-text-editor';
 import { WizardShell, type WizardPendingAction } from '../shared/wizard-shell';
+import { ExperiencePricingSelector } from './experience-pricing-selector';
 import {
   emptyTourValues,
   tourFormSchema,
   tourStepSchemas,
   tourWizardSteps,
   type ItineraryDay,
-  type PricingTier,
   type RouteLeg,
   type TourFormValues
 } from './schema';
@@ -249,206 +249,6 @@ function RoutePreview({
   );
 }
 
-const PRICING_TIER_OPTIONS: Array<{ value: PricingTier['tier']; label: string }> = [
-  { value: 'budget', label: 'Budget' },
-  { value: 'mid_range', label: 'Mid Range' },
-  { value: 'luxury', label: 'Luxury' }
-];
-
-function emptyPricingTier(tier: PricingTier['tier'] = 'mid_range'): PricingTier {
-  return {
-    tier,
-    label:
-      tier === 'mid_range'
-        ? 'Mid-range options'
-        : tier === 'budget'
-          ? 'Budget options'
-          : 'Luxury options',
-    blurb: '',
-    notes: '',
-    currency: 'USD',
-    seasons: []
-  };
-}
-
-function PricingInput({
-  value,
-  onChange
-}: {
-  value: PricingTier[];
-  onChange: (next: PricingTier[]) => void;
-}) {
-  function updateTier(index: number, patch: Partial<PricingTier>) {
-    onChange(value.map((tier, i) => (i === index ? { ...tier, ...patch } : tier)));
-  }
-
-  function removeTier(index: number) {
-    onChange(value.filter((_, i) => i !== index));
-  }
-
-  function addSeason(tierIndex: number) {
-    updateTier(tierIndex, {
-      seasons: [
-        ...value[tierIndex].seasons,
-        {
-          label: '',
-          dateStart: '',
-          dateEnd: '',
-          cells: [
-            { groupBand: '1', price: '' },
-            { groupBand: '2-3', price: '' },
-            { groupBand: '4-5', price: '' },
-            { groupBand: '6+', price: '' }
-          ]
-        }
-      ]
-    });
-  }
-
-  return (
-    <div className='grid gap-4'>
-      {value.map((tier, tierIndex) => (
-        <div className='rounded-lg border p-4' key={`${tier.tier}-${tierIndex}`}>
-          <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-            <div className='grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]'>
-              <select
-                className='border-input bg-background rounded-md border px-3 py-2 text-sm'
-                onChange={(event) =>
-                  updateTier(tierIndex, { tier: event.target.value as PricingTier['tier'] })
-                }
-                value={tier.tier}
-              >
-                {PRICING_TIER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <Input
-                value={tier.label}
-                onChange={(event) => updateTier(tierIndex, { label: event.target.value })}
-                placeholder='Tier heading, e.g. Mid-range options'
-              />
-            </div>
-            <Button type='button' size='sm' variant='ghost' onClick={() => removeTier(tierIndex)}>
-              <Icons.trash className='size-4' />
-            </Button>
-          </div>
-          <div className='grid gap-3'>
-            <Textarea
-              value={tier.blurb}
-              onChange={(event) => updateTier(tierIndex, { blurb: event.target.value })}
-              placeholder='Short tier description…'
-              rows={2}
-            />
-            {tier.seasons.map((season, seasonIndex) => (
-              <div className='rounded-md border p-3' key={seasonIndex}>
-                <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_150px]'>
-                  <Input
-                    value={season.label}
-                    onChange={(event) => {
-                      const seasons = tier.seasons.map((item, i) =>
-                        i === seasonIndex ? { ...item, label: event.target.value } : item
-                      );
-                      updateTier(tierIndex, { seasons });
-                    }}
-                    placeholder='Jan 3 - Mar 31, 2026'
-                  />
-                  <Input
-                    type='date'
-                    value={season.dateStart}
-                    onChange={(event) => {
-                      const seasons = tier.seasons.map((item, i) =>
-                        i === seasonIndex ? { ...item, dateStart: event.target.value } : item
-                      );
-                      updateTier(tierIndex, { seasons });
-                    }}
-                  />
-                  <Input
-                    type='date'
-                    value={season.dateEnd}
-                    onChange={(event) => {
-                      const seasons = tier.seasons.map((item, i) =>
-                        i === seasonIndex ? { ...item, dateEnd: event.target.value } : item
-                      );
-                      updateTier(tierIndex, { seasons });
-                    }}
-                  />
-                </div>
-                <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
-                  {season.cells.map((cell, cellIndex) => (
-                    <div className='grid gap-1' key={cellIndex}>
-                      <Input
-                        value={cell.groupBand}
-                        onChange={(event) => {
-                          const seasons = tier.seasons.map((item, i) =>
-                            i === seasonIndex
-                              ? {
-                                  ...item,
-                                  cells: item.cells.map((nextCell, nextCellIndex) =>
-                                    nextCellIndex === cellIndex
-                                      ? { ...nextCell, groupBand: event.target.value }
-                                      : nextCell
-                                  )
-                                }
-                              : item
-                          );
-                          updateTier(tierIndex, { seasons });
-                        }}
-                        placeholder='2-3'
-                      />
-                      <Input
-                        inputMode='numeric'
-                        value={cell.price}
-                        onChange={(event) => {
-                          const seasons = tier.seasons.map((item, i) =>
-                            i === seasonIndex
-                              ? {
-                                  ...item,
-                                  cells: item.cells.map((nextCell, nextCellIndex) =>
-                                    nextCellIndex === cellIndex
-                                      ? { ...nextCell, price: event.target.value }
-                                      : nextCell
-                                  )
-                                }
-                              : item
-                          );
-                          updateTier(tierIndex, { seasons });
-                        }}
-                        placeholder='645'
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <Textarea
-              value={tier.notes}
-              onChange={(event) => updateTier(tierIndex, { notes: event.target.value })}
-              placeholder='Pricing notes, child rules, optional extras…'
-              rows={2}
-            />
-            <Button type='button' size='sm' variant='outline' onClick={() => addSeason(tierIndex)}>
-              <Icons.add className='mr-2 size-4' />
-              Add season
-            </Button>
-          </div>
-        </div>
-      ))}
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        onClick={() => onChange([...value, emptyPricingTier()])}
-        className='justify-self-start'
-      >
-        <Icons.add className='mr-2 size-4' />
-        Add pricing tier
-      </Button>
-    </div>
-  );
-}
-
 export function TourWizard({ id, initialValues, options }: TourWizardProps) {
   const router = useRouter();
   const [pendingAction, setPendingAction] = React.useState<WizardPendingAction>(null);
@@ -615,6 +415,14 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                     label='Price from (USD)'
                     placeholder='1500'
                     inputMode='numeric'
+                    disabled={
+                      Boolean(values.pricingExperienceId) && values.pricingTableKeys.length > 0
+                    }
+                    description={
+                      values.pricingExperienceId && values.pricingTableKeys.length
+                        ? 'Auto-filled from selected experience pricing tables.'
+                        : undefined
+                    }
                   />
                 )}
               </form.AppField>
@@ -689,6 +497,10 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                 placeholder='Select experiences'
                 searchPlaceholder='Search experiences…'
               />
+              <p className='text-muted-foreground text-xs'>
+                Linked experiences supply pricing tables on the Pricing step — updates on the
+                experience flow through to this trip automatically.
+              </p>
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
               <div className='grid gap-2'>
@@ -779,9 +591,16 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
         ) : null}
 
         {currentStep === 6 ? (
-          <PricingInput
-            value={values.pricingTiers}
-            onChange={(next) => form.setFieldValue('pricingTiers', next)}
+          <ExperiencePricingSelector
+            experienceIds={values.experienceIds}
+            experienceOptions={options.experiences}
+            pricingExperienceId={values.pricingExperienceId}
+            pricingTableKeys={values.pricingTableKeys}
+            pricingTiers={values.pricingTiers}
+            onPricingExperienceIdChange={(next) => form.setFieldValue('pricingExperienceId', next)}
+            onPricingTableKeysChange={(next) => form.setFieldValue('pricingTableKeys', next)}
+            onPricingTiersChange={(next) => form.setFieldValue('pricingTiers', next)}
+            onPriceFromChange={(next) => form.setFieldValue('priceFrom', next)}
           />
         ) : null}
 
@@ -950,8 +769,12 @@ function ReviewSummary({
     { label: 'Fleet', value: countLabels(values.fleetIds, options.fleet) },
     { label: 'Gallery', value: values.gallery.length ? `${values.gallery.length} image(s)` : '' },
     {
-      label: 'Pricing tiers',
-      value: values.pricingTiers.length ? `${values.pricingTiers.length} tier(s)` : ''
+      label: 'Pricing source',
+      value: values.pricingExperienceId
+        ? `${countLabels([values.pricingExperienceId], options.experiences)} · ${values.pricingTableKeys.join(', ') || 'no tables'}`
+        : values.pricingTiers.length
+          ? `${values.pricingTiers.length} legacy tier(s)`
+          : ''
     },
     { label: 'Inclusions', value: values.inclusions.join(', ') },
     { label: 'SEO title', value: values.seoTitle || values.title }

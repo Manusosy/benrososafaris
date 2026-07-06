@@ -4,12 +4,14 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 
 import { revalidateLogic, useStore } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useAppForm } from '@/components/ui/tanstack-form';
 import { Label } from '@/components/ui/label';
 import { useFormStepper } from '@/hooks/use-stepper';
 import { slugify } from '@/lib/utils';
+import { previewTourPricingForPackage } from '../tours/service';
 import { MediaGalleryField } from '../media/components/media-picker';
 import { Combobox } from '../shared/combobox';
 import { htmlToText, RichTextEditor } from '../shared/rich-text-editor';
@@ -61,6 +63,16 @@ export function PackageWizard({ id, initialValues, tourOptions }: PackageWizardP
   });
 
   const values = useStore(form.store, (state) => state.values);
+
+  const pricingPreview = useQuery({
+    queryKey: ['package-pricing-preview', values.tourId, values.comfortTier],
+    queryFn: () =>
+      previewTourPricingForPackage({
+        tourId: values.tourId,
+        comfortTier: values.comfortTier
+      }),
+    enabled: Boolean(values.tourId && values.comfortTier)
+  });
 
   async function persist(status: SaveStatus) {
     const schema = status === 'published' ? packageFormSchema : packageStepSchemas[0];
@@ -153,6 +165,29 @@ export function PackageWizard({ id, initialValues, tourOptions }: PackageWizardP
                 />
               )}
             </form.AppField>
+
+            {values.tourId && values.comfortTier ? (
+              <div className='rounded-lg border bg-muted/20 p-4 text-sm'>
+                {pricingPreview.isLoading ? (
+                  <p className='text-muted-foreground'>Checking linked trip pricing…</p>
+                ) : pricingPreview.data?.hasPricing ? (
+                  <p>
+                    Public pricing: <strong>{pricingPreview.data.tierLabel}</strong>
+                    {pricingPreview.data.priceFrom != null
+                      ? ` · from $${pricingPreview.data.priceFrom}`
+                      : ''}
+                    {pricingPreview.data.source === 'experience'
+                      ? ' (live from experience tables)'
+                      : ' (legacy trip pricing)'}
+                  </p>
+                ) : (
+                  <p className='text-destructive'>
+                    {pricingPreview.data?.warning ??
+                      'No matching pricing table on the linked trip yet.'}
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
         ) : null}
 

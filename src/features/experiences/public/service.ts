@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { localePath } from '@/lib/public/locale-path';
+import { getPublicToursByIds } from '@/lib/public/site-data';
 
 import { BENROSO_OPERATING_COUNTRIES, type BenrosoCountryId } from './country-map-copy';
 import type {
@@ -593,48 +594,27 @@ export async function getRelatedToursForExperience(
     experienceLinks.map((link, index) => [link.tour_id, link.position ?? index])
   );
 
-  const { data: tourRows } = await supabase
-    .from('tour_translations')
-    .select(
-      `
-      slug,
-      title,
-      excerpt,
-      tour_id,
-      tour:tours!inner(id, status, days, nights, price_from),
-      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
-    `
-    )
-    .eq('locale', locale)
-    .in('tour_id', tourIds)
-    .eq('tour.status', 'published')
-    .not('published_at', 'is', null);
+  const [publicTours, parksByTourId] = await Promise.all([
+    getPublicToursByIds(locale, tourIds),
+    fetchParksByTourId(tourIds, locale)
+  ]);
 
-  const parksByTourId = await fetchParksByTourId(tourIds, locale);
-
-  return (tourRows ?? [])
-    .flatMap((row: TourTranslationRow) => {
-      const tour = unwrapRelation(row.tour);
-      if (!tour) return [];
-
-      const parks = parksByTourId.get(row.tour_id) ?? [];
-
-      return [
-        {
-          days: tour.days,
-          excerpt: row.excerpt,
-          href: localePath(locale, `/tours/${row.slug}`),
-          id: tour.id,
-          imageAlt: mediaAlt(row.og_image, row.title),
-          imageUrl: mediaUrl(row.og_image),
-          nights: tour.nights,
-          parksLabel: parks.length ? parks.slice(0, 3).join(' · ') : null,
-          priceFrom: tour.price_from,
-          slug: row.slug,
-          title: row.title
-        }
-      ];
-    })
+  return publicTours
+    .map((tour) => ({
+      days: tour.days,
+      excerpt: tour.excerpt,
+      href: tour.href,
+      id: tour.id,
+      imageAlt: tour.imageAlt,
+      imageUrl: tour.imageUrl,
+      nights: tour.nights,
+      parksLabel: (parksByTourId.get(tour.id) ?? []).length
+        ? (parksByTourId.get(tour.id) ?? []).slice(0, 3).join(' · ')
+        : null,
+      priceFrom: tour.priceFrom,
+      slug: tour.slug,
+      title: tour.title
+    }))
     .toSorted((a, b) => (orderByTourId.get(a.id) ?? 0) - (orderByTourId.get(b.id) ?? 0));
 }
 
