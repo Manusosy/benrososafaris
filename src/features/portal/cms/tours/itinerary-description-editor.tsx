@@ -97,7 +97,7 @@ export function ItineraryDescriptionEditor({
     content: descriptionToEditorHtml(value),
     editorProps: {
       attributes: {
-        id,
+        ...(id ? { id } : {}),
         class: cn(
           'min-h-[140px] w-full px-3 py-2 text-sm outline-none',
           '[&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
