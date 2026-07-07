@@ -181,7 +181,7 @@ export type PublicTourRouteLeg = {
 
 export type PublicTourPricingCell = {
   groupBand: string;
-  price: number;
+  price?: number | null;
 };
 
 export type PublicTourPricingSeason = {

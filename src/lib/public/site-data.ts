@@ -9,10 +9,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
 import {
+  formatExperienceKeyLabel,
+  mapExperienceKeyToTourTier,
   mapExperienceLevelsToTourTiers,
   parseExperiencePackagePricing,
-  parsePricingTableKeys
+  parsePricingTableKeys,
+  type ExperiencePricingTableKey
 } from '@/lib/pricing/experience-to-tour-pricing';
+import { LEGACY_PAX_BANDS } from '@/features/portal/cms/tours/legacy-pricing';
 import {
   formatTourSafariMarketLabel,
   parseTourSafariMarkets,
@@ -740,7 +744,7 @@ async function getLegacyTourPricingMap(
   const tiers = (tierRows ?? []) as Array<{
     id: string;
     tour_id: string;
-    tier: PublicTourPricingTier['tier'];
+    tier: ExperiencePricingTableKey;
     label: string | null;
     blurb: string | null;
     notes: string | null;
@@ -774,15 +778,31 @@ async function getLegacyTourPricingMap(
         .order('band_position', { ascending: true })
     : { data: [] };
 
-  const cellsBySeasonId = new Map<string, PublicTourPricingCell[]>();
+  const cellsBySeasonId = new Map<string, Map<string, number | null>>();
   for (const cell of cellRows ?? []) {
     const seasonId = cell.season_id as string;
-    const price = toFiniteNumber(cell.price);
-    if (price == null) continue;
-    cellsBySeasonId.set(seasonId, [
-      ...(cellsBySeasonId.get(seasonId) ?? []),
-      { groupBand: cell.group_band as string, price }
-    ]);
+    const groupBand = cell.group_band as string;
+    if (!groupBand.trim()) continue;
+    const seasonCells = cellsBySeasonId.get(seasonId) ?? new Map<string, number | null>();
+    seasonCells.set(groupBand, toFiniteNumber(cell.price));
+    cellsBySeasonId.set(seasonId, seasonCells);
+  }
+
+  function mapSeasonCells(seasonId: string): PublicTourPricingCell[] {
+    const seasonCells = cellsBySeasonId.get(seasonId);
+    if (!seasonCells?.size) {
+      return LEGACY_PAX_BANDS.map((groupBand) => ({ groupBand, price: undefined }));
+    }
+
+    const bands: string[] = [...LEGACY_PAX_BANDS];
+    for (const band of seasonCells.keys()) {
+      if (!bands.includes(band)) bands.push(band);
+    }
+
+    return bands.map((groupBand) => {
+      const price = seasonCells.get(groupBand);
+      return { groupBand, price: price ?? undefined };
+    });
   }
 
   const seasonsByTierId = new Map<string, PublicTourPricingSeason[]>();
@@ -794,18 +814,19 @@ async function getLegacyTourPricingMap(
         label: season.label,
         dateStart: season.date_start,
         dateEnd: season.date_end,
-        cells: cellsBySeasonId.get(season.id) ?? []
+        cells: mapSeasonCells(season.id)
       }
     ]);
   }
 
   for (const tier of tiers) {
+    const tierKey = tier.tier as ExperiencePricingTableKey;
     pricingByTourId.set(tier.tour_id, [
       ...(pricingByTourId.get(tier.tour_id) ?? []),
       {
         id: tier.id,
-        tier: tier.tier,
-        label: tier.label || formatTierLabel(tier.tier),
+        tier: mapExperienceKeyToTourTier(tierKey),
+        label: tier.label?.trim() || formatExperienceKeyLabel(tierKey),
         blurb: tier.blurb,
         notes: tier.notes,
         currency: tier.currency || 'USD',
@@ -890,7 +911,9 @@ function pricingBounds(
 ): { min: number | null; max: number | null } {
   const prices =
     tiers?.flatMap((tier) =>
-      tier.seasons.flatMap((season) => season.cells.map((cell) => cell.price))
+      tier.seasons.flatMap((season) =>
+        season.cells.flatMap((cell) => (cell.price != null ? [cell.price] : []))
+      )
     ) ?? [];
 
   if (!prices.length) return { min: fallbackPrice, max: fallbackPrice };

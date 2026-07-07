@@ -57,6 +57,17 @@ const routeLegSchema = z.object({
 
 export type RouteLeg = z.infer<typeof routeLegSchema>;
 
+export const experiencePricingTableKeySchema = z.enum([
+  'economy',
+  'budget',
+  'mid_range',
+  'luxury',
+  'high_end',
+  'custom'
+]);
+
+export type ExperiencePricingTableKey = z.infer<typeof experiencePricingTableKeySchema>;
+
 const pricingCellSchema = z.object({
   groupBand: z.string(),
   price: z.string()
@@ -70,7 +81,7 @@ const pricingSeasonSchema = z.object({
 });
 
 const pricingTierSchema = z.object({
-  tier: z.enum(['budget', 'mid_range', 'luxury']),
+  tier: experiencePricingTableKeySchema,
   label: z.string(),
   blurb: z.string(),
   notes: z.string(),
@@ -81,17 +92,6 @@ const pricingTierSchema = z.object({
 export type PricingCell = z.infer<typeof pricingCellSchema>;
 export type PricingSeason = z.infer<typeof pricingSeasonSchema>;
 export type PricingTier = z.infer<typeof pricingTierSchema>;
-
-export const experiencePricingTableKeySchema = z.enum([
-  'economy',
-  'budget',
-  'mid_range',
-  'luxury',
-  'high_end',
-  'custom'
-]);
-
-export type ExperiencePricingTableKey = z.infer<typeof experiencePricingTableKeySchema>;
 
 /**
  * Tour wizard form contract.
@@ -182,13 +182,9 @@ export const tourStepSchemas = [
     .refine(
       (data) => {
         if (data.pricingExperienceId && data.pricingTableKeys.length) return true;
-        return data.pricingTiers.some((tier) =>
-          tier.seasons.some((season) =>
-            season.cells.some((cell) => cell.groupBand.trim() && cell.price.trim())
-          )
-        );
+        return data.pricingTiers.some((tier) => tier.seasons.some((season) => season.label.trim()));
       },
-      { message: 'Select at least one experience pricing table or enter legacy pricing' }
+      { message: 'Select at least one experience pricing table or enable legacy pricing' }
     ),
   tourFormSchema.pick({
     seoTitle: true,

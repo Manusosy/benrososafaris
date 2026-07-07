@@ -23,7 +23,9 @@ import type { PricingTier } from './schema';
 import {
   createDefaultLegacyPricingTier,
   createLegacyPricingSeason,
-  LEGACY_PAX_BANDS
+  LEGACY_PAX_BANDS,
+  LEGACY_PRICING_TIER_OPTIONS,
+  mapLegacyPricingTiersToPublic
 } from './legacy-pricing';
 import {
   getExperiencePricingPreview,
@@ -247,17 +249,21 @@ export function ExperiencePricingSelector({
       </div>
 
       {showLegacy ? (
-        <LegacyPricingInput value={pricingTiers} onChange={onPricingTiersChange} />
+        <>
+          <LegacyPricingInput value={pricingTiers} onChange={onPricingTiersChange} />
+          {pricingTiers.length ? (
+            <div className='grid gap-2'>
+              <Label>Legacy preview</Label>
+              <TourPricingTable tiers={mapLegacyPricingTiersToPublic(pricingTiers)} />
+            </div>
+          ) : null}
+        </>
       ) : null}
     </div>
   );
 }
 
-const PRICING_TIER_OPTIONS = [
-  { value: 'budget', label: 'Budget' },
-  { value: 'mid_range', label: 'Mid-range' },
-  { value: 'luxury', label: 'Luxury' }
-] as const;
+const PRICING_TIER_OPTIONS = LEGACY_PRICING_TIER_OPTIONS;
 
 function LegacyPricingInput({
   value,
@@ -267,6 +273,8 @@ function LegacyPricingInput({
   onChange: (next: PricingTier[]) => void;
 }) {
   const tiers = value.length ? value : [createDefaultLegacyPricingTier()];
+
+  const usedTierKeys = new Set(tiers.map((tier) => tier.tier));
 
   function updateTier(index: number, patch: Partial<PricingTier>) {
     onChange(tiers.map((tier, i) => (i === index ? { ...tier, ...patch } : tier)));
@@ -310,8 +318,8 @@ function LegacyPricingInput({
       <div className='rounded-lg border bg-muted/25 p-4'>
         <h3 className='text-sm font-semibold'>Legacy trip pricing table</h3>
         <p className='mt-1 text-sm text-muted-foreground'>
-          Enter per-person prices by season and group size. The right-hand column stays empty here;
-          the public page shows enquiry buttons in that space.
+          Enter per-person prices by season and group size. Empty cells show as &ldquo;On
+          request&rdquo; on the public page. The enquiry column is filled in automatically there.
         </p>
       </div>
 
@@ -329,11 +337,14 @@ function LegacyPricingInput({
                 }
                 value={tier.tier}
               >
-                {PRICING_TIER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                {PRICING_TIER_OPTIONS.map((option) => {
+                  const taken = usedTierKeys.has(option.value) && tier.tier !== option.value;
+                  return (
+                    <option disabled={taken} key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  );
+                })}
               </select>
               <Input
                 value={tier.label}
@@ -361,7 +372,10 @@ function LegacyPricingInput({
                     <th className='w-52 px-3 py-3'>Season</th>
                     {LEGACY_PAX_BANDS.map((band) => (
                       <th className='px-3 py-3' key={band}>
-                        {band}
+                        <span className='block'>{band}</span>
+                        <span className='mt-1 block text-[10px] font-normal normal-case tracking-normal opacity-80'>
+                          per person
+                        </span>
                       </th>
                     ))}
                     <th className='px-3 py-3 text-center'>Enquiry</th>
@@ -382,15 +396,18 @@ function LegacyPricingInput({
                       </th>
                       {season.cells.map((cell, cellIndex) => (
                         <td className='px-3 py-3 align-top' key={cell.groupBand}>
-                          <Input
-                            aria-label={`${season.label || `Season ${seasonIndex + 1}`} ${cell.groupBand} price`}
-                            inputMode='numeric'
-                            value={cell.price}
-                            onChange={(event) =>
-                              updatePrice(tierIndex, seasonIndex, cellIndex, event.target.value)
-                            }
-                            placeholder='Price'
-                          />
+                          <div className='grid gap-1'>
+                            <Input
+                              aria-label={`${season.label || `Season ${seasonIndex + 1}`} ${cell.groupBand} price`}
+                              inputMode='numeric'
+                              value={cell.price}
+                              onChange={(event) =>
+                                updatePrice(tierIndex, seasonIndex, cellIndex, event.target.value)
+                              }
+                              placeholder='Price'
+                            />
+                            <span className='text-muted-foreground text-[10px]'>per person</span>
+                          </div>
                         </td>
                       ))}
                       <td className='px-3 py-3 text-center align-middle'>
@@ -416,7 +433,13 @@ function LegacyPricingInput({
         type='button'
         variant='outline'
         size='sm'
-        onClick={() => onChange([...tiers, createDefaultLegacyPricingTier()])}
+        disabled={usedTierKeys.size >= PRICING_TIER_OPTIONS.length}
+        onClick={() => {
+          const nextTier =
+            PRICING_TIER_OPTIONS.find((option) => !usedTierKeys.has(option.value))?.value ??
+            'custom';
+          onChange([...tiers, createDefaultLegacyPricingTier(nextTier)]);
+        }}
       >
         <Icons.add className='mr-2 size-4' />
         Add pricing tier

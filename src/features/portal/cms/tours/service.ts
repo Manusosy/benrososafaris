@@ -16,6 +16,11 @@ import {
 import { parseTourSafariMarkets } from '@/features/experiences/public/tour-markets';
 import { revalidateTourPublicPaths } from '@/features/portal/cms/tours/revalidate-public-paths';
 import {
+  mapLegacyPricingTiersToPublic,
+  normalizeLegacyPricingTier,
+  normalizeLegacySeasonCells
+} from '@/features/portal/cms/tours/legacy-pricing';
+import {
   formatExperienceKeyLabel,
   levelHasFilledPrices,
   mapExperienceKeyToTourTier,
@@ -156,7 +161,7 @@ async function replacePricing(supabase: SupabaseClient, tourId: string, tiers: P
           band_position: cellIndex,
           price: toNumberOrNull(cell.price)
         }))
-        .filter((cell) => cell.group_band.trim() && cell.price != null);
+        .filter((cell) => cell.group_band.trim());
 
       if (cells.length) {
         const { error: cellsError } = await supabase.from('tour_pricing_cells').insert(cells);
@@ -404,19 +409,21 @@ async function pricingTiers(supabase: SupabaseClient, tourId: string): Promise<P
         label: (season.label as string) ?? '',
         dateStart: (season.date_start as string | null) ?? '',
         dateEnd: (season.date_end as string | null) ?? '',
-        cells: cellsBySeason.get(season.id as string) ?? []
+        cells: normalizeLegacySeasonCells(cellsBySeason.get(season.id as string) ?? [])
       }
     ]);
   }
 
-  return tierRows.map((tier) => ({
-    tier: tier.tier as PricingTier['tier'],
-    label: (tier.label as string | null) ?? '',
-    blurb: (tier.blurb as string | null) ?? '',
-    notes: (tier.notes as string | null) ?? '',
-    currency: (tier.currency as string | null) ?? 'USD',
-    seasons: seasonsByTier.get(tier.id as string) ?? []
-  }));
+  return tierRows.map((tier) =>
+    normalizeLegacyPricingTier({
+      tier: tier.tier as PricingTier['tier'],
+      label: (tier.label as string | null) ?? '',
+      blurb: (tier.blurb as string | null) ?? '',
+      notes: (tier.notes as string | null) ?? '',
+      currency: (tier.currency as string | null) ?? 'USD',
+      seasons: seasonsByTier.get(tier.id as string) ?? []
+    })
+  );
 }
 
 async function relationIds(
@@ -623,24 +630,7 @@ async function resolveTourPricingForPreview(
 }
 
 function legacyPricingTiersToPublic(tiers: PricingTier[], tourId: string): PublicTourPricingTier[] {
-  return tiers.map((tier, index) => ({
-    id: `legacy-${tourId}-${tier.tier}-${index}`,
-    tier: tier.tier,
-    label: tier.label || tier.tier.replace('_', ' '),
-    blurb: tier.blurb || null,
-    notes: tier.notes || null,
-    currency: tier.currency || 'USD',
-    seasons: tier.seasons.map((season, seasonIndex) => ({
-      id: `legacy-${tourId}-${tier.tier}-season-${seasonIndex}`,
-      label: season.label,
-      dateStart: season.dateStart || null,
-      dateEnd: season.dateEnd || null,
-      cells: season.cells.flatMap((cell) => {
-        const price = toNumberOrNull(cell.price);
-        return price != null && cell.groupBand.trim() ? [{ groupBand: cell.groupBand, price }] : [];
-      })
-    }))
-  }));
+  return mapLegacyPricingTiersToPublic(tiers, tourId);
 }
 
 export async function previewTourPricingForPackage(input: {

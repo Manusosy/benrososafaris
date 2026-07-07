@@ -129,7 +129,9 @@ export function mapExperienceLevelsToTourTiers(
 
 export function minPriceFromTourTiers(tiers: PublicTourPricingTier[]): number | null {
   const prices = tiers.flatMap((tier) =>
-    tier.seasons.flatMap((season) => season.cells.map((cell) => cell.price))
+    tier.seasons.flatMap((season) =>
+      season.cells.flatMap((cell) => (cell.price != null ? [cell.price] : []))
+    )
   );
   return prices.length ? Math.min(...prices) : null;
 }
