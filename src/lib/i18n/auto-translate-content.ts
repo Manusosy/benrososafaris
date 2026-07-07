@@ -421,8 +421,14 @@ export async function backfillPublishedTranslations(): Promise<BackfillTranslati
     );
   }
 
-  const supabase = createServiceRoleClient() as unknown as GenericClient;
   const locales = getAutoTranslateLocales();
+  if (!locales.length) {
+    throw new Error(
+      'No target locales configured. Set AUTO_TRANSLATE_LOCALES=sw,fr,de,es,it,zh (or NEXT_PUBLIC_SUPPORTED_LOCALES).'
+    );
+  }
+
+  const supabase = createServiceRoleClient() as unknown as GenericClient;
   const result: BackfillTranslationResult = {
     blog: 0,
     tours: 0,
@@ -433,15 +439,7 @@ export async function backfillPublishedTranslations(): Promise<BackfillTranslati
     nationalParks: 0
   };
 
-  const [
-    { data: blogRows },
-    { data: tourRows },
-    { data: destinationRows },
-    { data: experienceRows },
-    { data: packageRows },
-    { data: accommodationRows },
-    { data: parkRows }
-  ] = await Promise.all([
+  const sourceQueries = await Promise.all([
     supabase
       .from('blog_translations')
       .select('*')
@@ -478,6 +476,32 @@ export async function backfillPublishedTranslations(): Promise<BackfillTranslati
       .eq('locale', 'en')
       .not('published_at', 'is', null)
   ]);
+
+  const sourceLabels = [
+    'blog_translations',
+    'tour_translations',
+    'destination_translations',
+    'experience_translations',
+    'package_translations',
+    'accommodation_translations',
+    'national_park_translations'
+  ] as const;
+
+  sourceQueries.forEach((query, index) => {
+    if (query.error) {
+      throw new Error(`${sourceLabels[index]}: ${query.error.message}`);
+    }
+  });
+
+  const [
+    { data: blogRows },
+    { data: tourRows },
+    { data: destinationRows },
+    { data: experienceRows },
+    { data: packageRows },
+    { data: accommodationRows },
+    { data: parkRows }
+  ] = sourceQueries;
 
   for (const locale of locales) {
     result.blog += await translateEnglishRows(
