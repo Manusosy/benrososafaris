@@ -39,7 +39,8 @@ function TextField({
   onChange,
   placeholder,
   hint,
-  type = 'text'
+  type = 'text',
+  readOnly = false
 }: {
   id: string;
   label: string;
@@ -48,6 +49,7 @@ function TextField({
   placeholder?: string;
   hint?: string;
   type?: string;
+  readOnly?: boolean;
 }) {
   return (
     <div className='space-y-1.5'>
@@ -56,10 +58,68 @@ function TextField({
         id={id}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        readOnly={readOnly}
         type={type}
         value={value}
+        className={readOnly ? 'bg-muted/50 text-muted-foreground' : undefined}
       />
       {hint ? <p className='text-muted-foreground text-xs'>{hint}</p> : null}
+    </div>
+  );
+}
+
+function LockedSecretField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  hint
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  hint?: string;
+}) {
+  const hasValue = Boolean(value.trim());
+  const [isEditing, setIsEditing] = useState(!hasValue);
+  const locked = hasValue && !isEditing;
+
+  return (
+    <div className='space-y-1.5'>
+      <div className='flex items-center justify-between gap-2'>
+        <Label htmlFor={id}>{label}</Label>
+        {hasValue ? (
+          <Button
+            aria-label={isEditing ? `Stop editing ${label}` : `Edit ${label}`}
+            onClick={() => setIsEditing((current) => !current)}
+            size='sm'
+            type='button'
+            variant='ghost'
+          >
+            <Icons.edit className='h-4 w-4' />
+            {isEditing ? 'Lock' : 'Edit'}
+          </Button>
+        ) : null}
+      </div>
+      <Input
+        id={id}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        readOnly={locked}
+        value={value}
+        className={
+          locked ? 'bg-muted/50 font-mono text-sm text-muted-foreground' : 'font-mono text-sm'
+        }
+      />
+      {hint ? <p className='text-muted-foreground text-xs'>{hint}</p> : null}
+      {locked ? (
+        <p className='text-muted-foreground text-xs'>
+          Saved value is locked. Click Edit to change it.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -404,38 +464,98 @@ function SeoTab({ initial }: { initial: SeoAnalyticsValues }) {
         title='Analytics & verification'
         description='Connect analytics and verify ownership with search engines.'
       >
+        <div className='rounded-lg border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground'>
+          <p className='font-medium text-foreground'>Where to find these IDs</p>
+          <ul className='mt-2 list-disc space-y-1 pl-5'>
+            <li>
+              Google Analytics:{' '}
+              <a
+                className='text-primary underline'
+                href='https://analytics.google.com/'
+                rel='noreferrer'
+                target='_blank'
+              >
+                analytics.google.com
+              </a>{' '}
+              → Admin → Data streams → Measurement ID (G-…)
+            </li>
+            <li>
+              Google Tag Manager:{' '}
+              <a
+                className='text-primary underline'
+                href='https://tagmanager.google.com/'
+                rel='noreferrer'
+                target='_blank'
+              >
+                tagmanager.google.com
+              </a>{' '}
+              → Container ID (GTM-…)
+            </li>
+            <li>
+              Search Console verification:{' '}
+              <a
+                className='text-primary underline'
+                href='https://search.google.com/search-console'
+                rel='noreferrer'
+                target='_blank'
+              >
+                search.google.com/search-console
+              </a>{' '}
+              → HTML tag method
+            </li>
+            <li>
+              Bing verification:{' '}
+              <a
+                className='text-primary underline'
+                href='https://www.bing.com/webmasters'
+                rel='noreferrer'
+                target='_blank'
+              >
+                bing.com/webmasters
+              </a>
+            </li>
+          </ul>
+          <p className='mt-3'>
+            IDs saved here load on the public site automatically via{' '}
+            <span className='font-mono text-xs'>SiteAnalytics</span>. Use either GA4 directly or GTM
+            (not both unless GTM is your only tag loader).
+          </p>
+        </div>
+
         <div className='grid gap-4 sm:grid-cols-2'>
-          <TextField
+          <LockedSecretField
             id='gaMeasurementId'
             label='Google Analytics ID'
-            hint='e.g. G-XXXXXXX'
+            hint='e.g. G-XXXXXXXXXX'
             onChange={(gaMeasurementId) => set({ gaMeasurementId })}
-            placeholder='G-XXXXXXX'
+            placeholder='G-XXXXXXXXXX'
             value={values.gaMeasurementId ?? ''}
           />
-          <TextField
+          <LockedSecretField
             id='gtmId'
             label='Google Tag Manager ID'
-            hint='e.g. GTM-XXXXXX'
+            hint='e.g. GTM-XXXXXXX'
             onChange={(gtmId) => set({ gtmId })}
-            placeholder='GTM-XXXXXX'
+            placeholder='GTM-XXXXXXX'
             value={values.gtmId ?? ''}
           />
-          <TextField
+          <LockedSecretField
             id='metaPixelId'
             label='Meta Pixel ID'
+            hint='Numeric pixel ID from Meta Events Manager'
             onChange={(metaPixelId) => set({ metaPixelId })}
+            placeholder='123456789012345'
             value={values.metaPixelId ?? ''}
           />
         </div>
-        <TextField
+        <LockedSecretField
           id='googleSiteVerification'
           label='Google site verification'
           hint='Paste the full HTML meta tag from Search Console, or just the verification code.'
           onChange={(googleSiteVerification) => set({ googleSiteVerification })}
           value={values.googleSiteVerification ?? ''}
         />
-        <TextField
+        <LockedSecretField
           id='bingSiteVerification'
           label='Bing site verification'
           hint='Paste the full HTML meta tag from Bing, or just the verification code.'
