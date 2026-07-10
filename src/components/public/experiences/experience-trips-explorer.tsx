@@ -13,7 +13,10 @@ type DurationFilter = 'all' | 'short' | 'classic' | 'extended';
 
 type ExperienceTripsExplorerProps = {
   description: string;
+  hideFilters?: boolean;
+  itemLabel?: 'route' | 'safari';
   locale: string;
+  showAll?: boolean;
   title: string;
   tours: PublicExperienceRelatedTour[];
 };
@@ -46,7 +49,10 @@ function uniqueRoutes(tours: PublicExperienceRelatedTour[]) {
 
 export function ExperienceTripsExplorer({
   description,
+  hideFilters = false,
+  itemLabel = 'safari',
   locale,
+  showAll = false,
   title,
   tours
 }: ExperienceTripsExplorerProps) {
@@ -58,7 +64,8 @@ export function ExperienceTripsExplorer({
     const matchesRoute = route === 'all' || tour.parksLabel === route;
     return matchesDuration && matchesRoute;
   });
-  const visibleTours = filteredTours.slice(0, MAX_VISIBLE_TOURS);
+  const visibleTours = showAll ? filteredTours : filteredTours.slice(0, MAX_VISIBLE_TOURS);
+  const itemLabelPlural = itemLabel === 'route' ? 'routes' : 'safaris';
 
   return (
     <div className='benroso-container'>
@@ -70,60 +77,68 @@ export function ExperienceTripsExplorer({
         <p className='benroso-body mx-auto mt-4 max-w-2xl text-base leading-7'>{description}</p>
       </div>
 
-      <div className='mt-12 grid gap-8 border-t border-[var(--benroso-line)] pt-8 lg:grid-cols-[240px_minmax(0,1fr)]'>
-        <aside className='benroso-contact-credentials-box h-fit lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
-          <div className='space-y-6'>
-            <FilterGroup label='Duration'>
-              {durationOptions.map((option) => (
-                <FilterButton
-                  active={duration === option.value}
-                  key={option.value}
-                  onClick={() => setDuration(option.value)}
-                >
-                  {option.label}
-                </FilterButton>
-              ))}
-            </FilterGroup>
-
-            {routeOptions.length ? (
-              <FilterGroup label='Route / Park Area'>
-                <FilterButton active={route === 'all'} onClick={() => setRoute('all')}>
-                  All Routes
-                </FilterButton>
-                {routeOptions.map((option) => (
+      <div
+        className={cn(
+          'mt-12 border-t border-[var(--benroso-line)] pt-8',
+          hideFilters ? '' : 'grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]'
+        )}
+      >
+        {!hideFilters ? (
+          <aside className='benroso-contact-credentials-box h-fit lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
+            <div className='space-y-6'>
+              <FilterGroup label='Duration'>
+                {durationOptions.map((option) => (
                   <FilterButton
-                    active={route === option}
-                    key={option}
-                    onClick={() => setRoute(option)}
+                    active={duration === option.value}
+                    key={option.value}
+                    onClick={() => setDuration(option.value)}
                   >
-                    {option}
+                    {option.label}
                   </FilterButton>
                 ))}
               </FilterGroup>
-            ) : null}
-          </div>
-        </aside>
+
+              {routeOptions.length ? (
+                <FilterGroup label='Route / Park Area'>
+                  <FilterButton active={route === 'all'} onClick={() => setRoute('all')}>
+                    All Routes
+                  </FilterButton>
+                  {routeOptions.map((option) => (
+                    <FilterButton
+                      active={route === option}
+                      key={option}
+                      onClick={() => setRoute(option)}
+                    >
+                      {option}
+                    </FilterButton>
+                  ))}
+                </FilterGroup>
+              ) : null}
+            </div>
+          </aside>
+        ) : null}
 
         <div>
-          <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
-            <p className='text-sm font-medium text-[var(--benroso-muted)]'>
-              {visibleTours.length} of {filteredTours.length} matching safari
-              {filteredTours.length === 1 ? '' : 's'} shown
-            </p>
-            {(duration !== 'all' || route !== 'all') && (
-              <button
-                className='inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-gold)]'
-                onClick={() => {
-                  setDuration('all');
-                  setRoute('all');
-                }}
-                type='button'
-              >
-                <Icons.close className='h-3.5 w-3.5' />
-                Clear Filters
-              </button>
-            )}
-          </div>
+          {!hideFilters ? (
+            <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
+              <p className='text-sm font-medium text-[var(--benroso-muted)]'>
+                {visibleTours.length} of {filteredTours.length} matching {itemLabelPlural} shown
+              </p>
+              {(duration !== 'all' || route !== 'all') && (
+                <button
+                  className='inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-gold)]'
+                  onClick={() => {
+                    setDuration('all');
+                    setRoute('all');
+                  }}
+                  type='button'
+                >
+                  <Icons.close className='h-3.5 w-3.5' />
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          ) : null}
 
           {visibleTours.length ? (
             <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
@@ -149,9 +164,15 @@ export function ExperienceTripsExplorer({
           ) : (
             <EmptyState
               actionHref={localePath(locale, '/contact')}
-              actionLabel='Request a Custom Safari'
-              message='Safaris connected to this experience will appear here once they are linked in the tour wizard.'
-              title='No matching safaris yet'
+              actionLabel={
+                itemLabel === 'route' ? 'Request a Custom Route' : 'Request a Custom Safari'
+              }
+              message={
+                itemLabel === 'route'
+                  ? 'Climbing routes connected to this experience will appear here once they are linked in the tour wizard.'
+                  : 'Safaris connected to this experience will appear here once they are linked in the tour wizard.'
+              }
+              title={itemLabel === 'route' ? 'No routes yet' : 'No matching safaris yet'}
             />
           )}
         </div>

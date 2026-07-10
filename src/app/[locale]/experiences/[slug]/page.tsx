@@ -8,6 +8,7 @@ import {
   getRelatedAccommodationsForExperience,
   getRelatedToursForExperience
 } from '@/features/experiences/public/service';
+import { isMountainExperienceLayout } from '@/features/experiences/public/layout-variant';
 import { absoluteUrl, buildAlternates, buildFaqJsonLd } from '@/lib/seo';
 
 type ExperiencePageProps = {
@@ -57,10 +58,12 @@ export default async function ExperienceDetailPage(props: ExperiencePageProps) {
 
   if (!experience) notFound();
 
+  const isMountainLayout = isMountainExperienceLayout(experience);
+
   const [tours, accommodations, packageLevels] = await Promise.all([
     getRelatedToursForExperience(experience.experienceId, locale),
     getRelatedAccommodationsForExperience(experience.experienceId, locale),
-    getPackageLevelsForExperience(experience.experienceId)
+    isMountainLayout ? Promise.resolve([]) : getPackageLevelsForExperience(experience.experienceId)
   ]);
 
   const faqJsonLd = buildFaqJsonLd(experience.faqs);

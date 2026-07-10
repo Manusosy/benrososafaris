@@ -8,10 +8,15 @@ import { ContactAdvantagesList } from '@/components/public/contact/contact-advan
 import { ContactScrollReveal } from '@/components/public/contact/contact-scroll-reveal';
 import { DestinationTripsSection } from '@/components/public/destinations/destination-trips-section';
 import { SectionAnchorNav } from '@/components/public/section-anchor-nav';
+import { MountainRoutePricingTable } from '@/components/public/experiences/mountain-route-pricing-table';
 import { RouteAccommodationsSection } from '@/components/public/tours/route-accommodations-section';
 import { TourInquiryPanel } from '@/components/public/tours/tour-inquiry-panel';
 import { ItineraryTimeline } from '@/components/public/tours/itinerary-timeline';
 import { TourPricingTable } from '@/components/public/tours/tour-pricing-table';
+import {
+  isMountainTourPricing,
+  mountainPricingRowsFromTier
+} from '@/features/portal/cms/tours/legacy-pricing';
 import {
   Accordion,
   AccordionContent,
@@ -67,9 +72,14 @@ export function TourDetailShell({
   tour
 }: TourDetailShellProps) {
   const price = formatTourPrice(tour.priceFrom);
+  const visiblePricing = pricingTiers ?? tour.pricingTiers ?? [];
+  const isMountainLayout = isMountainTourPricing(visiblePricing);
+  const mountainPricingTier = isMountainLayout ? visiblePricing[0] : null;
   const tabs = [
-    ...baseTabs,
-    tour.accommodations.length ? { href: '#accommodation', label: 'Accommodation' } : null,
+    ...baseTabs.filter((tab) => !(isMountainLayout && tab.href === '#route-map')),
+    !isMountainLayout && tour.accommodations.length
+      ? { href: '#accommodation', label: 'Accommodation' }
+      : null,
     tour.faqs.length ? { href: '#tour-faqs', label: 'FAQs' } : null
   ].filter((tab): tab is { href: string; label: string } => tab !== null);
   const galleryImages = tour.gallery.length
@@ -78,7 +88,6 @@ export function TourDetailShell({
       ? [{ id: 'cover', url: tour.imageUrl, alt: tour.imageAlt }]
       : [];
   const routeLabel = [tour.startLocation, tour.endLocation].filter(Boolean).join(' to ');
-  const visiblePricing = pricingTiers ?? tour.pricingTiers ?? [];
   const displayTitle = title ?? tour.title;
   const displayDescription = description ?? tour.excerpt;
   const routeStops = buildRouteStops(tour);
@@ -175,7 +184,7 @@ export function TourDetailShell({
                 id='itinerary'
               >
                 <h2 className='benroso-heading font-display text-[clamp(1.9rem,3vw,2.55rem)] leading-tight'>
-                  Safari Itinerary
+                  {isMountainLayout ? 'Day-by-day overview' : 'Safari Itinerary'}
                 </h2>
                 <span aria-hidden className='benroso-gold-line benroso-gold-line--left mt-3' />
                 <ItineraryTimeline
@@ -185,41 +194,60 @@ export function TourDetailShell({
                 />
               </section>
 
-              <section
-                className='mt-12 scroll-mt-36 border-t border-[var(--benroso-line)] pt-10'
-                id='route-map'
-              >
-                <div className='flex flex-wrap items-end justify-between gap-4'>
-                  <div>
-                    <h2 className='benroso-heading font-display text-[clamp(1.9rem,3vw,2.55rem)] leading-tight'>
-                      Route Map
-                    </h2>
-                    <span aria-hidden className='benroso-gold-line benroso-gold-line--left mt-3' />
+              {!isMountainLayout ? (
+                <section
+                  className='mt-12 scroll-mt-36 border-t border-[var(--benroso-line)] pt-10'
+                  id='route-map'
+                >
+                  <div className='flex flex-wrap items-end justify-between gap-4'>
+                    <div>
+                      <h2 className='benroso-heading font-display text-[clamp(1.9rem,3vw,2.55rem)] leading-tight'>
+                        Route Map
+                      </h2>
+                      <span
+                        aria-hidden
+                        className='benroso-gold-line benroso-gold-line--left mt-3'
+                      />
+                    </div>
                   </div>
-                </div>
-                <RouteMapPanel
-                  endLocation={tour.endLocation}
-                  routeLegs={routeMapLegs}
-                  routeLabel={routeLabel}
-                  startLocation={tour.startLocation}
-                  stops={routeStops}
-                />
-              </section>
+                  <RouteMapPanel
+                    endLocation={tour.endLocation}
+                    routeLegs={routeMapLegs}
+                    routeLabel={routeLabel}
+                    startLocation={tour.startLocation}
+                    stops={routeStops}
+                  />
+                </section>
+              ) : null}
 
               <section
                 className='mt-12 scroll-mt-36 border-t border-[var(--benroso-line)] pt-10'
                 id='price-seasons'
               >
                 <h2 className='benroso-heading font-display text-[clamp(1.75rem,2.6vw,2.35rem)] leading-tight'>
-                  Package Prices for This Trip
+                  {isMountainLayout ? 'Prices' : 'Package Prices for This Trip'}
                 </h2>
-                <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
-                  Each table belongs to this itinerary. The comfort tiers show how the same trip can
-                  be sold as budget, mid-range, or luxury, while the columns compare the per-person
-                  cost by group size.
-                </p>
+                {isMountainLayout ? (
+                  <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
+                    Camping and hut prices for this climbing route, per person.
+                  </p>
+                ) : (
+                  <p className='benroso-body mt-3 max-w-2xl text-base leading-7'>
+                    Each table belongs to this itinerary. The comfort tiers show how the same trip
+                    can be sold as budget, mid-range, or luxury, while the columns compare the
+                    per-person cost by group size.
+                  </p>
+                )}
                 <div className='mt-6'>
-                  <TourPricingTable locale={locale} tiers={visiblePricing} />
+                  {isMountainLayout && mountainPricingTier ? (
+                    <MountainRoutePricingTable
+                      currency={mountainPricingTier.currency}
+                      notes={mountainPricingTier.notes}
+                      rows={mountainPricingRowsFromTier(mountainPricingTier)}
+                    />
+                  ) : (
+                    <TourPricingTable locale={locale} tiers={visiblePricing} />
+                  )}
                 </div>
               </section>
 
@@ -234,7 +262,7 @@ export function TourDetailShell({
                 <InclusionSplit included={tour.inclusions} excluded={tour.exclusions} />
               </section>
 
-              {tour.accommodations.length ? (
+              {!isMountainLayout && tour.accommodations.length ? (
                 <div className='mt-12 border-t border-[var(--benroso-line)] pt-10'>
                   <RouteAccommodationsSection accommodations={tour.accommodations} />
                 </div>

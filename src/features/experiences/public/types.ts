@@ -1,4 +1,5 @@
 import type { BenrosoCountryId } from '@/features/experiences/public/country-map-copy';
+import type { ExperienceLayoutVariant } from '@/features/experiences/public/layout-variant';
 
 export type PublicExperienceMedia = {
   alt: string | null;
@@ -38,8 +39,31 @@ export type PublicExperienceDetail = PublicExperience & {
   faqs: PublicExperienceFaq[];
   gallery: PublicExperienceMedia[];
   highlights: string[];
+  layoutVariant: ExperienceLayoutVariant;
   seoDescription: string | null;
   seoTitle: string | null;
+};
+
+export type PublicMountainRoutePricingRow = {
+  label: string;
+  price: number;
+};
+
+export type PublicMountainRouteDay = {
+  day: number;
+  distanceLabel: string | null;
+  elevationLabel: string | null;
+  title: string;
+};
+
+export type PublicMountainRoute = PublicExperienceRelatedTour & {
+  currency: string;
+  exclusions: string[];
+  inclusions: string[];
+  itineraryDays: PublicMountainRouteDay[];
+  pricingRows: PublicMountainRoutePricingRow[];
+  routeLabel: string | null;
+  soloTravellerNote: string | null;
 };
 
 export type PublicExperienceRelatedTour = {

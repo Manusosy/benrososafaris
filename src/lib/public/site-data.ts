@@ -16,7 +16,7 @@ import {
   parsePricingTableKeys,
   type ExperiencePricingTableKey
 } from '@/lib/pricing/experience-to-tour-pricing';
-import { LEGACY_PAX_BANDS } from '@/features/portal/cms/tours/legacy-pricing';
+import { LEGACY_PAX_BANDS, mapPublicSeasonCells } from '@/features/portal/cms/tours/legacy-pricing';
 import {
   formatTourSafariMarketLabel,
   parseTourSafariMarkets,
@@ -795,15 +795,12 @@ async function getLegacyTourPricingMap(
       return LEGACY_PAX_BANDS.map((groupBand) => ({ groupBand, price: undefined }));
     }
 
-    const bands: string[] = [...LEGACY_PAX_BANDS];
-    for (const band of seasonCells.keys()) {
-      if (!bands.includes(band)) bands.push(band);
-    }
+    const cells = [...seasonCells.entries()].map(([groupBand, price]) => ({
+      groupBand,
+      price
+    }));
 
-    return bands.map((groupBand) => {
-      const price = seasonCells.get(groupBand);
-      return { groupBand, price: price ?? undefined };
-    });
+    return mapPublicSeasonCells(cells);
   }
 
   const seasonsByTierId = new Map<string, PublicTourPricingSeason[]>();

@@ -22,10 +22,14 @@ import { Combobox } from '../shared/combobox';
 import type { PricingTier } from './schema';
 import {
   createDefaultLegacyPricingTier,
+  createDefaultMountainPricingTier,
   createLegacyPricingSeason,
+  createMountainPricingSeason,
   LEGACY_PAX_BANDS,
   LEGACY_PRICING_TIER_OPTIONS,
-  mapLegacyPricingTiersToPublic
+  MOUNTAIN_ACCOMMODATION_BANDS,
+  mapLegacyPricingTiersToPublic,
+  normalizeMountainPricingTier
 } from './legacy-pricing';
 import {
   getExperiencePricingPreview,
@@ -38,6 +42,7 @@ type ExperiencePricingSelectorProps = {
   experienceOptions: RelationOption[];
   priceFrom: string;
   pricingExperienceId: string;
+  pricingMode?: 'safari' | 'mountain';
   pricingTableKeys: ExperiencePricingTableKey[];
   pricingTiers: PricingTier[];
   onPricingExperienceIdChange: (value: string) => void;
@@ -61,6 +66,7 @@ export function ExperiencePricingSelector({
   experienceOptions,
   priceFrom,
   pricingExperienceId,
+  pricingMode = 'safari',
   pricingTableKeys,
   pricingTiers,
   onPricingExperienceIdChange,
@@ -68,8 +74,9 @@ export function ExperiencePricingSelector({
   onPricingTiersChange,
   onPriceFromChange
 }: ExperiencePricingSelectorProps) {
+  const isMountainPricing = pricingMode === 'mountain';
   const [showLegacy, setShowLegacy] = React.useState(
-    !pricingExperienceId && pricingTiers.length > 0
+    isMountainPricing || (!pricingExperienceId && pricingTiers.length > 0)
   );
 
   const linkedExperienceOptions = experienceOptions.filter((option) =>
@@ -129,11 +136,49 @@ export function ExperiencePricingSelector({
     onPricingTableKeysChange(pricingTableKeys.filter((item) => item !== key));
   }
 
+  React.useEffect(() => {
+    if (!isMountainPricing) return;
+    if (pricingExperienceId) onPricingExperienceIdChange('');
+    if (pricingTableKeys.length) onPricingTableKeysChange([]);
+    if (!pricingTiers.length) onPricingTiersChange([createDefaultMountainPricingTier()]);
+    setShowLegacy(true);
+  }, [
+    isMountainPricing,
+    onPricingExperienceIdChange,
+    onPricingTableKeysChange,
+    onPricingTiersChange,
+    pricingExperienceId,
+    pricingTableKeys.length,
+    pricingTiers.length
+  ]);
+
   if (!experienceIds.length) {
     return (
       <div className='rounded-lg border border-dashed p-6 text-sm text-muted-foreground'>
         Link at least one experience under Parks &amp; Links — pricing tables come from that
         experience and update automatically when you edit the experience.
+      </div>
+    );
+  }
+
+  if (isMountainPricing) {
+    const mountainTiers = pricingTiers.length
+      ? pricingTiers.map(normalizeMountainPricingTier)
+      : [createDefaultMountainPricingTier()];
+
+    return (
+      <div className='grid gap-5'>
+        <div className='rounded-lg border bg-muted/25 p-4'>
+          <h3 className='text-sm font-semibold'>Mountain route pricing</h3>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            Enter camping and hut prices per person for this route. These appear on the tour detail
+            page when the route is opened.
+          </p>
+        </div>
+        <MountainPricingInput
+          value={mountainTiers}
+          onChange={(next) => onPricingTiersChange(next.map(normalizeMountainPricingTier))}
+        />
       </div>
     );
   }
@@ -444,6 +489,58 @@ function LegacyPricingInput({
         <Icons.add className='mr-2 size-4' />
         Add pricing tier
       </Button>
+    </div>
+  );
+}
+
+function MountainPricingInput({
+  value,
+  onChange
+}: {
+  value: PricingTier[];
+  onChange: (next: PricingTier[]) => void;
+}) {
+  const tier = value[0] ?? createDefaultMountainPricingTier();
+  const season = tier.seasons[0] ?? createMountainPricingSeason();
+
+  function updatePrice(cellIndex: number, price: string) {
+    onChange([
+      {
+        ...tier,
+        seasons: [
+          {
+            ...season,
+            cells: season.cells.map((cell, index) =>
+              index === cellIndex ? { ...cell, price } : cell
+            )
+          }
+        ]
+      }
+    ]);
+  }
+
+  return (
+    <div className='overflow-hidden rounded-lg border border-[#3C5142]/30 bg-background shadow-sm'>
+      <div className='bg-[#3C5142] px-4 py-3 text-white'>
+        <h4 className='font-semibold'>{tier.label || 'Route pricing'}</h4>
+        <p className='mt-1 text-sm text-white/80'>Per person · USD</p>
+      </div>
+      <div className='grid gap-3 p-4'>
+        {season.cells.map((cell, cellIndex) => (
+          <div className='grid gap-2' key={cell.groupBand}>
+            <Label>{cell.groupBand}</Label>
+            <Input
+              inputMode='decimal'
+              placeholder='e.g. 1480'
+              value={cell.price}
+              onChange={(event) => updatePrice(cellIndex, event.target.value)}
+            />
+          </div>
+        ))}
+        <p className='text-muted-foreground text-xs'>
+          Leave blank only if the price should show as &ldquo;On request&rdquo; on the public site.
+        </p>
+      </div>
     </div>
   );
 }

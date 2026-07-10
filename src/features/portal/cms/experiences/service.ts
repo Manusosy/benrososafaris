@@ -55,6 +55,7 @@ export async function saveExperience(input: {
     category: values.category || null,
     countries: values.countries,
     menu_group: values.menuGroup,
+    layout_variant: values.layoutVariant,
     highlights: values.highlights,
     package_pricing: values.packagePricing,
     gallery: values.gallery,
@@ -159,6 +160,10 @@ export async function getExperience(id: string): Promise<ExperienceRecord | null
       base.menu_group === 'wildlife_safari' || base.menu_group === 'top_experiences'
         ? base.menu_group
         : 'top_experiences',
+    layoutVariant:
+      base.layout_variant === 'mountain' || base.layout_variant === 'safari'
+        ? base.layout_variant
+        : 'safari',
     highlights,
     packagePricing,
     gallery,

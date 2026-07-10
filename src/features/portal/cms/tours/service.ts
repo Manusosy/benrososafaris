@@ -528,6 +528,7 @@ export async function getTourRelationOptions(): Promise<{
   accommodations: RelationOption[];
   fleet: RelationOption[];
   experienceCountries: Record<string, BenrosoCountryId[]>;
+  experienceLayoutVariants: Record<string, 'safari' | 'mountain'>;
 }> {
   const supabase = await genericClient();
   const [parks, destinations, experiences, accommodations, fleet, experienceRows] =
@@ -537,7 +538,7 @@ export async function getTourRelationOptions(): Promise<{
       moduleOptions(supabase, 'experience_translations', 'experience_id', 'title'),
       moduleOptions(supabase, 'accommodation_translations', 'accommodation_id', 'name'),
       moduleOptions(supabase, 'fleet_vehicle_translations', 'vehicle_id', 'title'),
-      supabase.from('experiences').select('id, countries').is('deleted_at', null)
+      supabase.from('experiences').select('id, countries, layout_variant').is('deleted_at', null)
     ]);
 
   const experienceCountries = Object.fromEntries(
@@ -546,8 +547,22 @@ export async function getTourRelationOptions(): Promise<{
       parseExperienceCountries(row.countries)
     ])
   );
+  const experienceLayoutVariants = Object.fromEntries(
+    (experienceRows.data ?? []).map((row) => [
+      row.id as string,
+      row.layout_variant === 'mountain' ? 'mountain' : 'safari'
+    ])
+  );
 
-  return { parks, destinations, experiences, accommodations, fleet, experienceCountries };
+  return {
+    parks,
+    destinations,
+    experiences,
+    accommodations,
+    fleet,
+    experienceCountries,
+    experienceLayoutVariants
+  };
 }
 
 export async function getExperiencePricingTablesForWizard(

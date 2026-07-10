@@ -3,6 +3,7 @@ import { localePath } from '@/lib/public/locale-path';
 import { getPublicToursByIds } from '@/lib/public/site-data';
 
 import { BENROSO_OPERATING_COUNTRIES, type BenrosoCountryId } from './country-map-copy';
+import { isMountainExperienceLayout, normalizeExperienceLayoutVariant } from './layout-variant';
 import type {
   PublicExperience,
   PublicExperienceDetail,
@@ -11,7 +12,10 @@ import type {
   PublicExperienceMedia,
   PublicExperiencePackageLevel,
   PublicExperienceRelatedAccommodation,
-  PublicExperienceRelatedTour
+  PublicExperienceRelatedTour,
+  PublicMountainRoute,
+  PublicMountainRouteDay,
+  PublicMountainRoutePricingRow
 } from './types';
 
 type ExperienceTranslationRow = {
@@ -25,6 +29,7 @@ type ExperienceTranslationRow = {
         highlights: string[] | null;
         id: string;
         menu_group: string | null;
+        layout_variant?: string | null;
         package_pricing?: unknown;
         status: string;
       }
@@ -36,6 +41,7 @@ type ExperienceTranslationRow = {
         highlights: string[] | null;
         id: string;
         menu_group: string | null;
+        layout_variant?: string | null;
         package_pricing?: unknown;
         status: string;
       }>
@@ -339,7 +345,7 @@ async function fetchPublishedTranslationRows(
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, countries, menu_group, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, countries, menu_group, layout_variant, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -490,7 +496,7 @@ export async function getPublishedExperienceBySlug(
       faqs,
       seo_title,
       seo_description,
-      experience:experiences!inner(id, category, countries, menu_group, status, gallery, highlights, package_pricing, deleted_at),
+      experience:experiences!inner(id, category, countries, menu_group, layout_variant, status, gallery, highlights, package_pricing, deleted_at),
       og_image:media_assets!experience_translations_og_image_id_fkey(url, alt)
     `
     )
@@ -529,6 +535,7 @@ export async function getPublishedExperienceBySlug(
     id: experience.id,
     imageAlt: ogImage?.alt ?? cover.imageAlt,
     imageUrl: ogImage?.url ?? cover.imageUrl,
+    layoutVariant: normalizeExperienceLayoutVariant(experience.layout_variant),
     menuGroup: normalizeMenuGroup(experience.menu_group),
     seoDescription: row.seo_description,
     seoTitle: row.seo_title,
@@ -619,6 +626,203 @@ export async function getRelatedToursForExperience(
     .toSorted((a, b) => (orderByTourId.get(a.id) ?? 0) - (orderByTourId.get(b.id) ?? 0));
 }
 
+function parseMountainItineraryDays(value: unknown): PublicMountainRouteDay[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item, index) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const title = typeof record.title === 'string' ? record.title.trim() : '';
+    if (!title) return [];
+
+    const description = typeof record.description === 'string' ? record.description : '';
+    const distanceMatch = description.match(
+      /(?:distance|hiking distance)\s*([0-9]+(?:\.[0-9]+)?\s*km)/i
+    );
+    const elevationMatch = description.match(/(?:height|elevation)\s*([0-9][0-9,\s\-m.]+)/i);
+
+    return [
+      {
+        day: typeof record.day === 'number' ? record.day : index + 1,
+        distanceLabel: distanceMatch?.[1]?.trim() ?? null,
+        elevationLabel: elevationMatch?.[1]?.replace(/\s+/g, ' ').trim() ?? null,
+        title
+      }
+    ];
+  });
+}
+
+async function fetchMountainPricingByTourId(
+  tourIds: string[]
+): Promise<Map<string, { currency: string; rows: PublicMountainRoutePricingRow[] }>> {
+  const result = new Map<string, { currency: string; rows: PublicMountainRoutePricingRow[] }>();
+  if (!tourIds.length) return result;
+
+  const supabase = await createClient();
+  const { data: tiers } = await supabase
+    .from('tour_pricing_tiers')
+    .select('id, tour_id, currency, position')
+    .in('tour_id', tourIds)
+    .order('position', { ascending: true });
+
+  const tierRows = (tiers ?? []) as Array<{
+    currency: string | null;
+    id: string;
+    position: number | null;
+    tour_id: string;
+  }>;
+  if (!tierRows.length) return result;
+
+  const tierIds = tierRows.map((tier) => tier.id);
+  const { data: seasons } = await supabase
+    .from('tour_pricing_seasons')
+    .select('id, tier_id, label, position')
+    .in('tier_id', tierIds)
+    .order('position', { ascending: true });
+
+  const seasonRows = (seasons ?? []) as Array<{
+    id: string;
+    label: string;
+    position: number | null;
+    tier_id: string;
+  }>;
+  const seasonIds = seasonRows.map((season) => season.id);
+  const { data: cells } = seasonIds.length
+    ? await supabase
+        .from('tour_pricing_cells')
+        .select('season_id, group_band, band_position, price')
+        .in('season_id', seasonIds)
+        .order('band_position', { ascending: true })
+    : { data: [] };
+
+  const cellsBySeasonId = new Map<string, PublicMountainRoutePricingRow[]>();
+  for (const cell of (cells ?? []) as Array<{
+    band_position: number | null;
+    group_band: string | null;
+    price: number | null;
+    season_id: string;
+  }>) {
+    if (!cell.group_band) continue;
+    const price = toFiniteNumber(cell.price);
+    if (price == null) continue;
+    cellsBySeasonId.set(cell.season_id, [
+      ...(cellsBySeasonId.get(cell.season_id) ?? []),
+      { label: cell.group_band, price }
+    ]);
+  }
+
+  const seasonsByTierId = new Map<string, typeof seasonRows>();
+  for (const season of seasonRows) {
+    seasonsByTierId.set(season.tier_id, [...(seasonsByTierId.get(season.tier_id) ?? []), season]);
+  }
+
+  for (const tier of tierRows) {
+    const firstSeason = (seasonsByTierId.get(tier.id) ?? [])[0];
+    if (!firstSeason) continue;
+    const rows = cellsBySeasonId.get(firstSeason.id) ?? [];
+    if (!rows.length) continue;
+    result.set(tier.tour_id, {
+      currency: tier.currency ?? 'USD',
+      rows
+    });
+  }
+
+  return result;
+}
+
+export async function getMountainRoutesForExperience(
+  experienceId: string,
+  locale: string
+): Promise<PublicMountainRoute[]> {
+  const supabase = await createClient();
+  const { data: experienceLinks } = await supabase
+    .from('tour_experiences')
+    .select('tour_id, position')
+    .eq('experience_id', experienceId)
+    .order('position');
+
+  if (!experienceLinks?.length) return [];
+
+  const tourIds = experienceLinks.map((link) => link.tour_id);
+  const orderByTourId = new Map(
+    experienceLinks.map((link, index) => [link.tour_id, link.position ?? index])
+  );
+
+  const { data: rows } = await supabase
+    .from('tour_translations')
+    .select(
+      `
+      slug,
+      title,
+      excerpt,
+      tour:tours!inner(
+        id,
+        status,
+        days,
+        nights,
+        price_from,
+        itinerary_days,
+        inclusions,
+        exclusions,
+        important_notice
+      ),
+      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .in('tour_id', tourIds)
+    .eq('tour.status', 'published')
+    .not('published_at', 'is', null);
+
+  const [publicTours, parksByTourId, pricingByTourId] = await Promise.all([
+    getPublicToursByIds(locale, tourIds),
+    fetchParksByTourId(tourIds, locale),
+    fetchMountainPricingByTourId(tourIds)
+  ]);
+  const publicTourById = new Map(publicTours.map((tour) => [tour.id, tour]));
+
+  return (rows ?? [])
+    .flatMap((row) => {
+      const tour = unwrapRelation(row.tour);
+      if (!tour) return [];
+      const publicTour = publicTourById.get(tour.id);
+      if (!publicTour) return [];
+
+      const parks = parksByTourId.get(tour.id) ?? [];
+      const pricing = pricingByTourId.get(tour.id);
+      const routeLabel = parks.length ? parks.join(' · ') : null;
+
+      return [
+        {
+          days: tour.days,
+          excerpt: row.excerpt,
+          href: publicTour.href,
+          id: tour.id,
+          imageAlt: publicTour.imageAlt,
+          imageUrl: publicTour.imageUrl,
+          nights: tour.nights,
+          parksLabel: routeLabel,
+          priceFrom: tour.price_from != null ? Number(tour.price_from) : publicTour.priceFrom,
+          slug: row.slug,
+          title: row.title,
+          currency: pricing?.currency ?? 'USD',
+          exclusions: parseStringArray(tour.exclusions),
+          inclusions: parseStringArray(tour.inclusions),
+          itineraryDays: parseMountainItineraryDays(tour.itinerary_days),
+          pricingRows: pricing?.rows ?? [],
+          routeLabel,
+          soloTravellerNote:
+            typeof tour.important_notice === 'string' && tour.important_notice.trim()
+              ? tour.important_notice.trim()
+              : null
+        } satisfies PublicMountainRoute
+      ];
+    })
+    .toSorted((a, b) => (orderByTourId.get(a.id) ?? 0) - (orderByTourId.get(b.id) ?? 0));
+}
+
+export { isMountainExperienceLayout };
+
 async function getExperienceTourIds(experienceId: string): Promise<string[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -635,16 +839,17 @@ async function getExperienceTourIds(experienceId: string): Promise<string[]> {
 export async function getPackageLevelsForExperience(
   experienceId: string
 ): Promise<PublicExperiencePackageLevel[]> {
-  const tourIds = await getExperienceTourIds(experienceId);
   const supabase = await createClient();
-
-  const { data: experiencePricing } = await supabase
+  const { data: experienceRow } = await supabase
     .from('experiences')
-    .select('package_pricing')
+    .select('layout_variant, package_pricing')
     .eq('id', experienceId)
     .maybeSingle();
 
-  const savedLevels = parsePackagePricing(experiencePricing?.package_pricing);
+  if (experienceRow?.layout_variant === 'mountain') return [];
+
+  const tourIds = await getExperienceTourIds(experienceId);
+  const savedLevels = parsePackagePricing(experienceRow?.package_pricing);
   if (savedLevels.length) {
     return savedLevels.map((level) => ({
       ...level,

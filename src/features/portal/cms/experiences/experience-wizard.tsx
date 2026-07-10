@@ -54,6 +54,7 @@ const CATEGORY_PRESETS: ComboboxOption[] = [
   { value: 'Private Safari', label: 'Private Safari' },
   { value: 'Beach Extension', label: 'Beach Extension' },
   { value: 'Mountain Hiking', label: 'Mountain Hiking' },
+  { value: 'Mountain Climbing', label: 'Mountain Climbing' },
   { value: 'Conservation Safari', label: 'Conservation Safari' },
   { value: 'Family Safari', label: 'Family Safari' },
   { value: 'Luxury Safari', label: 'Luxury Safari' },
@@ -64,6 +65,19 @@ const CATEGORY_PRESETS: ComboboxOption[] = [
   { value: 'Bird Watching Safari', label: 'Bird Watching Safari' },
   { value: 'Gorilla Trekking', label: 'Gorilla Trekking' }
 ];
+
+const LAYOUT_VARIANT_OPTIONS = [
+  {
+    value: 'safari',
+    label: 'Safari layout',
+    description: 'Package tables plus filtered linked safaris (default).'
+  },
+  {
+    value: 'mountain',
+    label: 'Mountain routes layout',
+    description: 'Hide package tables. Show per-route camping/hut tables on linked tours.'
+  }
+] as const;
 
 const MENU_GROUP_OPTIONS = [
   {
@@ -547,6 +561,35 @@ export function ExperienceWizard({
                 </div>
               )}
             </form.AppField>
+            <form.AppField name='layoutVariant'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label htmlFor='experience-layout-variant'>Public page layout</Label>
+                  <select
+                    className='border-input bg-background h-10 rounded-md border px-3 text-sm'
+                    id='experience-layout-variant'
+                    value={field.state.value}
+                    onChange={(event) =>
+                      field.handleChange(
+                        event.target.value as ExperienceFormValues['layoutVariant']
+                      )
+                    }
+                  >
+                    {LAYOUT_VARIANT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className='text-muted-foreground text-xs'>
+                    {
+                      LAYOUT_VARIANT_OPTIONS.find((option) => option.value === field.state.value)
+                        ?.description
+                    }
+                  </p>
+                </div>
+              )}
+            </form.AppField>
           </div>
         ) : null}
 
@@ -608,10 +651,20 @@ export function ExperienceWizard({
         ) : null}
 
         {currentStep === 4 ? (
-          <PackagePricingInput
-            value={values.packagePricing}
-            onChange={(next) => form.setFieldValue('packagePricing', next)}
-          />
+          values.layoutVariant === 'mountain' ? (
+            <div className='rounded-lg border border-dashed p-6 text-sm leading-7 text-muted-foreground'>
+              <p className='font-medium text-foreground'>Mountain routes layout is enabled.</p>
+              <p className='mt-2'>
+                Package tables are hidden on the public experience page. Enter camping and hut
+                prices on each linked tour route instead, then link those tours to this experience.
+              </p>
+            </div>
+          ) : (
+            <PackagePricingInput
+              value={values.packagePricing}
+              onChange={(next) => form.setFieldValue('packagePricing', next)}
+            />
+          )
         ) : null}
 
         {currentStep === 5 ? (
@@ -675,6 +728,12 @@ function ReviewSummary({ values }: { values: ExperienceFormValues }) {
     { label: 'Slug', value: values.slug },
     { label: 'Package style', value: values.category },
     {
+      label: 'Page layout',
+      value:
+        LAYOUT_VARIANT_OPTIONS.find((option) => option.value === values.layoutVariant)?.label ??
+        'Safari layout'
+    },
+    {
       label: 'Menu group',
       value:
         MENU_GROUP_OPTIONS.find((option) => option.value === values.menuGroup)?.label ??
@@ -692,7 +751,12 @@ function ReviewSummary({ values }: { values: ExperienceFormValues }) {
     },
     {
       label: 'Package tables',
-      value: values.packagePricing.length ? `${values.packagePricing.length} table(s)` : ''
+      value:
+        values.layoutVariant === 'mountain'
+          ? 'Hidden (mountain routes layout)'
+          : values.packagePricing.length
+            ? `${values.packagePricing.length} table(s)`
+            : ''
     },
     { label: 'SEO title', value: values.seoTitle || values.title },
     { label: 'Focus keyword', value: values.focusKeyword },

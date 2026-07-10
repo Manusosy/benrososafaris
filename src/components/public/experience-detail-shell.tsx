@@ -14,6 +14,7 @@ import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { BenrosoButtonGroup } from '@/components/public/ui/benroso-button-group';
 import { localePath } from '@/lib/public/locale-path';
 import { buildExperienceGuideHeading } from '@/features/experiences/public/guide-heading';
+import { isMountainExperienceLayout } from '@/features/experiences/public/layout-variant';
 import type {
   PublicExperienceDetail,
   PublicExperiencePackageLevel,
@@ -35,6 +36,11 @@ function formatExperienceTourHeading(category: string | null, title: string) {
   return trimmed ? `Our Best ${trimmed} Safaris` : 'Safaris For This Experience';
 }
 
+function formatMountainTripsHeading(title: string) {
+  const trimmed = title.replace(/\s+(Safari(s)?|Experience)$/i, '').trim();
+  return trimmed ? `${trimmed} Routes` : 'Climbing Routes';
+}
+
 export function ExperienceDetailShell({
   accommodations,
   experience,
@@ -43,6 +49,7 @@ export function ExperienceDetailShell({
   tours
 }: ExperienceDetailShellProps) {
   const galleryImages = experience.gallery.filter((image) => image.url);
+  const isMountainLayout = isMountainExperienceLayout(experience);
   const guideHeading = buildExperienceGuideHeading({
     category: experience.category,
     countries: experience.countries,
@@ -51,8 +58,11 @@ export function ExperienceDetailShell({
   const anchorItems = [
     { href: '#experience-overview', label: 'Overview' },
     experience.highlights.length ? { href: '#experience-expect', label: 'What To Expect' } : null,
-    { href: '#experience-pricing', label: 'Packages' },
-    { href: '#experience-trips', label: 'Safaris' },
+    !isMountainLayout ? { href: '#experience-pricing', label: 'Packages' } : null,
+    {
+      href: '#experience-trips',
+      label: isMountainLayout ? 'Routes' : 'Safaris'
+    },
     accommodations.length ? { href: '#experience-lodges', label: 'Lodges' } : null,
     experience.faqs.length ? { href: '#experience-faqs', label: 'FAQs' } : null
   ].filter((item): item is { href: string; label: string } => item !== null);
@@ -121,25 +131,28 @@ export function ExperienceDetailShell({
           </div>
         </ExperienceScrollReveal>
 
-        <ExperienceScrollReveal
-          className='benroso-section scroll-mt-36 border-t border-[var(--benroso-line)] bg-white'
-          id='experience-pricing'
-        >
-          <div className='benroso-container'>
-            <div className='mx-auto max-w-3xl text-center'>
-              <p className='benroso-eyebrow'>Package Tables</p>
-              <h2 className='benroso-heading mt-3 font-display text-[clamp(2rem,4vw,3rem)] leading-tight'>
-                {experience.title} Pricing
-              </h2>
-              <p className='benroso-body mx-auto mt-4 max-w-2xl text-base leading-7'>
-                Select a package level to compare per-person prices by travel period and group size.
-              </p>
+        {!isMountainLayout ? (
+          <ExperienceScrollReveal
+            className='benroso-section scroll-mt-36 border-t border-[var(--benroso-line)] bg-white'
+            id='experience-pricing'
+          >
+            <div className='benroso-container'>
+              <div className='mx-auto max-w-3xl text-center'>
+                <p className='benroso-eyebrow'>Package Tables</p>
+                <h2 className='benroso-heading mt-3 font-display text-[clamp(2rem,4vw,3rem)] leading-tight'>
+                  {experience.title} Pricing
+                </h2>
+                <p className='benroso-body mx-auto mt-4 max-w-2xl text-base leading-7'>
+                  Select a package level to compare per-person prices by travel period and group
+                  size.
+                </p>
+              </div>
+              <div className='mt-10'>
+                <ExperiencePackageTabs levels={packageLevels} locale={locale} />
+              </div>
             </div>
-            <div className='mt-10'>
-              <ExperiencePackageTabs levels={packageLevels} locale={locale} />
-            </div>
-          </div>
-        </ExperienceScrollReveal>
+          </ExperienceScrollReveal>
+        ) : null}
 
         <ExperienceScrollReveal
           className='benroso-section scroll-mt-36 border-y border-[var(--benroso-line)] bg-white'
@@ -147,9 +160,20 @@ export function ExperienceDetailShell({
           stagger
         >
           <ExperienceTripsExplorer
-            description={`Under ${experience.title}, we curate safaris that let guests experience this travel style in different ways. Choose the package level that fits your comfort, then compare the routes below by duration and park area.`}
+            description={
+              isMountainLayout
+                ? 'Each route is a published climbing itinerary. Open a route for the full day-by-day trek, camping or hut prices, and what is included.'
+                : `Under ${experience.title}, we curate safaris that let guests experience this travel style in different ways. Choose the package level that fits your comfort, then compare the routes below by duration and park area.`
+            }
+            hideFilters={isMountainLayout}
+            itemLabel={isMountainLayout ? 'route' : 'safari'}
             locale={locale}
-            title={formatExperienceTourHeading(experience.category, experience.title)}
+            showAll={isMountainLayout}
+            title={
+              isMountainLayout
+                ? formatMountainTripsHeading(experience.title)
+                : formatExperienceTourHeading(experience.category, experience.title)
+            }
             tours={tours}
           />
         </ExperienceScrollReveal>
@@ -238,11 +262,14 @@ export function ExperienceDetailShell({
                 Ready to start planning?
               </h2>
               <p className='benroso-body mx-auto mt-3 max-w-md'>
-                Tell us your month, group size, and comfort level. We will match the right package
-                table with a route that makes sense.
+                {isMountainLayout
+                  ? 'Tell us your preferred route, month, and group size. We will confirm camping or hut arrangements and guide support.'
+                  : 'Tell us your month, group size, and comfort level. We will match the right package table with a route that makes sense.'}
               </p>
               <BenrosoButtonGroup align='center' className='mt-7'>
-                <BenrosoButton href={localePath(locale, '/contact')}>Plan My Safari</BenrosoButton>
+                <BenrosoButton href={localePath(locale, '/contact')}>
+                  {isMountainLayout ? 'Plan My Climb' : 'Plan My Safari'}
+                </BenrosoButton>
                 <BenrosoButton href={localePath(locale, '/experiences')} variant='accent-outline'>
                   All Experiences
                 </BenrosoButton>

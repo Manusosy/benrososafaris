@@ -58,6 +58,7 @@ interface TourWizardProps {
     accommodations: RelationOption[];
     fleet: RelationOption[];
     experienceCountries: Record<string, BenrosoCountryId[]>;
+    experienceLayoutVariants: Record<string, 'safari' | 'mountain'>;
   };
 }
 
@@ -401,6 +402,14 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
     );
     return [...new Set(countryIds)];
   }, [options.experienceCountries, values.experienceIds]);
+
+  const usesMountainPricing = React.useMemo(
+    () =>
+      values.experienceIds.some(
+        (experienceId) => options.experienceLayoutVariants[experienceId] === 'mountain'
+      ),
+    [options.experienceLayoutVariants, values.experienceIds]
+  );
 
   const suggestedMarkets = React.useMemo(
     () => tourMarketsFromExperienceCountries(linkedExperienceCountries),
@@ -778,6 +787,7 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
             experienceOptions={options.experiences}
             priceFrom={values.priceFrom}
             pricingExperienceId={values.pricingExperienceId}
+            pricingMode={usesMountainPricing ? 'mountain' : 'safari'}
             pricingTableKeys={values.pricingTableKeys}
             pricingTiers={values.pricingTiers}
             onPricingExperienceIdChange={(next) => form.setFieldValue('pricingExperienceId', next)}

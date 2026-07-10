@@ -44,6 +44,9 @@ export type PackagePricingSeason = z.infer<typeof packagePricingSeasonSchema>;
 export const experienceMenuGroupSchema = z.enum(['top_experiences', 'wildlife_safari']);
 export type ExperienceMenuGroup = z.infer<typeof experienceMenuGroupSchema>;
 
+export const experienceLayoutVariantSchema = z.enum(['safari', 'mountain']);
+export type ExperienceLayoutVariant = z.infer<typeof experienceLayoutVariantSchema>;
+
 /**
  * Experience wizard form contract.
  *
@@ -71,6 +74,8 @@ export const experienceFormSchema = z.object({
   /** Operating countries where this experience is offered. */
   countries: z.array(benrosoCountryIdSchema),
   menuGroup: experienceMenuGroupSchema,
+  /** Public page layout: safari (default) or mountain (route tables, no package grid). */
+  layoutVariant: experienceLayoutVariantSchema,
   /** Highlights list, stored directly as a jsonb array. */
   highlights: z.array(z.string()),
   /** Package price tables for this experience page. */
@@ -97,7 +102,8 @@ export const experienceStepSchemas = [
     slug: true,
     category: true,
     countries: true,
-    menuGroup: true
+    menuGroup: true,
+    layoutVariant: true
   }),
   experienceFormSchema.pick({ gallery: true }),
   experienceFormSchema.pick({
@@ -149,6 +155,7 @@ export const emptyExperienceValues: ExperienceFormValues = {
   category: '',
   countries: [],
   menuGroup: 'top_experiences',
+  layoutVariant: 'safari',
   highlights: [],
   packagePricing: [
     {
