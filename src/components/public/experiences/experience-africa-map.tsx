@@ -54,7 +54,6 @@ type MapSize = {
 
 const MAP_PADDING = 2;
 const MAP_PADDING_RIGHT = 0;
-const CARD_LEFT_INSET_SM = 24; // minimal padding — card overlays map, no left margin reserved
 const CARD_LEFT_INSET_MD = 32;
 const MAP_HORIZONTAL_SCALE = 1.07;
 const FIT_WEST_BUFFER_ISOS = ['COD', 'AGO', 'NAM', 'BWA', 'MOZ'];
@@ -64,7 +63,8 @@ const MUTED_STROKE = '#ffffff';
 const ACTIVE_STROKE = '#3c5142';
 
 function getCardLeftInset(width: number): number {
-  return width >= 768 ? CARD_LEFT_INSET_MD : CARD_LEFT_INSET_SM;
+  if (width < 768) return MAP_PADDING;
+  return CARD_LEFT_INSET_MD;
 }
 
 function buildMapGeometry(
@@ -410,7 +410,7 @@ export function ExperienceAfricaMap() {
           ) : null}
 
           {cardVisible ? (
-            <div className='absolute left-[20%] top-6 z-10 w-[min(100%,320px)] md:left-[22%] md:w-[min(100%,360px)] lg:left-[24%]'>
+            <div className='absolute left-[20%] top-6 z-10 hidden w-[min(100%,360px)] md:block md:left-[22%] lg:left-[24%]'>
               <CountryInfoCard
                 cardRef={cardRef}
                 countryId={highlightedCountryId}

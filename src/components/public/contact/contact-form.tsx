@@ -13,6 +13,7 @@ import { getCountryDialCode } from '@/constants/world-countries';
 import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { submitEnquiry } from '@/features/contact/api/service';
 import type { EnquiryType } from '@/features/contact/api/types';
+import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -344,11 +345,14 @@ function ContactFormBody({
   sourcePath?: string;
   submitStatus: 'idle' | 'success' | 'error';
 }) {
+  const turnstile = useTurnstileGate();
+
   const mutation = useMutation({
     mutationFn: submitEnquiry,
     onSuccess: () => {
       onSubmitStatusChange('success');
       form.reset();
+      turnstile.resetTurnstile();
     },
     onError: () => {
       onSubmitStatusChange('error');
@@ -418,7 +422,8 @@ function ContactFormBody({
         travelers,
         tripType: activeType === 'safari-quote' ? value.tripType : undefined,
         sourcePath: sourcePath || (typeof window !== 'undefined' ? window.location.pathname : ''),
-        topic: activeType === 'general' ? value.topic : undefined
+        topic: activeType === 'general' ? value.topic : undefined,
+        turnstileToken: turnstile.token ?? undefined
       });
     }
   });
@@ -844,9 +849,13 @@ function ContactFormBody({
           )}
 
           <div className='space-y-3 pt-4'>
+            <TurnstileField
+              onTokenChange={turnstile.setToken}
+              resetSignal={turnstile.resetSignal}
+            />
             <form.SubmitButton
               className='benroso-contact-submit w-full'
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !turnstile.canSubmit}
               onMouseEnter={() => setSubmitHovered(true)}
               onMouseLeave={() => setSubmitHovered(false)}
             >

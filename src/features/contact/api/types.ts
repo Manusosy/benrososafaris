@@ -31,6 +31,10 @@ export interface SubmitEnquiryPayload {
   travelStartDate?: string;
   travelers?: number;
   tripType?: string;
+  /** Cloudflare Turnstile token — required when Turnstile is configured. */
+  turnstileToken?: string;
+  /** Honeypot — must stay empty; bots that fill it are rejected silently. */
+  website?: string;
 }
 
 export interface SubmitEnquiryResponse {

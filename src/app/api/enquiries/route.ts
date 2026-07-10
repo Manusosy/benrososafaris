@@ -10,11 +10,18 @@ import {
   sendGuestEnquiryConfirmationEmail,
   shouldSendGuestEnquiryConfirmation
 } from '@/lib/email/send-guest-enquiry-confirmation';
+import { checkEnquiryRateLimit, getClientIp } from '@/lib/security/enquiry-rate-limit';
+import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/security/turnstile';
 import {
   createEnquiryPublicClient,
   createServiceRoleClient,
   hasServiceRoleKey
 } from '@/lib/supabase/service-role';
+
+const securityFields = {
+  turnstileToken: z.string().optional(),
+  website: z.string().optional()
+};
 
 const baseFields = {
   email: z.string().email(),
@@ -26,6 +33,7 @@ const baseFields = {
 
 const safariQuoteSchema = z.object({
   ...baseFields,
+  ...securityFields,
   adults: z.number().int().min(1),
   budget: z.string().min(1),
   budgetTier: z.string().min(1),
@@ -47,6 +55,7 @@ const safariQuoteSchema = z.object({
 
 const generalSchema = z.object({
   ...baseFields,
+  ...securityFields,
   enquiryType: z.literal('general'),
   message: z.string().min(10),
   topic: z.string().min(1)
@@ -54,6 +63,7 @@ const generalSchema = z.object({
 
 const otherSchema = z.object({
   ...baseFields,
+  ...securityFields,
   bookingReference: z.string().optional(),
   enquiryType: z.literal('other'),
   message: z.string().min(10)
@@ -271,11 +281,49 @@ function extractReferenceCode(result: { data: unknown }): string | null {
 }
 
 export async function POST(request: Request) {
+  const clientIp = getClientIp(request);
+  const rateLimit = checkEnquiryRateLimit(clientIp);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many enquiries from this connection. Please try again later.' },
+      {
+        headers: { 'Retry-After': String(rateLimit.retryAfterSec) },
+        status: 429
+      }
+    );
+  }
+
   const body = await request.json().catch(() => null);
+
+  if (body && typeof body === 'object' && 'website' in body && body.website) {
+    return NextResponse.json({ ok: true });
+  }
+
   const parsed = enquirySchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
+  }
+
+  if (isTurnstileConfigured()) {
+    const token = parsed.data.turnstileToken?.trim();
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Please complete the security check before submitting.' },
+        { status: 400 }
+      );
+    }
+
+    const verification = await verifyTurnstileToken(token, clientIp);
+
+    if (!verification.ok) {
+      return NextResponse.json(
+        { error: 'Security check failed. Please try again.' },
+        { status: 400 }
+      );
+    }
   }
 
   const message =

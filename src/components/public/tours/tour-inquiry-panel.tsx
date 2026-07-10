@@ -10,6 +10,7 @@ import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { useAppForm } from '@/components/ui/tanstack-form';
 import { getCountryDialCode } from '@/constants/world-countries';
 import { submitEnquiry } from '@/features/contact/api/service';
+import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -211,6 +212,7 @@ function TourInquiryForm({
   tourTitle: string;
 }) {
   const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle');
+  const turnstile = useTurnstileGate();
 
   const mutation = useMutation({
     mutationFn: submitEnquiry,
@@ -218,6 +220,7 @@ function TourInquiryForm({
     onSuccess: () => {
       setSubmitStatus('success');
       form.reset();
+      turnstile.resetTurnstile();
     }
   });
 
@@ -265,7 +268,8 @@ function TourInquiryForm({
         travelStartDate: value.travelStartDate || undefined,
         travelers: value.adults + value.children + value.infants,
         tripType: value.tripType || undefined,
-        sourcePath: typeof window !== 'undefined' ? window.location.pathname : ''
+        sourcePath: typeof window !== 'undefined' ? window.location.pathname : '',
+        turnstileToken: turnstile.token ?? undefined
       });
     }
   });
@@ -487,9 +491,10 @@ function TourInquiryForm({
         </div>
 
         <div className='mt-5 space-y-3'>
+          <TurnstileField onTokenChange={turnstile.setToken} resetSignal={turnstile.resetSignal} />
           <form.SubmitButton
             className='w-full min-h-11 rounded-[var(--benroso-button-radius)] text-sm font-semibold uppercase tracking-[0.08em]'
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || !turnstile.canSubmit}
           >
             {mutation.isPending ? 'Sending...' : 'Send Trip Enquiry'}
           </form.SubmitButton>

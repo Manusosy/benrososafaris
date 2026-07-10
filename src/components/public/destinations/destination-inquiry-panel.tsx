@@ -8,6 +8,7 @@ import { Icons } from '@/components/icons';
 import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { useAppForm } from '@/components/ui/tanstack-form';
 import { submitEnquiry } from '@/features/contact/api/service';
+import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -65,12 +66,14 @@ function DestinationInquiryForm({
   locale
 }: DestinationInquiryPanelProps) {
   const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle');
+  const turnstile = useTurnstileGate();
 
   const mutation = useMutation({
     mutationFn: submitEnquiry,
     onSuccess: () => {
       setSubmitStatus('success');
       form.reset();
+      turnstile.resetTurnstile();
     },
     onError: () => setSubmitStatus('error')
   });
@@ -103,7 +106,8 @@ function DestinationInquiryForm({
           ? formatTravelDateRange(value.travelStartDate, value.travelEndDate || '')
           : undefined,
         sourcePath: typeof window !== 'undefined' ? window.location.pathname : '',
-        travelers: value.travelers
+        travelers: value.travelers,
+        turnstileToken: turnstile.token ?? undefined
       });
     }
   });
@@ -241,13 +245,14 @@ function DestinationInquiryForm({
         </div>
 
         <div className='mt-5 space-y-3'>
+          <TurnstileField onTokenChange={turnstile.setToken} resetSignal={turnstile.resetSignal} />
           <form.SubmitButton
             className={cn(
               'w-full min-h-11 rounded-[var(--benroso-button-radius)] text-sm font-semibold uppercase tracking-[0.08em] shadow-none',
               '!border-[var(--benroso-lime)] !bg-[var(--benroso-lime)] !text-[var(--benroso-primary-dark)]',
               'hover:!border-[var(--benroso-lime-hover)] hover:!bg-[var(--benroso-lime-hover)] hover:!text-[var(--benroso-primary-dark)]'
             )}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || !turnstile.canSubmit}
             variant='outline'
           >
             {mutation.isPending ? 'Sending...' : 'Send Enquiry'}
