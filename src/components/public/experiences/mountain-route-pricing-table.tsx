@@ -33,7 +33,7 @@ export function MountainRoutePricingTable({
               <tr className='border-t border-[var(--benroso-line)]' key={row.label}>
                 <td className='px-4 py-3 font-medium text-[var(--benroso-ink)]'>{row.label}</td>
                 <td className='px-4 py-3 text-[var(--benroso-primary)]'>
-                  {formatTourPrice(row.price, currency) ?? 'On request'}
+                  {row.price != null ? formatTourPrice(row.price, currency) : 'On request'}
                 </td>
               </tr>
             ))}

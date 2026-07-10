@@ -3,6 +3,7 @@ import {
   mapExperienceKeyToTourTier,
   type ExperiencePricingTableKey
 } from '@/lib/pricing/experience-to-tour-pricing';
+import type { PublicMountainRoutePricingRow } from '@/features/experiences/public/types';
 import type { PublicTourPricingCell, PublicTourPricingTier } from '@/lib/public/types';
 
 import type { PricingTier } from './schema';
@@ -63,7 +64,7 @@ export function isMountainTourPricing(tiers: PublicTourPricingTier[]): boolean {
 
 export function mountainPricingRowsFromTier(
   tier: PublicTourPricingTier
-): Array<{ label: string; price: number | null }> {
+): PublicMountainRoutePricingRow[] {
   const season = tier.seasons.find((item) => item.label.trim()) ?? tier.seasons[0];
   if (!season) return [];
 

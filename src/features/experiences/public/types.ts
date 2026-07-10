@@ -46,7 +46,7 @@ export type PublicExperienceDetail = PublicExperience & {
 
 export type PublicMountainRoutePricingRow = {
   label: string;
-  price: number;
+  price: number | null;
 };
 
 export type PublicMountainRouteDay = {
