@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { Icons } from '@/components/icons';
+import { isDayTripPricingTierPublic } from '@/features/portal/cms/tours/legacy-pricing';
 import { formatTourPrice } from '@/lib/public/tour-format';
 import type { PublicTourPricingTier } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
@@ -160,24 +161,31 @@ export function TourPricingTable({ tiers }: TourPricingTableProps) {
       {tiers.map((tier) => {
         const bands = collectBands(tier);
         const theme = tierTheme(tier.tier);
+        const dayTrip = isDayTripPricingTierPublic(tier);
         const seasonWidth = bands.length > 4 ? 21 : 23;
         const actionWidth = 11;
-        const paxWidth = bands.length ? (100 - seasonWidth - actionWidth) / bands.length : 0;
+        const reservedWidth = dayTrip ? actionWidth : seasonWidth + actionWidth;
+        const paxWidth = bands.length ? (100 - reservedWidth) / bands.length : 0;
         const headStyle = {
           '--pricing-head-bg': theme.headBg,
           '--pricing-head-fg': theme.headFg
         } as React.CSSProperties;
 
         return (
-          <div className='benroso-pricing-tier' key={tier.id}>
-            <PricingTableIntro blurb={tier.blurb} label={tier.label} theme={theme} />
+          <div
+            className={cn('benroso-pricing-tier', dayTrip && 'benroso-pricing-tier--day-trip')}
+            key={tier.id}
+          >
+            {dayTrip ? null : (
+              <PricingTableIntro blurb={tier.blurb} label={tier.label} theme={theme} />
+            )}
 
             {bands.length && tier.seasons.length ? (
               <div className='benroso-thin-scrollbar overflow-x-auto lg:overflow-x-visible'>
                 <div className='benroso-pricing-tier__table-shell'>
                   <table className='benroso-pricing-tier__table text-left text-sm'>
                     <colgroup>
-                      <col style={{ width: `${seasonWidth}%` }} />
+                      {dayTrip ? null : <col style={{ width: `${seasonWidth}%` }} />}
                       {bands.map((band) => (
                         <col key={band} style={{ width: `${paxWidth}%` }} />
                       ))}
@@ -185,7 +193,7 @@ export function TourPricingTable({ tiers }: TourPricingTableProps) {
                     </colgroup>
                     <thead className='benroso-pricing-tier__head' style={headStyle}>
                       <tr>
-                        <th scope='col'>Season</th>
+                        {dayTrip ? null : <th scope='col'>Season</th>}
                         {bands.map((band) => (
                           <th key={band} scope='col'>
                             {formatBandLabel(band)}
@@ -197,9 +205,11 @@ export function TourPricingTable({ tiers }: TourPricingTableProps) {
                     <tbody>
                       {tier.seasons.map((season) => (
                         <tr className='benroso-pricing-tier__row' key={season.id}>
-                          <th className='benroso-pricing-tier__season' scope='row'>
-                            {season.label}
-                          </th>
+                          {dayTrip ? null : (
+                            <th className='benroso-pricing-tier__season' scope='row'>
+                              {season.label}
+                            </th>
+                          )}
                           {bands.map((band) => {
                             const cell = season.cells.find((item) => item.groupBand === band);
                             return (

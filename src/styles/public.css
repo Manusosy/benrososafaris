@@ -803,6 +803,14 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   vertical-align: middle;
 }
 
+.public-site .benroso-pricing-tier--day-trip {
+  padding-top: 0.875rem;
+}
+
+.public-site .benroso-pricing-tier--day-trip .benroso-pricing-tier__head th:first-child {
+  text-align: center;
+}
+
 .public-site .benroso-pricing-tier--table-only {
   padding-top: 0.875rem;
 }

@@ -13,6 +13,9 @@ export const LEGACY_PAX_BANDS = ['1 PAX', '2-3 PAX', '4-5 PAX', '6 AND ABOVE'] a
 /** South Africa private tours: year-round matrix with three group-size columns. */
 export const SOUTH_AFRICA_PAX_BANDS = ['1 PAX', '2 - 3 PAX', '4 PAX & ABOVE'] as const;
 
+/** Excursions / day trips: one pax-rate row, no seasonal matrix. */
+export const DAY_TRIP_SEASON_LABEL = 'Day trip';
+
 export const MOUNTAIN_ACCOMMODATION_BANDS = ['Camping', 'Sleeping at hut'] as const;
 
 export const DEFAULT_LEGACY_SEASONS = [
@@ -60,6 +63,36 @@ export function seasonUsesSouthAfricaBands(cells: Array<{ groupBand: string }>):
   if (!bands.length) return false;
   const saSet = new Set<string>(SOUTH_AFRICA_PAX_BANDS);
   return bands.every((band) => saSet.has(band));
+}
+
+export function isDayTripSeasonLabel(label: string): boolean {
+  return label.trim().toLowerCase() === DAY_TRIP_SEASON_LABEL.toLowerCase();
+}
+
+export function isDayTripPricingTierPublic(tier: PublicTourPricingTier): boolean {
+  return tier.seasons.length === 1 && isDayTripSeasonLabel(tier.seasons[0]?.label ?? '');
+}
+
+export function createDayTripPricingSeason(): PricingTier['seasons'][number] {
+  return {
+    label: DAY_TRIP_SEASON_LABEL,
+    dateStart: '',
+    dateEnd: '',
+    cells: LEGACY_PAX_BANDS.map((groupBand) => ({ groupBand, price: '' }))
+  };
+}
+
+export function createDefaultDayTripPricingTier(
+  tier: PricingTier['tier'] = 'mid_range'
+): PricingTier {
+  return {
+    tier,
+    label: 'Per person rates',
+    blurb: '',
+    notes: '',
+    currency: 'USD',
+    seasons: [createDayTripPricingSeason()]
+  };
 }
 
 export function isMountainPricingTierPublic(tier: PublicTourPricingTier): boolean {
