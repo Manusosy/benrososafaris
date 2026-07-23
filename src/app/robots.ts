@@ -12,7 +12,8 @@ const DEFAULT_DISALLOW = [
   '/sign-up',
   '/monitoring',
   '/v1/',
-  '/*/newsletter/unsubscribe'
+  '/*/newsletter/unsubscribe',
+  '/*/thank-you'
 ];
 
 export default function robots(): MetadataRoute.Robots {

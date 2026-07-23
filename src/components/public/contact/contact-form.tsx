@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import * as z from 'zod';
 
 import { useAppForm } from '@/components/ui/tanstack-form';
@@ -14,6 +15,7 @@ import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { submitEnquiry } from '@/features/contact/api/service';
 import type { EnquiryType } from '@/features/contact/api/types';
 import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
+import { localePath } from '@/lib/public/locale-path';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -275,7 +277,7 @@ function RadioOptionList({
 
 export function ContactForm({ locale, sidebar, sourcePath }: ContactFormProps) {
   const [activeType, setActiveType] = React.useState<EnquiryType>('safari-quote');
-  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle');
+  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'error'>('idle');
 
   const activeTab = ENQUIRY_TABS.find((tab) => tab.id === activeType) ?? ENQUIRY_TABS[0];
 
@@ -341,21 +343,21 @@ function ContactFormBody({
 }: {
   activeType: EnquiryType;
   locale: string;
-  onSubmitStatusChange: (status: 'idle' | 'success' | 'error') => void;
+  onSubmitStatusChange: (status: 'idle' | 'error') => void;
   sourcePath?: string;
-  submitStatus: 'idle' | 'success' | 'error';
+  submitStatus: 'idle' | 'error';
 }) {
+  const router = useRouter();
   const turnstile = useTurnstileGate();
 
   const mutation = useMutation({
     mutationFn: submitEnquiry,
     onSuccess: () => {
-      onSubmitStatusChange('success');
-      form.reset();
-      turnstile.resetTurnstile();
+      router.push(`${localePath(locale, '/thank-you')}?source=contact`);
     },
     onError: () => {
       onSubmitStatusChange('error');
+      turnstile.resetTurnstile();
     }
   });
 
@@ -873,16 +875,6 @@ function ContactFormBody({
             <p className='text-xs text-[var(--benroso-muted)]'>
               No payment is collected on this website. We aim to respond within 24 hours.
             </p>
-            {submitStatus === 'success' ? (
-              <div className='space-y-1'>
-                <p className='text-sm text-[var(--benroso-primary)]'>
-                  Thank you for your enquiry. We will be in touch shortly.
-                </p>
-                <p className='text-xs text-[var(--benroso-muted)]'>
-                  We listen first and tailor suggestions to your interests, never a hard sell.
-                </p>
-              </div>
-            ) : null}
             {submitStatus === 'error' ? (
               <p className='text-sm text-red-700'>
                 {mutation.error instanceof Error

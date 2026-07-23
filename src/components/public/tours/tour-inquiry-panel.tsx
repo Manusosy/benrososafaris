@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import * as z from 'zod';
 
 import { Icons } from '@/components/icons';
@@ -11,6 +12,7 @@ import { useAppForm } from '@/components/ui/tanstack-form';
 import { getCountryDialCode } from '@/constants/world-countries';
 import { submitEnquiry } from '@/features/contact/api/service';
 import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
+import { localePath } from '@/lib/public/locale-path';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -211,16 +213,18 @@ function TourInquiryForm({
   tourSlug: string;
   tourTitle: string;
 }) {
-  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle');
+  const router = useRouter();
+  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'error'>('idle');
   const turnstile = useTurnstileGate();
 
   const mutation = useMutation({
     mutationFn: submitEnquiry,
-    onError: () => setSubmitStatus('error'),
-    onSuccess: () => {
-      setSubmitStatus('success');
-      form.reset();
+    onError: () => {
+      setSubmitStatus('error');
       turnstile.resetTurnstile();
+    },
+    onSuccess: () => {
+      router.push(`${localePath(locale, '/thank-you')}?source=tour`);
     }
   });
 
@@ -501,11 +505,6 @@ function TourInquiryForm({
           <p className='text-xs text-[var(--benroso-muted)]'>
             No payment is collected here. We aim to respond within 24 hours.
           </p>
-          {submitStatus === 'success' ? (
-            <p className='text-sm text-[var(--benroso-primary)]'>
-              Thank you. We will reply with a tailored quote shortly.
-            </p>
-          ) : null}
           {submitStatus === 'error' ? (
             <p className='text-sm text-red-700'>
               {mutation.error instanceof Error
