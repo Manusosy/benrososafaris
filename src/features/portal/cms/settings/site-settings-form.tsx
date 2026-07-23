@@ -532,6 +532,14 @@ function SeoTab({ initial }: { initial: SeoAnalyticsValues }) {
             value={values.gaMeasurementId ?? ''}
           />
           <LockedSecretField
+            id='googleAdsId'
+            label='Google Ads tag ID'
+            hint='e.g. AW-XXXXXXXXXX (from Google Ads tag setup)'
+            onChange={(googleAdsId) => set({ googleAdsId })}
+            placeholder='AW-XXXXXXXXXX'
+            value={values.googleAdsId ?? ''}
+          />
+          <LockedSecretField
             id='gtmId'
             label='Google Tag Manager ID'
             hint='e.g. GTM-XXXXXXX'

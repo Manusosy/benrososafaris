@@ -72,6 +72,7 @@ export type PageHero = {
 
 export type SiteAnalyticsSettings = {
   gaMeasurementId: string | null;
+  googleAdsId: string | null;
   gtmId: string | null;
   metaPixelId: string | null;
   googleSiteVerification: string | null;

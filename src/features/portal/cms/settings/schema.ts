@@ -63,6 +63,7 @@ export const seoAnalyticsSchema = z.object({
   seoTitle: optionalText,
   seoDescription: optionalText,
   gaMeasurementId: optionalText,
+  googleAdsId: optionalText,
   gtmId: optionalText,
   metaPixelId: optionalText,
   googleSiteVerification: optionalVerificationToken,
@@ -131,6 +132,7 @@ export function settingsFromRow(row: Tables<'site_settings'> | null): SettingsFo
       seoTitle: str(seo.title),
       seoDescription: str(seo.description),
       gaMeasurementId: str(analytics.gaMeasurementId),
+      googleAdsId: str(analytics.googleAdsId),
       gtmId: str(analytics.gtmId),
       metaPixelId: str(analytics.metaPixelId),
       googleSiteVerification:

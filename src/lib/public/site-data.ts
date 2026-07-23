@@ -195,6 +195,7 @@ function readAnalytics(value: unknown): PublicSiteSettings['analytics'] {
       : null;
   return {
     gaMeasurementId: str('gaMeasurementId'),
+    googleAdsId: str('googleAdsId'),
     gtmId: str('gtmId'),
     metaPixelId: str('metaPixelId'),
     googleSiteVerification: normalizeSiteVerificationToken(str('googleSiteVerification')),

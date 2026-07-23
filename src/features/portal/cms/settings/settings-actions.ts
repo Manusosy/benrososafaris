@@ -96,6 +96,7 @@ export async function saveSeoAnalytics(input: SeoAnalyticsValues): Promise<{ ok:
     seo_defaults: compact({ title: values.seoTitle, description: values.seoDescription }),
     analytics: compact({
       gaMeasurementId: values.gaMeasurementId,
+      googleAdsId: values.googleAdsId,
       gtmId: values.gtmId,
       metaPixelId: values.metaPixelId,
       googleSiteVerification: values.googleSiteVerification,

@@ -6,23 +6,28 @@ import type { SiteAnalyticsSettings } from '@/lib/public/types';
  * Injects analytics on the public site only (rendered from the [locale] layout,
  * never the portal). Each integration is opt-in: it renders nothing unless the
  * corresponding id is configured in Portal > Settings > SEO & Analytics.
+ *
+ * GA4 and Google Ads share one gtag.js loader so both can be configured without
+ * double-loading the library.
  */
 export function SiteAnalytics({ analytics }: { analytics: SiteAnalyticsSettings }) {
-  const { gaMeasurementId, gtmId, metaPixelId } = analytics;
+  const { gaMeasurementId, googleAdsId, gtmId, metaPixelId } = analytics;
+  const gtagPrimaryId = gaMeasurementId || googleAdsId;
 
   return (
     <>
-      {gaMeasurementId ? (
+      {gtagPrimaryId ? (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${gtagPrimaryId}`}
             strategy='lazyOnload'
           />
-          <Script id='ga-init' strategy='lazyOnload'>
+          <Script id='gtag-init' strategy='lazyOnload'>
             {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${gaMeasurementId}');`}
+${gaMeasurementId ? `gtag('config', '${gaMeasurementId}');` : ''}
+${googleAdsId ? `gtag('config', '${googleAdsId}');` : ''}`}
           </Script>
         </>
       ) : null}
